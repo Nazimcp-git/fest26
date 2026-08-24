@@ -41,16 +41,21 @@
             }
             #print-area {
                 display: block !important;
+                visibility: visible !important;
+                position: static !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
             .print-page {
                 page-break-after: always;
             }
-             .print-page:last-child {
+            .print-page:last-child {
                 page-break-after: avoid;
             }
             @page {
-                size: A4 landscape;
-                margin: 1.5cm;
+                size: auto;
+                margin: 10mm;
             }
         }
         /* Animation for detail view */
@@ -69,8 +74,49 @@
             right: 0;
             border-color: #f97316;
         }
-        .toggle-checkbox:checked + .toggle-label {
+        /* Custom styled student selection cards */
+        .student-select-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+        .student-select-card:hover {
+            transform: translateY(-2px);
+            border-color: #f97316;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.08);
+        }
+        .student-select-card:has(input[type="checkbox"]:checked) {
+            border-color: #f97316;
+            background: linear-gradient(135deg, rgba(255, 247, 237, 0.95) 0%, rgba(255, 237, 213, 0.7) 100%);
+            box-shadow: 0 4px 16px rgba(249, 115, 22, 0.14);
+        }
+        .student-select-card:has(input[type="checkbox"]:checked) .card-check-box {
             background-color: #f97316;
+            border-color: #f97316;
+            color: white;
+        }
+        .student-select-card:has(input[type="checkbox"]:checked) .card-check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .card-check-icon {
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.15s ease;
+        }
+        /* Custom scrollbar */
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.02);
+            border-radius: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.15);
+            border-radius: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,0,0,0.25);
         }
     </style>
     <script>
@@ -111,6 +157,7 @@
     <div id="app" class="min-h-screen relative z-10">
         <!-- App content will be rendered here -->
     </div>
+    <div id="modal-container" class="hidden"></div>
     
     <!-- Hidden container for printing -->
     <div id="print-area" class="hidden"></div>
@@ -124,7 +171,7 @@
 
     <script type="module">
         // --- TEAM & ADMIN PASSWORDS (HASHED FOR SECURITY) ---
-        const ACCESS_CODE_HASHES = {
+       const ACCESS_CODE_HASHES = {
             // 6-Digit Team PINs
             "48290cf691c41cbc99b2396d2e5313ccfba91987b384e6d8f08b951fa5045e83": { type: "team", teamName: "TEAM A" }, // PIN: 482915
             "3b2c2d4629b9403fc17bb4bced473a355883cce7e3e923b08b13a5bbbf3bbc10": { type: "team", teamName: "TEAM B" }, // PIN: 739104
@@ -133,11 +180,7 @@
             
             // Admin PINs & Passcodes
             "5dfc92691f7fa0a4f9f8dd9b05b69b1720baad084182c7c4d492cbbab1f23333": { type: "admin" }, // PIN: 850392
-            "835d6dc88b708bc646d6db82c853ef4182fabbd4a8de59c213f2b5ab3ae7d9be": { type: "admin" }, // ADMIN
-            "64e48f3bf07307f751c02213b95e0b5e1e8351597dfbe12bce5cbf115591ce3f": { type: "admin" }, // ADMIN2026
-            "ad0ee11b4ee66abb29207fdb6f105cb2b771cc549e7917b239b4cab56c9bfa5d": { type: "admin" }, // ADMIN2025
-            "c5539eb87431e51b1424ed0f0a514d3a8241b9d4df2e923e20023a9d5dd408d6": { type: "admin" },
-            "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918": { type: "admin" }
+            "64e48f3bf07307f751c02213b95e0b5e1e8351597dfbe12bce5cbf115591ce3f": { type: "admin" } // ADMIN2026
         };
 
         // --- APPLICATION STATE ---
@@ -173,7 +216,6 @@
                         ${content}
                     </div>
                 </main>
-                <div id="modal-container" class="hidden"></div>
             </div>
         `;
         
@@ -371,6 +413,8 @@
             const activeRegProgramIds = Object.keys(appData.registrationPrograms || {});
 
             allStudents.forEach(student => {
+                student.stageCount = 0;
+                student.nonStageCount = 0;
                 student.registrationCount = 0;
                 activeRegProgramIds.forEach(progId => {
                     const program = appData.programs[progId];
@@ -378,6 +422,12 @@
                         const programRegs = registrations[progId] || {};
                         const teamRegs = programRegs[student.teamId] || [];
                         if (teamRegs.includes(student.id)) {
+                            const isStage = (program.stageType || 'stage') !== 'non-stage';
+                            if (isStage) {
+                                student.stageCount++;
+                            } else {
+                                student.nonStageCount++;
+                            }
                             student.registrationCount++;
                         }
                     }
@@ -394,7 +444,18 @@
 
             return `
                 <div class="bg-white/60 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-lg">
-                    <h2 class="text-2xl font-bold mb-4">Student Registration Stats (Individual Events Only)</h2>
+                    <div class="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Student Registration Stats</h2>
+                            <p class="text-xs text-gray-500 mt-0.5">Individual Events Breakdown (Stage & Non-Stage)</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="printAllStudentStats('${activeCategory}')" id="print-student-stats-btn" class="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-4 py-2.5 text-xs font-bold rounded-xl shadow-md flex items-center gap-2 transition-all active:scale-95">
+                                <i class="fas fa-print"></i>
+                                <span>Print Full Student Report</span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="overflow-x-auto hide-scrollbar pb-2 -mx-6 px-6 sm:mx-0 sm:px-0 max-w-full">
                         <div id="student-stats-filter-container" class="mb-6 flex flex-nowrap w-max gap-2">
                             ${filterButtons.map(status => `
@@ -404,25 +465,35 @@
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
-                             <thead class="bg-gray-50">
+                             <thead class="bg-gray-50/80">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                                    ${activeCategory === 'All' ? `<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>` : ''}
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registrations</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Rank</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Student</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Team</th>
+                                    ${activeCategory === 'All' ? `<th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>` : ''}
+                                    <th class="px-5 py-3 text-center text-xs font-semibold text-purple-700 uppercase tracking-wider">Stage</th>
+                                    <th class="px-5 py-3 text-center text-xs font-semibold text-amber-700 uppercase tracking-wider">Non-Stage</th>
+                                    <th class="px-5 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Total</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="bg-white/60 divide-y divide-gray-200">
                                 ${filteredStudents.map((student, index) => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${index + 1}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            <button class="text-indigo-600 hover:underline student-info-btn" data-student-id="${student.id}">${student.name} <span class="text-gray-500">(${student.chestNo})</span></button>
+                                    <tr class="hover:bg-gray-50/80 transition-colors">
+                                        <td class="px-5 py-3.5 whitespace-nowrap text-sm font-medium text-gray-900">${index + 1}</td>
+                                        <td class="px-5 py-3.5 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <button class="text-indigo-600 hover:text-indigo-800 font-semibold hover:underline student-info-btn text-left" data-student-id="${student.id}">${student.name} <span class="text-gray-500 font-normal">(${student.chestNo})</span></button>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${appData.teams[student.teamId]?.name || 'N/A'}</td>
-                                         ${activeCategory === 'All' ? `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.category}</td>` : ''}
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-600">${student.registrationCount}</td>
+                                        <td class="px-5 py-3.5 whitespace-nowrap text-sm text-gray-600">${appData.teams[student.teamId]?.name || 'N/A'}</td>
+                                         ${activeCategory === 'All' ? `<td class="px-5 py-3.5 whitespace-nowrap text-sm text-gray-500"><span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">${student.category}</span></td>` : ''}
+                                        <td class="px-5 py-3.5 whitespace-nowrap text-sm text-center">
+                                            <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-bold ${student.stageCount > 0 ? 'bg-purple-100 text-purple-700' : 'text-gray-400'}">${student.stageCount}</span>
+                                        </td>
+                                        <td class="px-5 py-3.5 whitespace-nowrap text-sm text-center">
+                                            <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-bold ${student.nonStageCount > 0 ? 'bg-amber-100 text-amber-700' : 'text-gray-400'}">${student.nonStageCount}</span>
+                                        </td>
+                                        <td class="px-5 py-3.5 whitespace-nowrap text-sm font-bold text-center">
+                                            <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-bold ${student.registrationCount > 0 ? 'bg-indigo-100 text-indigo-700' : 'text-gray-400'}">${student.registrationCount}</span>
+                                        </td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -451,7 +522,7 @@
                     </header>
                     <div class="border-b border-gray-200 mb-6">
                         <nav id="team-tabs" class="-mb-px flex space-x-8" aria-label="Tabs">
-                            <button data-tab="roster" class="team-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTeamTab === 'register' ? 'active' : ''}">Overview</button>
+                            <button data-tab="register" class="team-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTeamTab === 'register' ? 'active' : ''}">Overview</button>
                             <button data-tab="roster" class="team-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTeamTab === 'roster' ? 'active' : ''}">My Roster</button>
                         </nav>
                     </div>
@@ -468,86 +539,54 @@
              const teamId = Object.keys(appData.teams).find(id => appData.teams[id].name === teamName);
              const activeRegProgramIds = Object.keys(appData.registrationPrograms || {});
              const totalActivePrograms = activeRegProgramIds.length;
+             
              let teamRegisteredCount = 0;
+             let stageTotal = 0, stageRegistered = 0;
+             let nonStageTotal = 0, nonStageRegistered = 0;
+
              activeRegProgramIds.forEach(progId => {
-                if (appData.participantRegistrations?.[progId]?.[teamId] && appData.participantRegistrations[progId][teamId].length > 0) {
+                const program = appData.programs[progId];
+                if (!program) return;
+                const isStage = (program.stageType || 'stage') !== 'non-stage';
+                if (isStage) stageTotal++;
+                else nonStageTotal++;
+
+                const isReg = appData.participantRegistrations?.[progId]?.[teamId] && appData.participantRegistrations[progId][teamId].length > 0;
+                if (isReg) {
                     teamRegisteredCount++;
+                    if (isStage) stageRegistered++;
+                    else nonStageRegistered++;
                 }
              });
              const percentage = totalActivePrograms > 0 ? Math.round((teamRegisteredCount / totalActivePrograms) * 100) : 0;
+             const stagePercentage = stageTotal > 0 ? Math.round((stageRegistered / stageTotal) * 100) : 0;
+             const nonStagePercentage = nonStageTotal > 0 ? Math.round((nonStageRegistered / nonStageTotal) * 100) : 0;
 
-
-             const categoriesWithPrograms = CATEGORIES.map(category => ({
-                name: category,
-                programs: registrationPrograms.filter(p => p.category === category)
-             })).filter(c => c.programs.length > 0);
+             const categoriesWithPrograms = CATEGORIES.map(category => {
+                const progs = registrationPrograms.filter(p => p.category === category);
+                return {
+                    name: category,
+                    programs: progs,
+                    stagePrograms: progs.filter(p => (p.stageType || 'stage') !== 'non-stage'),
+                    nonStagePrograms: progs.filter(p => (p.stageType || 'stage') === 'non-stage')
+                };
+             }).filter(c => c.programs.length > 0);
              
-             let registrationContent = '';
-             if(selectedProgramId) {
-                const program = appData.programs[selectedProgramId];
-                const studentsForProgram = getDataAsArray('students').filter(s => s.teamId === teamId && s.category === program.category);
-                const teamRegistrationsForProgram = appData.participantRegistrations?.[selectedProgramId]?.[teamId] || [];
-
-                registrationContent = `
-                    <div class="bg-white/60 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-lg mt-8">
-                        <h3 class="text-3xl font-bold mb-2">${program.name}</h3>
-                        <p class="text-lg text-gray-500 mb-6">${program.category}</p>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div>
-                                <h4 class="text-xl font-bold mb-4">Register Participants</h4>
-                                <form id="registration-form" class="space-y-4">
-                                    <input type="hidden" name="programId" value="${selectedProgramId}">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700">Select Participants</label>
-                                        <p class="text-xs text-gray-500 mb-1">You can select multiple students.</p>
-                                        <div class="mt-2 border rounded-md max-h-48 overflow-y-auto p-2 bg-gray-50">
-                                            ${studentsForProgram.length === 0 ? `<p class="text-sm text-gray-500 p-2">No eligible students in this category.</p>` : 
-                                            studentsForProgram.map(s => `
-                                                <div class="flex items-center p-1">
-                                                    <input id="student-${s.id}" name="studentIds" type="checkbox" value="${s.id}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                                    <label for="student-${s.id}" class="ml-3 text-sm text-gray-700">${s.name} (${s.chestNo})</label>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md font-semibold hover:bg-indigo-700">Register Selected</button>
-                                    <p id="reg-form-message" class="text-sm mt-2 text-center"></p>
-                                </form>
-                            </div>
-                            <div>
-                                <h4 class="text-xl font-bold mb-4">Your Registered Participants</h4>
-                                <div class="space-y-2 max-h-96 overflow-y-auto">
-                                ${teamRegistrationsForProgram.length === 0 ? `<p class="text-gray-500">You have not registered any participants for this program yet.</p>` : `
-                                    <ul class="divide-y divide-gray-200">
-                                    ${teamRegistrationsForProgram.map(studentId => {
-                                        const student = appData.students[studentId];
-                                        return `
-                                        <li class="py-2 flex justify-between items-center">
-                                            <div>
-                                                <p class="font-semibold">${student.name}</p>
-                                                <p class="text-sm text-gray-500">Chest No: ${student.chestNo}</p>
-                                            </div>
-                                            <button class="remove-participant-btn text-red-500 hover:text-red-700 text-xs font-semibold" data-student-id="${studentId}"><i class="fas fa-times mr-1"></i>Remove</button>
-                                        </li>
-                                    `}).join('')}
-                                    </ul>
-                                `}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-             }
-
              return `
                  <div>
                     <div class="bg-white/60 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-lg mb-8">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Your Registration Progress</h2>
-                        <p class="text-gray-500">You have registered for ${teamRegisteredCount} out of ${totalActivePrograms} available programs.</p>
-                        <div class="w-full bg-gray-200 rounded-full h-4 mt-4">
-                            <div class="bg-indigo-600 h-4 rounded-full text-white text-xs flex items-center justify-center" style="width: ${percentage}%">
-                                ${percentage}%
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-800">Your Registration Progress</h2>
+                                <p class="text-gray-500 text-sm">Overall: ${teamRegisteredCount} of ${totalActivePrograms} programs registered (${percentage}%)</p>
                             </div>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">Stage: ${stageRegistered}/${stageTotal} (${stagePercentage}%)</span>
+                                <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">Non-Stage: ${nonStageRegistered}/${nonStageTotal} (${nonStagePercentage}%)</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div class="bg-gradient-to-r from-orange-500 to-indigo-600 h-3 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
                         </div>
                     </div>
                     <main>
@@ -555,63 +594,179 @@
                          ? `<div class="bg-white/60 backdrop-blur-xl border border-white/60 p-8 rounded-3xl shadow-md text-center"><p class="text-gray-600">No programs are currently open for registration. Please check back later.</p></div>`
                          : categoriesWithPrograms.map(cat => `
                             <div class="mb-8">
-                                <details class="bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl shadow-md" ${selectedCategory === cat.name ? 'open' : ''}>
-                                    <summary class="text-2xl font-bold p-4 cursor-pointer list-none flex justify-between items-center">
-                                        ${cat.name}
-                                        <i class="fas fa-chevron-down transform transition-transform"></i>
+                                <details class="bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl shadow-md overflow-hidden" open>
+                                    <summary class="text-2xl font-bold p-5 cursor-pointer list-none flex justify-between items-center bg-white/30 hover:bg-white/50 transition-colors">
+                                        <div class="flex items-center gap-3">
+                                            <span>${cat.name}</span>
+                                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600">${cat.programs.length} Programs</span>
+                                        </div>
+                                        <i class="fas fa-chevron-down transform transition-transform text-gray-500"></i>
                                     </summary>
-                                    <div class="p-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                        ${cat.programs.map(p => {
-                                            const teamRegs = appData.participantRegistrations?.[p.id]?.[teamId] || [];
-                                            const isRegistered = teamRegs.length > 0;
-                                            return `
-                                            <button class="program-select-btn text-left p-4 rounded-lg shadow-md transition-all duration-200 ${selectedProgramId === p.id ? 'active' : 'bg-gray-50 hover:bg-gray-100'} " data-program-id="${p.id}">
-                                                <div class="flex justify-between items-center">
-                                                    <span class="font-bold">${p.name}</span>
-                                                    ${isRegistered ? `<i class="fas fa-check-circle text-green-500"></i>` : ''}
+                                    <div class="p-6 border-t border-gray-100 space-y-6">
+                                        ${cat.stagePrograms.length > 0 ? `
+                                            <div>
+                                                <div class="flex items-center gap-2 mb-3">
+                                                    <span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+                                                    <h4 class="text-xs font-bold uppercase tracking-wider text-purple-800">Stage Programs (${cat.stagePrograms.length})</h4>
                                                 </div>
-                                            </button>
-                                        `}).join('')}
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                    ${cat.stagePrograms.map(p => {
+                                                        const teamRegs = appData.participantRegistrations?.[p.id]?.[teamId] || [];
+                                                        const isRegistered = teamRegs.length > 0;
+                                                        return `
+                                                        <button type="button" onclick="openRegistrationModal('${p.id}')" class="program-select-btn text-left p-4 rounded-2xl shadow-sm border transition-all duration-200 bg-white/80 border-gray-100 hover:bg-white hover:border-purple-300 hover:shadow-md group flex items-center justify-between" data-program-id="${p.id}">
+                                                            <div class="min-w-0 pr-2">
+                                                                <span class="font-bold text-gray-900 text-sm block truncate group-hover:text-purple-700 transition-colors">${p.name}</span>
+                                                                <span class="text-[11px] font-semibold text-gray-400">${isRegistered ? `<span class="text-emerald-600 font-bold">${teamRegs.length} registered</span>` : 'Click to register'}</span>
+                                                            </div>
+                                                            <div class="flex-shrink-0">
+                                                                ${isRegistered 
+                                                                    ? `<span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold shadow-sm"><i class="fas fa-check"></i></span>` 
+                                                                    : `<span class="w-8 h-8 rounded-xl bg-gray-100 text-gray-400 group-hover:bg-purple-100 group-hover:text-purple-600 flex items-center justify-center text-xs transition-colors"><i class="fas fa-user-plus"></i></span>`
+                                                                }
+                                                            </div>
+                                                        </button>
+                                                    `}).join('')}
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        ${cat.nonStagePrograms.length > 0 ? `
+                                            <div>
+                                                <div class="flex items-center gap-2 mb-3">
+                                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-600"></span>
+                                                    <h4 class="text-xs font-bold uppercase tracking-wider text-amber-800">Non-Stage Programs (${cat.nonStagePrograms.length})</h4>
+                                                </div>
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                    ${cat.nonStagePrograms.map(p => {
+                                                        const teamRegs = appData.participantRegistrations?.[p.id]?.[teamId] || [];
+                                                        const isRegistered = teamRegs.length > 0;
+                                                        return `
+                                                        <button type="button" onclick="openRegistrationModal('${p.id}')" class="program-select-btn text-left p-4 rounded-2xl shadow-sm border transition-all duration-200 bg-white/80 border-gray-100 hover:bg-white hover:border-amber-300 hover:shadow-md group flex items-center justify-between" data-program-id="${p.id}">
+                                                            <div class="min-w-0 pr-2">
+                                                                <span class="font-bold text-gray-900 text-sm block truncate group-hover:text-amber-700 transition-colors">${p.name}</span>
+                                                                <span class="text-[11px] font-semibold text-gray-400">${isRegistered ? `<span class="text-emerald-600 font-bold">${teamRegs.length} registered</span>` : 'Click to register'}</span>
+                                                            </div>
+                                                            <div class="flex-shrink-0">
+                                                                ${isRegistered 
+                                                                    ? `<span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold shadow-sm"><i class="fas fa-check"></i></span>` 
+                                                                    : `<span class="w-8 h-8 rounded-xl bg-gray-100 text-gray-400 group-hover:bg-amber-100 group-hover:text-amber-600 flex items-center justify-center text-xs transition-colors"><i class="fas fa-user-plus"></i></span>`
+                                                                }
+                                                            </div>
+                                                        </button>
+                                                    `}).join('')}
+                                                </div>
+                                            </div>
+                                        ` : ''}
                                     </div>
                                 </details>
                             </div>
                        `).join('')}
-                       <div id="registration-section">
-                            ${registrationContent}
-                       </div>
                     </main>
-                </div>
-             `;
+                 </div>
+              `;
         }
 
         function renderTeamRosterPage() {
-            const teamId = Object.keys(appData.teams).find(id => appData.teams[id].name === currentUser.teamName);
-            const teamStudents = getDataAsArray('students').filter(s => s.teamId === teamId).sort((a,b) => a.name.localeCompare(b.name));
+            const teamId = currentUser?.teamId || (currentUser?.teamName && Object.keys(appData.teams || {}).find(id => appData.teams[id]?.name === currentUser.teamName)) || Object.keys(appData.teams || {})[0];
+            const activeRegProgramIds = Object.keys(appData.registrationPrograms || {});
+            const registrations = appData.participantRegistrations || {};
+
+            const teamStudents = getDataAsArray('students').filter(s => s.teamId === teamId).map(student => {
+                let stageCount = 0;
+                let nonStageCount = 0;
+                activeRegProgramIds.forEach(progId => {
+                    const program = appData.programs[progId];
+                    if (program && !program.isGroup && registrations[progId]?.[teamId]?.includes(student.id)) {
+                        if ((program.stageType || 'stage') === 'non-stage') {
+                            nonStageCount++;
+                        } else {
+                            stageCount++;
+                        }
+                    }
+                });
+                return {
+                    ...student,
+                    stageCount,
+                    nonStageCount,
+                    totalCount: stageCount + nonStageCount
+                };
+            }).sort((a, b) => (String(a.chestNo || '')).localeCompare(String(b.chestNo || ''), undefined, { numeric: true }) || (a.name || '').localeCompare(b.name || ''));
+
+            const totalTeamStage = teamStudents.reduce((sum, s) => sum + s.stageCount, 0);
+            const totalTeamNonStage = teamStudents.reduce((sum, s) => sum + s.nonStageCount, 0);
+            const totalRegisteredStudents = teamStudents.filter(s => s.totalCount > 0).length;
 
             return `
-                <div class="bg-white/60 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-lg">
-                    <div class="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-4">
-                        <h2 class="text-2xl font-bold">My Roster (${teamStudents.length} Students)</h2>
-                        <button id="print-team-registrations-btn" class="bg-gray-600 text-white px-4 py-2 text-sm font-semibold rounded-md hover:bg-gray-700 w-full md:w-auto"><i class="fas fa-print mr-2"></i>Print My Registrations</button>
+                <div class="bg-white/60 backdrop-blur-xl border border-white/60 p-4 sm:p-6 rounded-3xl shadow-lg">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
+                        <div>
+                            <div class="flex items-center gap-3">
+                                <h2 class="text-2xl font-black text-gray-900 tracking-tight">My Roster (${teamStudents.length} Students)</h2>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Live participation breakdown for your team members</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-sm flex items-center gap-1.5">
+                                <i class="fas fa-theater-masks"></i> Stage: ${totalTeamStage}
+                            </span>
+                            <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 shadow-sm flex items-center gap-1.5">
+                                <i class="fas fa-pen-nib"></i> Non-Stage: ${totalTeamNonStage}
+                            </span>
+                            <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm flex items-center gap-1.5">
+                                <i class="fas fa-user-check"></i> Active: ${totalRegisteredStudents}/${teamStudents.length}
+                            </span>
+                            <button type="button" onclick="printTeamRoster()" id="print-team-registrations-btn" class="print-team-roster-btn bg-gradient-to-r from-gray-700 to-gray-800 text-white px-4 py-2 text-xs font-bold rounded-xl hover:from-gray-800 hover:to-gray-900 active:scale-95 transition-all flex items-center gap-2 shadow-sm ml-auto md:ml-2">
+                                <i class="fas fa-print"></i>
+                                <span>Print Roster</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
+
+                    <div class="overflow-x-auto rounded-2xl border border-gray-200/80 bg-white shadow-sm">
                         <table class="min-w-full divide-y divide-gray-200">
-                             <thead class="bg-gray-50">
+                             <thead class="bg-gray-50/80">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chest No</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th class="px-4 py-3.5 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Chest No</th>
+                                    <th class="px-4 py-3.5 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Student Name</th>
+                                    <th class="px-4 py-3.5 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Category</th>
+                                    <th class="px-4 py-3.5 text-center text-xs font-bold text-purple-700 uppercase tracking-wider">Stage</th>
+                                    <th class="px-4 py-3.5 text-center text-xs font-bold text-amber-700 uppercase tracking-wider">Non-Stage</th>
+                                    <th class="px-4 py-3.5 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Total</th>
+                                    <th class="px-4 py-3.5 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                ${teamStudents.map(student => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.chestNo}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-800">${student.name}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.category}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <button class="student-info-btn text-indigo-600 hover:underline" data-student-id="${student.id}">View Registrations</button>
+                            <tbody class="divide-y divide-gray-100 bg-white">
+                                ${teamStudents.length === 0 ? `
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-8 text-center text-sm text-gray-500">No students registered in your team roster.</td>
+                                    </tr>
+                                ` : teamStudents.map(student => `
+                                    <tr class="hover:bg-orange-50/30 transition-colors">
+                                        <td class="px-4 py-3.5 whitespace-nowrap text-sm font-bold text-gray-900">
+                                            <span class="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-800 text-xs font-bold border border-gray-200/60">#${student.chestNo || '-'}</span>
+                                        </td>
+                                        <td class="px-4 py-3.5 whitespace-nowrap">
+                                            <button class="student-info-btn text-left group" data-student-id="${student.id}">
+                                                <span class="font-bold text-gray-900 text-sm group-hover:text-orange-600 transition-colors">${student.name}</span>
+                                            </button>
+                                        </td>
+                                        <td class="px-4 py-3.5 whitespace-nowrap text-xs font-semibold text-gray-600">
+                                            <span class="px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700">${student.category}</span>
+                                        </td>
+                                        <td class="px-4 py-3.5 whitespace-nowrap text-sm text-center">
+                                            <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-bold ${student.stageCount > 0 ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'text-gray-400 bg-gray-50'}">${student.stageCount}</span>
+                                        </td>
+                                        <td class="px-4 py-3.5 whitespace-nowrap text-sm text-center">
+                                            <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-bold ${student.nonStageCount > 0 ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'text-gray-400 bg-gray-50'}">${student.nonStageCount}</span>
+                                        </td>
+                                        <td class="px-4 py-3.5 whitespace-nowrap text-sm font-bold text-center">
+                                            <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-bold ${student.totalCount > 0 ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' : 'text-gray-400 bg-gray-50'}">${student.totalCount}</span>
+                                        </td>
+                                        <td class="px-4 py-3.5 whitespace-nowrap text-sm text-right">
+                                            <button class="student-info-btn px-3 py-1.5 rounded-xl text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 transition-colors inline-flex items-center gap-1.5" data-student-id="${student.id}">
+                                                <i class="fas fa-eye text-[11px]"></i>
+                                                <span>View Events</span>
+                                            </button>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -792,62 +947,226 @@
         }
         
         function printTeamRegistrations() {
-            const { teamName } = currentUser;
-            const teamId = Object.keys(appData.teams).find(id => appData.teams[id].name === teamName);
-            const registrationPrograms = getDataAsArray('programs').filter(p => appData.registrationPrograms && appData.registrationPrograms[p.id]);
-            
-            const programsWithRegs = registrationPrograms.filter(p => appData.participantRegistrations?.[p.id]?.[teamId]?.length > 0)
-                .sort((a,b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+            printTeamRoster();
+        }
 
-            if (programsWithRegs.length === 0) {
-                alert("Your team has not registered for any programs yet.");
+        function printAllStudentStats(category = 'All') {
+            const allStudents = getDataAsArray('students');
+            const activeRegProgramIds = Object.keys(appData.registrationPrograms || {});
+            const registrations = appData.participantRegistrations || {};
+
+            allStudents.forEach(student => {
+                let stageCount = 0;
+                let nonStageCount = 0;
+                const stagePrograms = [];
+                const nonStagePrograms = [];
+                activeRegProgramIds.forEach(progId => {
+                    const program = appData.programs[progId];
+                    if (program && !program.isGroup && registrations[progId]?.[student.teamId]?.includes(student.id)) {
+                        const isStage = (program.stageType || 'stage') !== 'non-stage';
+                        if (isStage) {
+                            stageCount++;
+                            stagePrograms.push(program.name);
+                        } else {
+                            nonStageCount++;
+                            nonStagePrograms.push(program.name);
+                        }
+                    }
+                });
+                student.stageCount = stageCount;
+                student.nonStageCount = nonStageCount;
+                student.registrationCount = stageCount + nonStageCount;
+                student.stagePrograms = stagePrograms;
+                student.nonStagePrograms = nonStagePrograms;
+            });
+
+            const filteredStudents = category === 'All'
+                ? allStudents
+                : allStudents.filter(s => s.category === category);
+
+            filteredStudents.sort((a, b) => b.registrationCount - a.registrationCount || (String(a.chestNo || '')).localeCompare(String(b.chestNo || ''), undefined, { numeric: true }) || (a.name || '').localeCompare(b.name || ''));
+
+            if (filteredStudents.length === 0) {
+                alert("No students found to print.");
                 return;
             }
 
+            const totalStudents = filteredStudents.length;
+            const totalStage = filteredStudents.reduce((sum, s) => sum + s.stageCount, 0);
+            const totalNonStage = filteredStudents.reduce((sum, s) => sum + s.nonStageCount, 0);
+            const totalActive = filteredStudents.filter(s => s.registrationCount > 0).length;
+
             let printHTML = `
-                <div style="font-family: Arial, sans-serif; width: 210mm; padding: 1.5cm; box-sizing: border-box;">
-                    <div style="text-align: center; border-bottom: 2px solid black; padding-bottom: 1rem; margin-bottom: 1rem;">
-                        <h1 style="font-size: 24pt; margin: 0;">PORU 2K25</h1>
-                        <h2 style="font-size: 16pt; margin: 0.5rem 0;">${teamName} - Registration Summary</h2>
-                        <p style="font-size: 10pt; margin-top: 0.5rem;">Generated on: ${new Date().toLocaleString()}</p>
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; width: 100%; max-width: 210mm; margin: 0 auto; padding: 8mm; box-sizing: border-box; color: #111;">
+                    <!-- Header -->
+                    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 12px;">
+                        <h1 style="font-size: 22pt; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1px;">FEST 2026</h1>
+                        <h2 style="font-size: 14pt; font-weight: 700; margin: 4px 0; color: #ea580c;">Master Student Participation Report (Stage & Non-Stage)</h2>
+                        <div style="font-size: 9pt; color: #444; margin-top: 6px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <span><strong>Filter Category:</strong> ${category}</span>
+                            <span><strong>Total Students:</strong> ${totalStudents}</span>
+                            <span><strong>Active Enrolled:</strong> ${totalActive}</span>
+                            <span><strong>Stage Entries:</strong> ${totalStage}</span>
+                            <span><strong>Non-Stage Entries:</strong> ${totalNonStage}</span>
+                            <span><strong>Printed On:</strong> ${new Date().toLocaleString()}</span>
+                        </div>
                     </div>
+
+                    <!-- Table -->
+                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; text-align: left;">
+                        <thead>
+                            <tr style="background-color: #f3f4f6; border-bottom: 2px solid #9ca3af;">
+                                <th style="padding: 5px 6px; border: 1px solid #d1d5db; width: 4%; text-align: center;">#</th>
+                                <th style="padding: 5px 6px; border: 1px solid #d1d5db; width: 8%;">Chest</th>
+                                <th style="padding: 5px 6px; border: 1px solid #d1d5db; width: 18%;">Student Name</th>
+                                <th style="padding: 5px 6px; border: 1px solid #d1d5db; width: 11%;">Team</th>
+                                <th style="padding: 5px 6px; border: 1px solid #d1d5db; width: 10%;">Category</th>
+                                <th style="padding: 5px 6px; border: 1px solid #d1d5db; width: 22%;">Stage Programs</th>
+                                <th style="padding: 5px 6px; border: 1px solid #d1d5db; width: 22%;">Non-Stage Programs</th>
+                                <th style="padding: 5px 6px; border: 1px solid #d1d5db; width: 5%; text-align: center;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filteredStudents.map((s, idx) => `
+                                <tr style="border-bottom: 1px solid #e5e7eb; ${idx % 2 === 1 ? 'background-color: #fafafa;' : ''}">
+                                    <td style="padding: 4px 6px; border: 1px solid #e5e7eb; text-align: center; color: #6b7280;">${idx + 1}</td>
+                                    <td style="padding: 4px 6px; border: 1px solid #e5e7eb; font-weight: bold;">${s.chestNo || '-'}</td>
+                                    <td style="padding: 4px 6px; border: 1px solid #e5e7eb; font-weight: 600;">${s.name}</td>
+                                    <td style="padding: 4px 6px; border: 1px solid #e5e7eb; color: #374151;">${appData.teams[s.teamId]?.name || 'N/A'}</td>
+                                    <td style="padding: 4px 6px; border: 1px solid #e5e7eb; color: #4b5563;">${s.category}</td>
+                                    <td style="padding: 4px 6px; border: 1px solid #e5e7eb; font-size: 8pt;">
+                                        <strong style="color: #7e22ce;">(${s.stageCount})</strong> ${s.stagePrograms.length > 0 ? s.stagePrograms.join(', ') : '<span style="color: #9ca3af; font-style: italic;">None</span>'}
+                                    </td>
+                                    <td style="padding: 4px 6px; border: 1px solid #e5e7eb; font-size: 8pt;">
+                                        <strong style="color: #b45309;">(${s.nonStageCount})</strong> ${s.nonStagePrograms.length > 0 ? s.nonStagePrograms.join(', ') : '<span style="color: #9ca3af; font-style: italic;">None</span>'}
+                                    </td>
+                                    <td style="padding: 4px 6px; border: 1px solid #e5e7eb; text-align: center; font-weight: 900; ${s.registrationCount > 0 ? 'color: #4338ca;' : 'color: #9ca3af;'}">${s.registrationCount}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #ccc; display: flex; justify-content: space-between; font-size: 8.5pt; color: #555;">
+                        <span>Convener Signature: _______________________</span>
+                        <span>Controller of Examinations: _______________________</span>
+                    </div>
+                </div>
             `;
 
-            programsWithRegs.forEach(program => {
-                const participantIds = appData.participantRegistrations[program.id][teamId] || [];
-                printHTML += `
-                    <div style="margin-bottom: 2rem; page-break-inside: avoid;">
-                        <h3 style="font-size: 14pt; margin: 0 0 0.5rem 0; font-weight: bold;">${program.name} <span style="font-weight: normal; color: #555;">(${program.category})</span></h3>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
-                            <thead>
-                                <tr style="background-color: #eee; text-align: left;">
-                                    <th style="padding: 8px; border: 1px solid #ccc; width: 30%;">Chest No</th>
-                                    <th style="padding: 8px; border: 1px solid #ccc; width: 70%;">Name</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${participantIds.map(studentId => {
-                                    const student = appData.students[studentId];
-                                    return `
-                                    <tr style="border-bottom: 1px solid #eee;">
-                                        <td style="padding: 8px; border: 1px solid #ccc;">${student?.chestNo || 'N/A'}</td>
-                                        <td style="padding: 8px; border: 1px solid #ccc;">${student?.name || 'Unknown'}</td>
-                                    </tr>
-                                    `
-                                }).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            });
-
-            printHTML += `</div>`;
-            
             const printArea = document.getElementById('print-area');
-            printArea.innerHTML = printHTML;
-            window.print();
-            printArea.innerHTML = '';
+            if (printArea) {
+                printArea.innerHTML = printHTML;
+                window.print();
+                printArea.innerHTML = '';
+            }
         }
+        window.printAllStudentStats = printAllStudentStats;
+
+        function printTeamRoster() {
+            const teamName = currentUser?.teamName || 'Your Team';
+            const teamId = currentUser?.teamId || (teamName && Object.keys(appData.teams || {}).find(id => appData.teams[id]?.name === teamName)) || Object.keys(appData.teams || {})[0];
+            const activeRegProgramIds = Object.keys(appData.registrationPrograms || {});
+            const registrations = appData.participantRegistrations || {};
+
+            const teamStudents = getDataAsArray('students').filter(s => s.teamId === teamId).map(student => {
+                let stageCount = 0;
+                let nonStageCount = 0;
+                const stagePrograms = [];
+                const nonStagePrograms = [];
+                activeRegProgramIds.forEach(progId => {
+                    const program = appData.programs[progId];
+                    if (program && !program.isGroup && registrations[progId]?.[teamId]?.includes(student.id)) {
+                        const isStage = (program.stageType || 'stage') !== 'non-stage';
+                        if (isStage) {
+                            stageCount++;
+                            stagePrograms.push(program.name);
+                        } else {
+                            nonStageCount++;
+                            nonStagePrograms.push(program.name);
+                        }
+                    }
+                });
+                return {
+                    ...student,
+                    stageCount,
+                    nonStageCount,
+                    totalCount: stageCount + nonStageCount,
+                    stagePrograms,
+                    nonStagePrograms
+                };
+            }).sort((a, b) => (String(a.chestNo || '')).localeCompare(String(b.chestNo || ''), undefined, { numeric: true }) || (a.name || '').localeCompare(b.name || ''));
+
+            if (teamStudents.length === 0) {
+                alert("No students found in your team roster.");
+                return;
+            }
+
+            const totalStage = teamStudents.reduce((sum, s) => sum + s.stageCount, 0);
+            const totalNonStage = teamStudents.reduce((sum, s) => sum + s.nonStageCount, 0);
+            const totalActive = teamStudents.filter(s => s.totalCount > 0).length;
+
+            let printHTML = `
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; width: 100%; max-width: 210mm; margin: 0 auto; padding: 10mm; box-sizing: border-box; color: #111;">
+                    <!-- Header -->
+                    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 16px;">
+                        <h1 style="font-size: 22pt; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1px;">FEST 2026</h1>
+                        <h2 style="font-size: 15pt; font-weight: 700; margin: 6px 0; color: #ea580c;">${teamName} — Student Roster & Participation Report</h2>
+                        <div style="display: flex; justify-content: space-between; font-size: 9pt; color: #666; margin-top: 8px; flex-wrap: wrap; gap: 8px;">
+                            <span><strong>Total Students:</strong> ${teamStudents.length}</span>
+                            <span><strong>Active Participants:</strong> ${totalActive}</span>
+                            <span><strong>Stage Events:</strong> ${totalStage}</span>
+                            <span><strong>Non-Stage Events:</strong> ${totalNonStage}</span>
+                            <span><strong>Printed On:</strong> ${new Date().toLocaleString()}</span>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt; text-align: left;">
+                        <thead>
+                            <tr style="background-color: #f3f4f6; border-bottom: 2px solid #9ca3af;">
+                                <th style="padding: 6px 8px; border: 1px solid #d1d5db; width: 5%; text-align: center;">#</th>
+                                <th style="padding: 6px 8px; border: 1px solid #d1d5db; width: 10%;">Chest No</th>
+                                <th style="padding: 6px 8px; border: 1px solid #d1d5db; width: 22%;">Student Name</th>
+                                <th style="padding: 6px 8px; border: 1px solid #d1d5db; width: 12%;">Category</th>
+                                <th style="padding: 6px 8px; border: 1px solid #d1d5db; width: 23%;">Stage Programs</th>
+                                <th style="padding: 6px 8px; border: 1px solid #d1d5db; width: 23%;">Non-Stage Programs</th>
+                                <th style="padding: 6px 8px; border: 1px solid #d1d5db; width: 5%; text-align: center;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${teamStudents.map((s, idx) => `
+                                <tr style="border-bottom: 1px solid #e5e7eb; ${idx % 2 === 1 ? 'background-color: #fafafa;' : ''}">
+                                    <td style="padding: 5px 8px; border: 1px solid #e5e7eb; text-align: center; color: #6b7280;">${idx + 1}</td>
+                                    <td style="padding: 5px 8px; border: 1px solid #e5e7eb; font-weight: bold;">${s.chestNo || '-'}</td>
+                                    <td style="padding: 5px 8px; border: 1px solid #e5e7eb; font-weight: 600;">${s.name}</td>
+                                    <td style="padding: 5px 8px; border: 1px solid #e5e7eb; color: #4b5563;">${s.category}</td>
+                                    <td style="padding: 5px 8px; border: 1px solid #e5e7eb; font-size: 8pt;">
+                                        <strong style="color: #7e22ce;">(${s.stageCount})</strong> ${s.stagePrograms.length > 0 ? s.stagePrograms.join(', ') : '<span style="color: #9ca3af; font-style: italic;">None</span>'}
+                                    </td>
+                                    <td style="padding: 5px 8px; border: 1px solid #e5e7eb; font-size: 8pt;">
+                                        <strong style="color: #b45309;">(${s.nonStageCount})</strong> ${s.nonStagePrograms.length > 0 ? s.nonStagePrograms.join(', ') : '<span style="color: #9ca3af; font-style: italic;">None</span>'}
+                                    </td>
+                                    <td style="padding: 5px 8px; border: 1px solid #e5e7eb; text-align: center; font-weight: 900; ${s.totalCount > 0 ? 'color: #4338ca;' : 'color: #9ca3af;'}">${s.totalCount}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: 24px; padding-top: 12px; border-top: 1px solid #ccc; display: flex; justify-content: space-between; font-size: 9pt; color: #555;">
+                        <span>Team Leader Signature: _______________________</span>
+                        <span>Convener / Admin Signature: _______________________</span>
+                    </div>
+                </div>
+            `;
+
+            const printArea = document.getElementById('print-area');
+            if (printArea) {
+                printArea.innerHTML = printHTML;
+                window.print();
+                printArea.innerHTML = '';
+            }
+        }
+        window.printTeamRoster = printTeamRoster;
 
         // --- EVENT LISTENERS ---
         document.addEventListener('submit', async (e) => {
@@ -873,30 +1192,63 @@
                 const messageEl = document.getElementById('reg-form-message');
                 const selectedStudentIds = Array.from(form.querySelectorAll('input[name="studentIds"]:checked')).map(cb => cb.value);
                 
-                if (selectedStudentIds.length === 0) {
-                    messageEl.textContent = 'Please select at least one participant.';
-                    return;
-                }
-                
                 const teamId = Object.keys(appData.teams).find(id => appData.teams[id].name === currentUser.teamName);
                 const programId = form.elements.programId.value;
 
                 try {
                     await db.ref(`participantRegistrations/${programId}/${teamId}`).set(selectedStudentIds);
-                    messageEl.textContent = 'Registration successful!';
-                    messageEl.classList.remove('text-red-500');
-                    messageEl.classList.add('text-green-500');
+                    if (messageEl) {
+                        messageEl.textContent = '✓ Registrations saved successfully!';
+                        messageEl.className = 'text-xs font-semibold mt-1 text-center text-emerald-600 animate-fade-in';
+                    }
+                    setTimeout(() => {
+                        if (selectedProgramId === programId) {
+                            openRegistrationModal(programId);
+                        }
+                    }, 400);
                 } catch(err) {
-                    messageEl.textContent = 'Error: ' + err.message;
-                    messageEl.classList.add('text-red-500');
-                    messageEl.classList.remove('text-green-500');
-                } finally {
-                    setTimeout(() => messageEl.textContent = '', 3000);
+                    if (messageEl) {
+                        messageEl.textContent = 'Error: ' + err.message;
+                        messageEl.className = 'text-xs font-semibold mt-1 text-center text-red-500 animate-fade-in';
+                    }
                 }
             }
         });
-        
-        document.addEventListener('click', (e) => {
+
+
+        document.addEventListener('input', (e) => {
+            if (e.target.id === 'student-search-input') {
+                const query = e.target.value.trim().toLowerCase();
+                const cards = document.querySelectorAll('.student-select-card');
+                let visibleCount = 0;
+                cards.forEach(card => {
+                    const name = card.dataset.name || '';
+                    const chest = card.dataset.chest || '';
+                    if (name.includes(query) || chest.includes(query)) {
+                        card.style.display = 'flex';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                const noResults = document.getElementById('no-search-results');
+                if (noResults) {
+                    noResults.classList.toggle('hidden', visibleCount > 0 || cards.length === 0);
+                }
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('modal-container');
+                if (modal && !modal.classList.contains('hidden')) {
+                    closeModal();
+                    selectedProgramId = null;
+                }
+            }
+        });
+
+        document.addEventListener('click', async (e) => {
              if (e.target.id === 'logout-btn') {
                 currentUser = null;
                 sessionStorage.removeItem('user');
@@ -910,11 +1262,27 @@
                 activeTeamTab = e.target.closest('.team-tab').dataset.tab;
                 renderApp();
             }
+            if (e.target.closest('.modal-tab-btn')) {
+                const btn = e.target.closest('.modal-tab-btn');
+                const tab = btn.dataset.modalTab;
+                switchModalTab(tab);
+            }
+            if (e.target.id === 'clear-all-students-btn') {
+                clearAllSelectedStudents();
+            }
             const programButton = e.target.closest('.program-select-btn');
             if(programButton) {
                 selectedProgramId = programButton.dataset.programId;
-                selectedCategory = appData.programs[selectedProgramId].category;
-                renderApp();
+                selectedCategory = appData.programs[selectedProgramId]?.category;
+                openRegistrationModal(selectedProgramId);
+            }
+            if (e.target.id === 'close-registration-modal-btn' || e.target.id === 'modal-cancel-btn' || e.target.id === 'registration-modal-overlay') {
+                closeModal();
+            }
+            if (e.target.closest('.remove-participant-modal-btn')) {
+                const button = e.target.closest('.remove-participant-modal-btn');
+                const studentIdToRemove = button.dataset.studentId;
+                removeParticipantFromModal(studentIdToRemove, e);
             }
             if (e.target.closest('.remove-participant-btn')) {
                 const button = e.target.closest('.remove-participant-btn');
@@ -927,8 +1295,8 @@
             if (e.target.id === 'print-all-btn') {
                 printAllParticipantLists();
             }
-            if (e.target.id === 'print-team-registrations-btn') {
-                printTeamRegistrations();
+            if (e.target.closest('#print-team-registrations-btn') || e.target.closest('.print-team-roster-btn')) {
+                printTeamRoster();
             }
             if (e.target.matches('#student-stats-filter-container .category-filter-btn')) {
                 studentStatsFilter = e.target.dataset.status;
@@ -943,6 +1311,9 @@
         });
         
         document.addEventListener('change', e => {
+            if (e.target.name === 'studentIds') {
+                updateSelectedCounter();
+            }
             if (e.target.matches('.toggle-checkbox')) {
                 const programId = e.target.dataset.programId;
                 if(e.target.name === 'reg-toggle') {
@@ -956,6 +1327,316 @@
                 }
             }
         });
+
+        function updateSelectedCounter() {
+            const checkedBoxes = document.querySelectorAll('#student-cards-list input[name="studentIds"]:checked');
+            const badge = document.getElementById('selected-counter-badge');
+            const submitBtnText = document.getElementById('submit-btn-counter');
+            const count = checkedBoxes.length;
+            if (badge) {
+                badge.textContent = `${count} Selected`;
+            }
+            if (submitBtnText) {
+                submitBtnText.textContent = count > 0 ? `Save (${count} Selected)` : 'Save Registrations';
+            }
+        }
+
+        function clearAllSelectedStudents() {
+            const checkboxes = document.querySelectorAll('#student-cards-list input[name="studentIds"]');
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+            });
+            updateSelectedCounter();
+        }
+        window.clearAllSelectedStudents = clearAllSelectedStudents;
+
+        function switchModalTab(tab) {
+            const pickerPanel = document.getElementById('modal-picker-panel');
+            const rosterPanel = document.getElementById('modal-roster-panel');
+            const tabBtns = document.querySelectorAll('.modal-tab-btn');
+            
+            tabBtns.forEach(b => {
+                const isActive = b.dataset.modalTab === tab;
+                if (isActive) {
+                    b.className = 'modal-tab-btn flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-center bg-orange-500 text-white shadow-sm';
+                } else {
+                    b.className = 'modal-tab-btn flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-center bg-gray-100 text-gray-600 hover:text-gray-900';
+                }
+            });
+
+            if (pickerPanel && rosterPanel) {
+                if (tab === 'select') {
+                    pickerPanel.classList.remove('hidden');
+                    pickerPanel.classList.add('flex');
+                    rosterPanel.classList.add('hidden');
+                    rosterPanel.classList.remove('flex');
+                    pickerPanel.style.display = '';
+                    rosterPanel.style.display = '';
+                } else {
+                    pickerPanel.classList.add('hidden');
+                    pickerPanel.classList.remove('flex');
+                    rosterPanel.classList.remove('hidden');
+                    rosterPanel.classList.add('flex');
+                    pickerPanel.style.display = 'none';
+                    rosterPanel.style.display = 'flex';
+                }
+            }
+        }
+        window.switchModalTab = switchModalTab;
+
+        async function removeParticipantFromModal(studentId, e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            try {
+                if (!selectedProgramId) return;
+                const teamName = currentUser?.teamName;
+                const teamId = currentUser?.teamId || (teamName && Object.keys(appData.teams || {}).find(id => appData.teams[id]?.name === teamName)) || Object.keys(appData.teams || {})[0];
+                if (!teamId) return;
+
+                const currentRegs = appData.participantRegistrations?.[selectedProgramId]?.[teamId] || [];
+                const newRegs = currentRegs.filter(id => id !== studentId);
+                await db.ref(`participantRegistrations/${selectedProgramId}/${teamId}`).set(newRegs);
+                
+                openRegistrationModal(selectedProgramId);
+                if (window.innerWidth < 1024) {
+                    switchModalTab('roster');
+                }
+            } catch (err) {
+                console.error("Error removing participant:", err);
+            }
+        }
+        window.removeParticipantFromModal = removeParticipantFromModal;
+
+        function openRegistrationModal(programId) {
+            try {
+                selectedProgramId = programId;
+                const program = appData.programs?.[programId];
+                if (!program) {
+                    console.warn("Program not found for ID:", programId);
+                    return;
+                }
+                
+                const teamName = currentUser?.teamName;
+                const teamId = currentUser?.teamId || (teamName && Object.keys(appData.teams || {}).find(id => appData.teams[id]?.name === teamName)) || Object.keys(appData.teams || {})[0];
+                const isStage = (program.stageType || 'stage') !== 'non-stage';
+                const studentsForProgram = getDataAsArray('students').filter(s => s.teamId === teamId && s.category === program.category);
+                const activeRegProgramIds = Object.keys(appData.registrationPrograms || {});
+                const teamRegistrationsForProgram = appData.participantRegistrations?.[programId]?.[teamId] || [];
+
+                const studentsWithStats = studentsForProgram.map(s => {
+                    let stageCount = 0;
+                    let nonStageCount = 0;
+                    activeRegProgramIds.forEach(pId => {
+                        const p = appData.programs?.[pId];
+                        if (p && !p.isGroup) {
+                            const regs = appData.participantRegistrations?.[pId]?.[teamId] || [];
+                            if (regs.includes(s.id)) {
+                                if ((p.stageType || 'stage') === 'non-stage') {
+                                    nonStageCount++;
+                                } else {
+                                    stageCount++;
+                                }
+                            }
+                        }
+                    });
+                    return {
+                        ...s,
+                        stageCount,
+                        nonStageCount,
+                        totalCount: stageCount + nonStageCount,
+                        isRegistered: teamRegistrationsForProgram.includes(s.id)
+                    };
+                }).sort((a, b) => (b.isRegistered - a.isRegistered) || (a.name || '').localeCompare(b.name || ''));
+
+                const modalHTML = `
+                    <div id="registration-modal-overlay" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex flex-col justify-end sm:justify-center p-0 sm:p-4 md:p-6 animate-fade-in">
+                        <div class="w-full h-full sm:h-[92vh] sm:max-h-[850px] max-w-5xl bg-white sm:rounded-[2.5rem] flex flex-col overflow-hidden shadow-2xl rounded-none relative" onclick="event.stopPropagation();">
+                            
+                            <!-- Header (Mobile-First) -->
+                            <div class="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 bg-white/80 backdrop-blur-md flex-shrink-0">
+                                <div class="flex items-center gap-3 min-w-0 flex-1 pr-2">
+                                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${isStage ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'} flex items-center justify-center text-lg flex-shrink-0 shadow-sm">
+                                        <i class="${isStage ? 'fas fa-theater-masks' : 'fas fa-pen-nib'}"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                            <h3 class="text-base sm:text-xl font-black text-gray-900 tracking-tight truncate">${program.name || 'Event'}</h3>
+                                            <span class="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold ${isStage ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-amber-100 text-amber-700 border border-amber-200'}">
+                                                ${isStage ? 'Stage' : 'Non-Stage'}
+                                            </span>
+                                            ${program.isGroup ? '<span class="px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">Group</span>' : ''}
+                                        </div>
+                                        <p class="text-xs font-medium text-gray-500 mt-0.5 truncate">Category: <span class="font-bold text-gray-700">${program.category || 'N/A'}</span></p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <span id="selected-counter-badge" class="px-3 py-1 rounded-xl text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200/70 hidden sm:inline-block">
+                                        ${teamRegistrationsForProgram.length} Selected
+                                    </span>
+                                    <button type="button" id="close-registration-modal-btn" onclick="closeModal()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full sm:rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 flex items-center justify-center text-base font-bold transition-all" title="Close (Esc)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Mobile Segmented Tabs (Visible on < lg screens) -->
+                            <div class="lg:hidden px-4 pt-3 pb-1 bg-gray-50/80 border-b border-gray-200/60 flex items-center gap-2 flex-shrink-0">
+                                <button type="button" onclick="switchModalTab('select')" class="modal-tab-btn flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-center bg-orange-500 text-white shadow-sm" data-modal-tab="select">
+                                    <i class="fas fa-user-check mr-1.5"></i>Select Students
+                                </button>
+                                <button type="button" onclick="switchModalTab('roster')" class="modal-tab-btn flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-center bg-gray-100 text-gray-600 hover:text-gray-900" data-modal-tab="roster">
+                                    <i class="fas fa-users mr-1.5"></i>Registered (${teamRegistrationsForProgram.length})
+                                </button>
+                            </div>
+
+                            <!-- Modal Body Area -->
+                            <div class="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 p-3 sm:p-5 md:p-6 gap-4 sm:gap-6 bg-[#faf8f5]/50">
+                                
+                                <!-- Panel 1: Student Selector (7 cols on lg, toggled on mobile) -->
+                                <div id="modal-picker-panel" class="lg:col-span-7 flex flex-col h-full overflow-hidden bg-white rounded-2xl sm:rounded-3xl border border-gray-200/80 p-3 sm:p-5 shadow-sm">
+                                    
+                                    <!-- Search & Quick Clear -->
+                                    <div class="flex items-center gap-2 pb-3 flex-shrink-0">
+                                        <div class="relative flex-1">
+                                            <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                            <input type="text" id="student-search-input" placeholder="Search by student name or chest no..." class="w-full pl-9 pr-4 py-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all">
+                                        </div>
+                                        <button type="button" onclick="clearAllSelectedStudents()" id="clear-all-students-btn" class="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 active:scale-95 transition-all flex items-center gap-1.5 flex-shrink-0" title="Uncheck all students">
+                                            <i class="fas fa-undo text-[10px]"></i>
+                                            <span>Clear</span>
+                                        </button>
+                                    </div>
+
+                                    <form id="registration-form" class="flex flex-col flex-1 overflow-hidden">
+                                        <input type="hidden" name="programId" value="${programId}">
+                                        
+                                        <!-- Scrollable Student Cards Container -->
+                                        <div id="student-cards-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scroll">
+                                            ${studentsWithStats.length === 0 ? `
+                                                <div class="h-full min-h-[200px] flex flex-col items-center justify-center p-6 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                                    <i class="fas fa-user-slash text-3xl text-gray-300 mb-2"></i>
+                                                    <p class="text-sm font-bold text-gray-700">No eligible students found in ${program.category || ''} category.</p>
+                                                    <p class="text-xs text-gray-400 mt-1">Add students to your team roster under this category to register them.</p>
+                                                </div>
+                                            ` : studentsWithStats.map(s => {
+                                                const isChecked = s.isRegistered;
+                                                const sName = s.name || 'Unnamed';
+                                                const sChest = (s.chestNo !== undefined && s.chestNo !== null) ? String(s.chestNo) : '';
+                                                const initial = sName.charAt(0).toUpperCase();
+                                                return `
+                                                <label class="student-select-card group relative flex items-center justify-between p-3.5 sm:p-3 bg-white border border-gray-200/90 rounded-2xl cursor-pointer shadow-sm active:bg-orange-50/40 transition-all" data-name="${sName.toLowerCase()}" data-chest="${sChest.toLowerCase()}">
+                                                    <div class="flex items-center gap-3 min-w-0 flex-1 pr-2">
+                                                        <!-- Avatar Initial -->
+                                                        <div class="w-11 h-11 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 text-white font-black text-base sm:text-sm flex items-center justify-center shadow-sm flex-shrink-0">
+                                                            ${initial}
+                                                        </div>
+                                                        <!-- Student Info -->
+                                                        <div class="min-w-0 flex-1">
+                                                            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                                                <span class="font-bold text-gray-900 text-sm sm:text-base leading-snug break-words">${sName}</span>
+                                                                ${sChest ? `<span class="text-[11px] font-black px-2 py-0.5 rounded-lg bg-orange-100/70 text-orange-800 border border-orange-200/60 flex-shrink-0">#${sChest}</span>` : ''}
+                                                            </div>
+                                                            <div class="flex items-center gap-1.5 mt-1">
+                                                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100">🎭 Stage: ${s.stageCount || 0}</span>
+                                                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100">📝 Non-Stage: ${s.nonStageCount || 0}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Custom Checkbox (Touch-Friendly) -->
+                                                    <div class="flex items-center ml-2 flex-shrink-0">
+                                                        <input type="checkbox" name="studentIds" value="${s.id}" class="sr-only" ${isChecked ? 'checked' : ''}>
+                                                        <div class="card-check-box w-7 h-7 sm:w-6 sm:h-6 rounded-xl sm:rounded-lg border-2 border-gray-300 flex items-center justify-center transition-all">
+                                                            <i class="fas fa-check card-check-icon text-sm sm:text-xs"></i>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                                `;
+                                            }).join('')}
+                                            <div id="no-search-results" class="hidden p-6 text-center text-sm font-medium text-gray-500">
+                                                No students match your search.
+                                            </div>
+                                        </div>
+
+                                        <!-- Bottom Actions -->
+                                        <div class="pt-3 mt-2 border-t border-gray-100 flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                                            <button type="submit" class="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 shadow-md active:scale-95 transition-all">
+                                                <i class="fas fa-check-double"></i>
+                                                <span id="submit-btn-counter">${teamRegistrationsForProgram.length > 0 ? `Save (${teamRegistrationsForProgram.length} Selected)` : 'Save Registrations'}</span>
+                                            </button>
+                                            <button type="button" id="modal-cancel-btn" onclick="closeModal()" class="px-4 py-3.5 rounded-xl text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-colors">
+                                                Close
+                                            </button>
+                                        </div>
+                                        <p id="reg-form-message" class="text-xs font-semibold text-center h-4 mt-1"></p>
+                                    </form>
+                                </div>
+
+                                <!-- Panel 2: Live Registered Roster (5 cols on lg, hidden by default on mobile unless tab is active) -->
+                                <div id="modal-roster-panel" class="hidden lg:flex lg:col-span-5 flex-col h-full overflow-hidden bg-white rounded-2xl sm:rounded-3xl border border-gray-200/80 p-3 sm:p-5 shadow-sm">
+                                    <div class="flex items-center justify-between pb-3 border-b border-gray-200/70 mb-3 flex-shrink-0">
+                                        <h4 class="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fas fa-users text-orange-500"></i>
+                                            Registered (${teamRegistrationsForProgram.length})
+                                        </h4>
+                                        <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">Roster</span>
+                                    </div>
+
+                                    <div class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scroll" id="modal-roster-list">
+                                        ${teamRegistrationsForProgram.length === 0 ? `
+                                            <div class="h-full min-h-[200px] flex flex-col items-center justify-center p-6 text-center">
+                                                <div class="w-12 h-12 rounded-2xl bg-orange-100/60 text-orange-500 flex items-center justify-center text-lg mb-3">
+                                                    <i class="fas fa-user-plus"></i>
+                                                </div>
+                                                <p class="text-sm font-bold text-gray-700">No Participants Registered</p>
+                                                <p class="text-xs text-gray-400 mt-1 max-w-[220px]">Select students from the roster and tap Save to enroll them.</p>
+                                            </div>
+                                        ` : `
+                                            <div class="space-y-2">
+                                                ${teamRegistrationsForProgram.map(studentId => {
+                                                    const student = appData.students?.[studentId];
+                                                    if (!student) return '';
+                                                    const sName = student.name || 'Unnamed';
+                                                    const sChest = (student.chestNo !== undefined && student.chestNo !== null) ? String(student.chestNo) : '';
+                                                    const initial = sName.charAt(0).toUpperCase();
+                                                    return `
+                                                    <div class="flex items-center justify-between p-3 bg-gray-50/80 rounded-xl border border-gray-100 hover:bg-white shadow-sm transition-all group">
+                                                        <div class="flex items-center gap-3 min-w-0 flex-1 pr-2">
+                                                            <div class="w-9 h-9 rounded-xl bg-orange-100 text-orange-700 font-black text-xs flex items-center justify-center flex-shrink-0">
+                                                                ${initial}
+                                                            </div>
+                                                            <div class="min-w-0 flex-1">
+                                                                <p class="font-bold text-gray-900 text-sm truncate">${sName}</p>
+                                                                ${sChest ? `<p class="text-[11px] font-bold text-orange-600">Chest #${sChest}</p>` : ''}
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" onclick="removeParticipantFromModal('${studentId}', event)" class="remove-participant-modal-btn w-9 h-9 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center active:scale-90 transition-all text-sm flex-shrink-0" data-student-id="${studentId}" title="Remove Participant">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </div>
+                                                    `;
+                                                }).join('')}
+                                            </div>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const modalContainer = document.getElementById('modal-container');
+                if (modalContainer) {
+                    modalContainer.innerHTML = modalHTML;
+                    modalContainer.classList.remove('hidden');
+                }
+            } catch(err) {
+                console.error("Error opening registration modal:", err);
+            }
+        }
+        window.openRegistrationModal = openRegistrationModal;
         
         function openStudentRegistrationsModal(studentId) {
             const student = appData.students[studentId];
@@ -971,21 +1652,38 @@
                 }
             });
 
+            const stageCount = studentRegistrations.filter(p => !p.isGroup && (p.stageType || 'stage') !== 'non-stage').length;
+            const nonStageCount = studentRegistrations.filter(p => !p.isGroup && (p.stageType || 'stage') === 'non-stage').length;
+
             const modalHTML = `
-                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div class="bg-white/70 backdrop-blur-2xl border border-white/60 rounded-3xl shadow-2xl w-full max-w-lg p-8 relative transform transition-all" style="animation: fadeIn 0.3s ease-out;">
-                        <button class="close-modal-btn absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
-                        <h3 class="text-2xl font-bold mb-2">${student.name}</h3>
-                        <p class="text-gray-600 mb-6">Chest No: ${student.chestNo} • ${appData.teams[student.teamId]?.name}</p>
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div class="bg-white/90 backdrop-blur-2xl border border-white/60 rounded-3xl shadow-2xl w-full max-w-lg p-8 relative transform transition-all" style="animation: fadeIn 0.3s ease-out;">
+                        <button class="close-modal-btn absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center text-lg font-bold transition-all">&times;</button>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-1">${student.name}</h3>
+                        <p class="text-gray-500 text-sm mb-4">Chest No: <span class="font-semibold text-gray-800">${student.chestNo}</span> • Team: <span class="font-semibold text-gray-800">${appData.teams[student.teamId]?.name || 'N/A'}</span></p>
                         
-                        <h4 class="text-lg font-semibold mb-2">Registered Programs (${studentRegistrations.length})</h4>
-                        <div class="space-y-2 max-h-64 overflow-y-auto">
-                            ${studentRegistrations.length > 0 ? studentRegistrations.map(p => `
-                                <div class="bg-gray-50 p-3 rounded-md">
-                                    <p class="font-semibold">${p.name}</p>
-                                    <p class="text-sm text-gray-500">${p.category}</p>
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200/60">Stage: ${stageCount}</span>
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200/60">Non-Stage: ${nonStageCount}</span>
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60">Total: ${studentRegistrations.length}</span>
+                        </div>
+
+                        <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Registered Programs (${studentRegistrations.length})</h4>
+                        <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                            ${studentRegistrations.length > 0 ? studentRegistrations.map(p => {
+                                const isStage = (p.stageType || 'stage') !== 'non-stage';
+                                return `
+                                <div class="bg-white/80 border border-gray-100 p-3 rounded-xl flex items-center justify-between shadow-sm">
+                                    <div>
+                                        <p class="font-bold text-gray-800 text-sm">${p.name}</p>
+                                        <p class="text-xs text-gray-500">${p.category}${p.isGroup ? ' • <span class="text-blue-600 font-medium">Group</span>' : ''}</p>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold ${isStage ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'}">
+                                        ${isStage ? 'Stage' : 'Non-Stage'}
+                                    </span>
                                 </div>
-                            `).join('') : '<p class="text-gray-500">This student has not been registered for any programs yet.</p>'}
+                                `;
+                            }).join('') : '<p class="text-gray-500 text-sm py-4 text-center">This student has not been registered for any programs yet.</p>'}
                         </div>
                     </div>
                 </div>
@@ -996,10 +1694,15 @@
         }
 
         function closeModal() {
+            selectedProgramId = null;
             const modalContainer = document.getElementById('modal-container');
-            modalContainer.classList.add('hidden');
-            modalContainer.innerHTML = '';
+            if (modalContainer) {
+                modalContainer.classList.add('hidden');
+                modalContainer.innerHTML = '';
+            }
+            renderApp();
         }
+        window.closeModal = closeModal;
 
         // --- INITIALIZATION ---
         function initializeApp() {
@@ -1025,6 +1728,20 @@
                     window.location.replace('index.html');
                     return;
                 }
+                
+                // If this user currently has a registration modal open, DO NOT re-render the app or modal.
+                // This protects unsaved checkbox selections from being wiped when other teams save their data concurrently!
+                if (selectedProgramId) {
+                    const teamName = currentUser?.teamName;
+                    const teamId = currentUser?.teamId || (teamName && Object.keys(appData.teams || {}).find(id => appData.teams[id]?.name === teamName)) || Object.keys(appData.teams || {})[0];
+                    const teamRegs = appData.participantRegistrations?.[selectedProgramId]?.[teamId] || [];
+                    const rosterTabBtn = document.querySelector('.modal-tab-btn[data-modal-tab="roster"]');
+                    if (rosterTabBtn) {
+                        rosterTabBtn.innerHTML = `<i class="fas fa-users mr-1.5"></i>Registered (${teamRegs.length})`;
+                    }
+                    return;
+                }
+                
                 renderApp();
             });
         }

@@ -1,0 +1,58 @@
+{
+  "rules": {
+    ".read": true,
+    "students": {
+      ".validate": "newData.hasChildren(['chestNo', 'name', 'teamId'])",
+      "$studentId": {
+        ".validate": "newData.child('chestNo').isString() && newData.child('name').isString()"
+      }
+    },
+    "teams": {
+      "$teamId": {
+        ".validate": "newData.child('name').isString()"
+      }
+    },
+    "programs": {
+      "$programId": {
+        ".validate": "newData.child('name').isString() && newData.child('category').isString()"
+      }
+    },
+    "results": {
+      "$resultId": {
+        ".validate": "newData.hasChildren(['programId', 'programName', 'participants'])",
+        "participants": {
+          "$participantIndex": {
+            ".validate": "newData.hasChildren(['studentId', 'name'])"
+          }
+        }
+      }
+    },
+    "studentPenalties": {
+      "$penaltyId": {
+        ".validate": "newData.hasChildren(['studentId', 'points', 'reason']) && newData.child('points').isNumber() && newData.child('points').val() > 0"
+      }
+    },
+    "teamPenalties": {
+      "$penaltyId": {
+        ".validate": "newData.hasChildren(['teamId', 'points', 'reason']) && newData.child('points').isNumber() && newData.child('points').val() > 0"
+      }
+    },
+    "participantRegistrations": {
+      "$programId": {
+        "$teamId": {
+          ".validate": "newData.isArray() || newData.isObject() || newData.isString()"
+        }
+      }
+    },
+    "teacherJudges": {
+      "$judgeId": {
+        ".validate": "newData.hasChildren(['name', 'code'])"
+      }
+    },
+    "notifications": {
+      "$notificationId": {
+        ".validate": "newData.hasChildren(['type', 'timestamp'])"
+      }
+    }
+  }
+}

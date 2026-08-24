@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PORU 2K25 — Score ATM Kiosk</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          animation: {
+            'blob': 'blob 8s infinite alternate ease-in-out',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'ticker': 'ticker 35s linear infinite',
+            'fade-up': 'fadeUp 0.5s ease-out forwards',
+            'scale-in': 'scaleIn 0.4s ease-out forwards',
+            'progress': 'progress 15s linear forwards',
+          },
+          keyframes: {
+            blob: {
+              '0%': { transform: 'translate(0,0) scale(1)' },
+              '50%': { transform: 'translate(30px,-40px) scale(1.08)' },
+              '100%': { transform: 'translate(0,0) scale(1)' }
+            },
+            ticker: {
+              '0%': { transform: 'translateX(0)' },
+              '100%': { transform: 'translateX(-50%)' }
+            },
+            fadeUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            scaleIn: {
+              '0%': { opacity: '0', transform: 'scale(0.95)' },
+              '100%': { opacity: '1', transform: 'scale(1)' }
+            },
+            progress: {
+              '0%': { width: '100%' },
+              '100%': { width: '0%' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; height: 100vh; background-color: #030712; }
+    .custom-scrollbar::-webkit-scrollbar { display: none; }
+    .custom-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+</head>
+<body class="font-sans antialiased text-white selection:bg-orange-500 selection:text-white">
+
+  <div id="app"></div>
+
+  <script>
+    // ── Application State ──
+    var CATEGORIES = window.CATEGORIES || ["BIDAYA", "ALIYA", "UOOLA", "THANIYA", "THANAWIYYA", "KULLIYYA"];
+    let appData = {
+      teams: {},
+      students: {},
+      programs: {},
+      results: {},
+      studentPenalties: {},
+      pointsConfig: { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 },
+      groupPointsConfig: { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 },
+      teamPointsConfig: { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 }
+    };
+
+    let activeState = {
+      mode: 'idle', // 'idle' | 'profile' | 'not_found'
+      scannedCode: '',
+      studentId: null,
+      autoResetTimer: null,
+      clockInterval: null
+    };
+
+    // Barcode scanner buffer logic
+    let scanBuffer = '';
+    let lastKeyTime = 0;
+
+    // ── Theme Engine ──
+    let currentTheme = localStorage.getItem('fest_theme') || 'dark';
+
+    function toggleTheme() {
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('fest_theme', currentTheme);
+      render();
+    }
+
+    function getThemeStyles() {
+      const isDark = currentTheme === 'dark';
+      return {
+        isDark,
+        bgContainer: isDark ? 'bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900',
+        titleColor: isDark ? 'text-white' : 'text-gray-900',
+        subText: isDark ? 'text-white/40' : 'text-gray-500',
+        subTextMuted: isDark ? 'text-white/25' : 'text-gray-400',
+        cardBg: isDark ? 'bg-white/[0.04] border-white/10' : 'bg-white border-gray-200 shadow-xl text-gray-900',
+        cardBgSubtle: isDark ? 'bg-white/[0.025] border-white/[0.06]' : 'bg-white border-gray-200/90 shadow-md text-gray-900',
+        cardBgInner: isDark ? 'bg-white/[0.03] border-white/[0.06]' : 'bg-gray-50 border-gray-200 text-gray-900',
+        itemBg: isDark ? 'bg-white/[0.03] border-white/[0.06]' : 'bg-white border-gray-200 shadow-xs text-gray-900',
+        inputBg: isDark ? 'bg-white/5 border-white/10 text-white placeholder-white/20' : 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-400',
+        tickerBar: isDark ? 'border-white/[0.05] bg-black/40' : 'border-gray-200 bg-white/90 shadow-lg',
+        tickerText: isDark ? 'text-white/60' : 'text-gray-700',
+        tickerScore: isDark ? 'text-white' : 'text-gray-900',
+        toggleBtn: isDark ? 'bg-white/10 text-white hover:bg-white/15' : 'bg-gray-900 text-white hover:bg-black shadow-md',
+        toggleIcon: isDark ? 'fa-sun text-yellow-400' : 'fa-moon text-amber-300',
+        closeBtn: isDark ? 'bg-white/10 text-white/80 hover:bg-white/15' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 shadow-sm'
+      };
+    }
+
+    // ── Helper Utilities ──
+    function sanitize(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
+    }
+
+    function formatTime(ms) {
+      const d = new Date(ms || Date.now());
+      return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function startClock() {
+      if (activeState.clockInterval) clearInterval(activeState.clockInterval);
+      const clockEl = document.getElementById('live-clock');
+      if (clockEl) clockEl.textContent = formatTime();
+      activeState.clockInterval = setInterval(() => {
+        const el = document.getElementById('live-clock');
+        if (el) el.textContent = formatTime();
+      }, 1000);
+    }
+
+    function resetToIdle() {
+      if (activeState.autoResetTimer) clearTimeout(activeState.autoResetTimer);
+      activeState.mode = 'idle';
+      activeState.scannedCode = '';
+      activeState.studentId = null;
+      render();
+    }
+
+    function triggerAutoReset(seconds = 15) {
+      if (activeState.autoResetTimer) clearTimeout(activeState.autoResetTimer);
+      activeState.autoResetTimer = setTimeout(() => {
+        resetToIdle();
+      }, seconds * 1000);
+    }
+
+    function getStudentProfileDetails(studentId) {
+      const student = appData.students[studentId];
+      if (!student) return null;
+
+      const team = appData.teams[student.teamId] || { name: 'Unknown Team' };
+      const partMap = {};
+
+      // 1. Programs registered under appData.participantRegistrations
+      Object.entries(appData.participantRegistrations || {}).forEach(([progId, teamsObj]) => {
+        if (!teamsObj || typeof teamsObj !== 'object') return;
+        const rawTeamRegs = teamsObj[student.teamId];
+        if (!rawTeamRegs) return;
+
+        let teamRegs = [];
+        if (Array.isArray(rawTeamRegs)) {
+          teamRegs = rawTeamRegs;
+        } else if (typeof rawTeamRegs === 'object') {
+          teamRegs = Object.values(rawTeamRegs);
+        } else if (typeof rawTeamRegs === 'string') {
+          teamRegs = [rawTeamRegs];
+        }
+
+        if (teamRegs.includes(studentId)) {
+          const p = appData.programs?.[progId];
+          if (p) {
+            partMap[progId] = {
+              programId: progId,
+              programName: p.name || 'Program',
+              category: p.category || student.category || 'GENERAL',
+              programType: p.programType || 'individual',
+              stageType: p.stageType || 'stage',
+              status: 'registered',
+              position: 'none',
+              grade: 'none',
+              points: 0
+            };
+          }
+        }
+      });
+
+      // 2. Published Results & Point Calculations
+      let individualPoints = 0;
+      Object.values(appData.results || {}).forEach(r => {
+        if (!r || !r.participants) return;
+        const pt = r.participants.find(p => p.studentId === studentId);
+        
+        if (pt) {
+          const cfg = r.programType === 'group' 
+            ? appData.groupPointsConfig 
+            : r.programType === 'team' 
+              ? appData.teamPointsConfig 
+              : appData.pointsConfig;
+
+          let pts = 0;
+          if (pt.position && pt.position !== 'none' && cfg[pt.position]) pts += cfg[pt.position];
+          if (pt.grade && pt.grade !== 'none' && cfg[pt.grade]) pts += cfg[pt.grade];
+
+          if (r.programType !== 'group' && r.programType !== 'team') {
+            individualPoints += pts;
+          }
+
+          const isPrized = (pt.position && pt.position !== 'none') || (pt.grade && pt.grade !== 'none');
+
+          partMap[r.programId] = {
+            programId: r.programId,
+            programName: r.programName || appData.programs?.[r.programId]?.name || 'Program',
+            category: r.category || appData.programs?.[r.programId]?.category || student.category,
+            programType: r.programType || 'individual',
+            stageType: r.stageType || 'stage',
+            position: pt.position || 'none',
+            grade: pt.grade || 'none',
+            points: pts,
+            status: r.status === 'published' ? (isPrized ? 'prized' : 'participated') : 'registered'
+          };
+        } else if (r.status === 'published' && partMap[r.programId]) {
+          partMap[r.programId].status = 'participated';
+        }
+      });
+
+      const allPrograms = Object.values(partMap);
+      const prizedPrograms = allPrograms.filter(p => (p.position && p.position !== 'none') || (p.grade && p.grade !== 'none'));
+
+      // Student Penalties
+      let penaltyTotal = 0;
+      const penaltiesList = [];
+      Object.values(appData.studentPenalties || {}).forEach(pen => {
+        if (pen && pen.studentId === studentId) {
+          penaltyTotal += (pen.points || 0);
+          penaltiesList.push(pen);
+        }
+      });
+
+      const netPoints = individualPoints - penaltyTotal;
+
+      // Category Rank
+      const categoryStudents = Object.entries(appData.students || {})
+        .map(([id, s]) => ({ id, ...s }))
+        .filter(s => s && s.category === student.category)
+        .map(s => {
+          let pts = 0;
+          Object.values(appData.results || {}).forEach(r => {
+            if (!r || r.programType === 'group' || r.programType === 'team' || !r.participants || r.status !== 'published') return;
+            const cfg = appData.pointsConfig;
+            r.participants.forEach(p => {
+              if (p.studentId === s.id) {
+                if (p.position && p.position !== 'none' && cfg[p.position]) pts += cfg[p.position];
+                if (p.grade && p.grade !== 'none' && cfg[p.grade]) pts += cfg[p.grade];
+              }
+            });
+          });
+          Object.values(appData.studentPenalties || {}).forEach(pen => {
+            if (pen && pen.studentId === s.id) pts -= (pen.points || 0);
+          });
+          return { id: s.id, points: pts };
+        })
+        .sort((a, b) => b.points - a.points);
+
+      const rankIndex = categoryStudents.findIndex(s => s.id === studentId);
+      const rank = rankIndex !== -1 ? rankIndex + 1 : '—';
+
+      return {
+        student,
+        team,
+        netPoints,
+        grossPoints: individualPoints,
+        penaltyTotal,
+        penaltiesList,
+        prizedPrograms,
+        allPrograms,
+        rank,
+        totalCategoryStudents: categoryStudents.length
+      };
+    }
+
+    // ── Get Stored Team Scores for Ticker ──
+    function getTeamScores() {
+      const teams = appData.teams || {};
+      const students = appData.students || {};
+      const directScores = appData.teamDirectScores || {};
+      const penalties = {};
+
+      Object.values(appData.teamPenalties || {}).forEach(p => {
+        if (p && p.teamId) {
+          if (!penalties[p.teamId]) penalties[p.teamId] = 0;
+          penalties[p.teamId] += (p.points || 0);
+        }
+      });
+
+      const arr = Object.entries(teams).map(([id, t]) => {
+        const stored = directScores[id] || {};
+        let total = 0;
+        CATEGORIES.forEach(cat => { total += (stored[cat] || 0); });
+
+        Object.entries(students).forEach(([sid, s]) => {
+          if (s && s.teamId === id) total += (s.totalPoints || 0);
+        });
+
+        total -= (penalties[id] || 0);
+        return { id, name: t.name, totalPoints: total };
+      });
+
+      arr.sort((a, b) => b.totalPoints - a.totalPoints);
+      return arr;
+    }
+
+    // ── Handle Scanned Code Lookup ──
+    function processScannedCode(code) {
+      const cleanCode = String(code || '').trim().toLowerCase();
+      if (!cleanCode) return;
+
+      // Find student by Chest Number or Firebase Student Key
+      const studentEntry = Object.entries(appData.students || {}).find(([id, s]) => {
+        if (!s) return false;
+        const chest = String(s.chestNo || '').trim().toLowerCase();
+        const studentId = String(id || s.id || '').trim().toLowerCase();
+        return chest === cleanCode || studentId === cleanCode;
+      });
+
+      if (studentEntry) {
+        const [id, student] = studentEntry;
+        activeState.mode = 'profile';
+        activeState.scannedCode = code;
+        activeState.studentId = id;
+        triggerAutoReset(15);
+      } else {
+        activeState.mode = 'not_found';
+        activeState.scannedCode = code;
+        activeState.studentId = null;
+        triggerAutoReset(4);
+      }
+      render();
+    }
+
+    // ── Render Views ──
+    function render() {
+      const appEl = document.getElementById('app');
+      const teamsArray = getTeamScores();
+      const theme = getThemeStyles();
+
+      const tickerItems = teamsArray.map((t, i) => {
+        const mColors = ['text-yellow-400', 'text-gray-300', 'text-amber-600'];
+        const mc = mColors[i] || theme.subText;
+        return `
+          <div class="flex items-center gap-3 px-6 flex-shrink-0">
+            <i class="fas fa-${i < 3 ? 'medal' : 'flag'} ${mc}"></i>
+            <span class="${theme.tickerText} font-bold whitespace-nowrap text-sm">${sanitize(t.name)}</span>
+            <span class="${theme.tickerScore} font-black text-lg">${t.totalPoints}</span>
+          </div>`;
+      }).join('<div class="w-px h-5 bg-gray-400/20 flex-shrink-0"></div>');
+
+      // 1. IDLE SCREEN
+      if (activeState.mode === 'idle') {
+        appEl.innerHTML = `
+          <div class="h-screen ${theme.bgContainer} flex flex-col relative overflow-hidden">
+            <!-- Background Glowing Blobs -->
+            <div class="absolute inset-0 pointer-events-none">
+              <div class="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-orange-500/10 rounded-full blur-[200px] animate-blob"></div>
+              <div class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[200px] animate-blob" style="animation-delay: 3s"></div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="relative z-10 flex flex-col h-screen justify-between">
+              
+              <!-- Top Bar -->
+              <div class="flex items-center justify-between px-10 py-5 flex-shrink-0">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <i class="fas fa-barcode text-white text-xl"></i>
+                  </div>
+                  <div>
+                    <span class="${theme.titleColor} font-black text-xl tracking-tight">PORU 2K25</span>
+                    <span class="${theme.subText} text-sm font-medium ml-3">SCORE ATM KIOSK</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <!-- Theme Switcher Toggle Button -->
+                  <button onclick="toggleTheme()" class="px-3.5 py-2 ${theme.toggleBtn} rounded-xl font-bold text-xs flex items-center gap-2 transition-all">
+                    <i class="fas ${theme.toggleIcon}"></i>
+                    <span>${theme.isDark ? 'Light' : 'Dark'} Theme</span>
+                  </button>
+
+                  <div class="flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/30 rounded-xl px-4 py-1.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span class="text-emerald-500 text-xs font-bold uppercase tracking-widest">Scanner Ready</span>
+                  </div>
+                  <div class="${theme.subText} text-sm font-medium tabular-nums" id="live-clock"></div>
+                </div>
+              </div>
+
+              <!-- Main Kiosk Welcome Callout -->
+              <div class="flex-grow flex items-center justify-center px-10">
+                <div class="text-center max-w-2xl animate-fade-up">
+                  
+                  <!-- Pulsing Scanner Graphic -->
+                  <div class="relative w-40 h-40 mx-auto mb-8 flex items-center justify-center">
+                    <div class="absolute inset-0 rounded-full bg-orange-500/20 animate-ping opacity-30"></div>
+                    <div class="w-36 h-36 rounded-3xl ${theme.cardBg} backdrop-blur-xl flex flex-col items-center justify-center shadow-2xl">
+                      <i class="fas fa-qrcode text-6xl text-orange-400 mb-2"></i>
+                      <div class="h-0.5 w-20 bg-gradient-to-r from-transparent via-orange-500 to-transparent animate-pulse"></div>
+                    </div>
+                  </div>
+
+                  <h1 class="text-5xl lg:text-6xl font-black tracking-tight ${theme.titleColor} mb-4 leading-tight">
+                    Scan Your <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-300">ID Card</span>
+                  </h1>
+                  <p class="text-xl ${theme.subText} font-medium mb-8">
+                    Hold your Student ID barcode under the scanner to view your complete points, achievements & team rank.
+                  </p>
+
+                  <!-- Manual Quick Entry Form -->
+                  <form onsubmit="event.preventDefault(); processScannedCode(document.getElementById('manual-chest-input').value);" class="flex items-center gap-3 justify-center max-w-md mx-auto">
+                    <input type="text" id="manual-chest-input" placeholder="Or enter Chest No (e.g. 101)..." 
+                      class="px-5 py-3 rounded-xl ${theme.inputBg} text-sm outline-none focus:border-orange-500/50 flex-grow text-center font-bold tracking-wider">
+                    <button type="submit" class="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-orange-500/20">
+                      Go
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Bottom Ticker -->
+              <div class="border-t ${theme.tickerBar} backdrop-blur-sm flex-shrink-0">
+                <div class="flex items-center h-14 overflow-hidden">
+                  <div class="flex-shrink-0 px-6 py-2 bg-gradient-to-r from-orange-500 to-amber-600">
+                    <span class="text-white text-xs font-black uppercase tracking-[0.2em]">Leaderboard Ticker</span>
+                  </div>
+                  <div class="flex-grow overflow-hidden">
+                    <div class="flex items-center animate-ticker">
+                      ${tickerItems}
+                      <div class="w-20 flex-shrink-0"></div>
+                      ${tickerItems}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>`;
+        startClock();
+        return;
+      }
+
+      // 2. NOT FOUND SCREEN
+      if (activeState.mode === 'not_found') {
+        appEl.innerHTML = `
+          <div class="h-screen ${theme.bgContainer} flex flex-col items-center justify-center relative overflow-hidden p-6">
+            <div class="text-center animate-scale-in max-w-md">
+              <div class="w-28 h-28 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-exclamation-triangle text-5xl text-red-500"></i>
+              </div>
+              <h2 class="text-4xl font-black ${theme.titleColor} tracking-tight mb-3">ID Card Not Found</h2>
+              <p class="text-lg ${theme.subText} mb-6 font-medium">
+                No student registered with ID code: <span class="font-mono text-red-500 font-bold">${sanitize(activeState.scannedCode)}</span>
+              </p>
+              <button onclick="resetToIdle()" class="px-6 py-3 ${theme.closeBtn} rounded-xl font-bold text-sm transition-colors">
+                Return to Scanner
+              </button>
+            </div>
+
+            <!-- Auto Reset Progress Bar -->
+            <div class="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-500/10">
+              <div class="h-full bg-red-500 animate-progress" style="animation-duration: 4s;"></div>
+            </div>
+          </div>`;
+        return;
+      }
+
+      // 3. STUDENT PROFILE ATM DISPLAY
+      if (activeState.mode === 'profile') {
+        const details = getStudentProfileDetails(activeState.studentId);
+        if (!details) {
+          resetToIdle();
+          return;
+        }
+
+        const { student, team, netPoints, grossPoints, penaltyTotal, penaltiesList, prizedPrograms, allPrograms, rank, totalCategoryStudents } = details;
+
+        const prizedRowsHtml = prizedPrograms.length === 0 ? `
+          <div class="text-center py-6 ${theme.cardBgSubtle} rounded-2xl">
+            <i class="fas fa-award text-3xl ${theme.subTextMuted} mb-2"></i>
+            <p class="${theme.subText} text-sm font-medium">No prizes/positions recorded yet for this student.</p>
+          </div>` : prizedPrograms.map(a => {
+            const posBadge = a.position && a.position !== 'none' ? `
+              <span class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-amber-500/15 border border-amber-500/30 text-amber-500">
+                <i class="fas fa-trophy mr-1.5"></i>${a.position.toUpperCase()}
+              </span>` : '';
+            const gradeBadge = a.grade && a.grade !== 'none' ? `
+              <span class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-blue-500/15 border border-blue-500/30 text-blue-500">
+                <i class="fas fa-certificate mr-1.5"></i>${a.grade.toUpperCase()} GRADE
+              </span>` : '';
+
+            return `
+              <div class="${theme.itemBg} rounded-xl p-4 flex items-center justify-between gap-4 transition-colors">
+                <div class="min-w-0">
+                  <h4 class="text-lg font-black ${theme.titleColor} truncate">${sanitize(a.programName)}</h4>
+                  <div class="flex items-center gap-3 mt-1 text-xs ${theme.subText} font-medium">
+                    <span class="uppercase tracking-wider font-bold text-orange-500">${sanitize(a.category)}</span>
+                    <span>·</span>
+                    <span class="capitalize">${a.programType}</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                  ${posBadge}
+                  ${gradeBadge}
+                  <div class="px-4 py-1.5 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-500 font-black text-base">
+                    +${a.points} Pts
+                  </div>
+                </div>
+              </div>`;
+          }).join('');
+
+        const registeredRowsHtml = allPrograms.length === 0 ? `
+          <div class="text-center py-6 ${theme.cardBgSubtle} rounded-2xl">
+            <i class="fas fa-list-check text-3xl ${theme.subTextMuted} mb-2"></i>
+            <p class="${theme.subText} text-sm font-medium">No registered programs found.</p>
+          </div>` : allPrograms.map(p => {
+            let statusTag = '';
+            if (p.status === 'prized') {
+              statusTag = `<span class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-amber-500/15 border border-amber-500/30 text-amber-500"><i class="fas fa-trophy mr-1.5"></i>Prized Winner (+${p.points} pts)</span>`;
+            } else if (p.status === 'participated') {
+              statusTag = `<span class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${theme.cardBgInner} ${theme.subText} border border-gray-500/10"><i class="fas fa-user-check mr-1.5"></i>Participated</span>`;
+            } else {
+              statusTag = `<span class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-500/10 border border-blue-500/20 text-blue-500"><i class="fas fa-clock mr-1.5 font-normal"></i>Registered / Upcoming</span>`;
+            }
+
+            return `
+              <div class="${theme.itemBg} rounded-xl p-3.5 flex items-center justify-between gap-4">
+                <div class="min-w-0">
+                  <p class="font-bold ${theme.titleColor} text-base truncate">${sanitize(p.programName)}</p>
+                  <p class="text-[10px] ${theme.subText} uppercase tracking-wider mt-0.5">${sanitize(p.category)} · ${p.programType}</p>
+                </div>
+                <div class="flex-shrink-0">
+                  ${statusTag}
+                </div>
+              </div>`;
+          }).join('');
+
+        const penaltiesHtml = penaltiesList.length === 0 ? '' : `
+          <div class="mb-4 bg-red-500/10 border border-red-500/20 rounded-2xl p-4">
+            <h4 class="text-xs font-bold text-red-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+              <i class="fas fa-minus-circle"></i> Applied Minus Points (-${penaltyTotal} pts)
+            </h4>
+            <div class="space-y-1.5">
+              ${penaltiesList.map(p => `
+                <div class="flex justify-between items-center text-xs ${theme.titleColor}">
+                  <span>${sanitize(p.reason)}</span>
+                  <span class="font-bold text-red-500">-${p.points} pts</span>
+                </div>`).join('')}
+            </div>
+          </div>`;
+
+        appEl.innerHTML = `
+          <div class="h-screen ${theme.bgContainer} flex flex-col relative overflow-hidden">
+            
+            <!-- Top Auto-Reset Progress Bar -->
+            <div class="w-full h-1.5 bg-gray-500/10 relative flex-shrink-0">
+              <div class="h-full bg-gradient-to-r from-orange-500 to-amber-400 animate-progress"></div>
+            </div>
+
+            <!-- Top Header -->
+            <div class="flex items-center justify-between px-10 py-4 flex-shrink-0 border-b border-gray-500/10">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-lg">
+                  <i class="fas fa-id-card text-white text-base"></i>
+                </div>
+                <div>
+                  <span class="${theme.titleColor} font-black text-lg">STUDENT SCORE ATM</span>
+                  <span class="${theme.subText} text-xs font-medium ml-3">Verified Student Profile</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="px-3.5 py-2 ${theme.toggleBtn} rounded-xl text-xs font-bold transition-colors flex items-center gap-2">
+                  <i class="fas ${theme.toggleIcon}"></i> ${theme.isDark ? 'Light' : 'Dark'} Theme
+                </button>
+                <button onclick="resetToIdle()" class="px-4 py-2 ${theme.closeBtn} rounded-xl text-xs font-bold transition-colors flex items-center gap-2">
+                  <i class="fas fa-times"></i> Close Screen
+                </button>
+              </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="flex-grow flex px-10 py-6 overflow-hidden min-h-0">
+              <div class="w-full max-w-[1600px] mx-auto grid grid-cols-12 gap-8 min-h-0">
+
+                <!-- Left Profile Summary Card (4 cols) -->
+                <div class="col-span-4 flex flex-col justify-between ${theme.cardBgSubtle} rounded-3xl p-8 min-h-0">
+                  <div>
+                    <!-- Student Header -->
+                    <div class="flex items-center gap-4 mb-6">
+                      <div class="w-20 h-20 rounded-2xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden relative group">
+                        <img src="https://raw.githubusercontent.com/Nazimcp-git/azinco/refs/heads/main/images/${encodeURIComponent(student.chestNo)}.jpg" alt="${sanitize(student.name)}"
+                          class="w-full h-full object-cover rounded-2xl"
+                          onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
+                        <div class="w-full h-full rounded-2xl flex items-center justify-center bg-orange-500/15">
+                          <span class="text-2xl font-black text-orange-500">${sanitize(student.chestNo)}</span>
+                        </div>
+                      </div>
+                      <div class="min-w-0">
+                        <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] bg-orange-500/15 border border-orange-500/30 text-orange-500">
+                          ${sanitize(student.category)}
+                        </span>
+                        <h2 class="text-3xl font-black ${theme.titleColor} tracking-tight mt-2 truncate">${sanitize(student.name)}</h2>
+                        <p class="text-sm font-medium ${theme.subText} mt-1">${sanitize(team.name)} ${student.className ? `· Class ${sanitize(student.className)}` : ''}</p>
+                      </div>
+                    </div>
+
+                    <!-- Total Score Display -->
+                    <div class="bg-gradient-to-br from-orange-500/15 via-amber-500/10 to-transparent border border-orange-500/30 rounded-2xl p-6 text-center mb-6">
+                      <span class="text-xs font-bold text-orange-500 uppercase tracking-[0.2em]">Total Score</span>
+                      <div class="text-6xl font-black ${theme.titleColor} tracking-tight mt-2 mb-1">${netPoints}</div>
+                      <span class="text-xs ${theme.subText} font-medium">Individual Points</span>
+                    </div>
+
+                    <!-- Category Rank & Stats -->
+                    <div class="grid grid-cols-3 gap-3">
+                      <div class="${theme.cardBgInner} rounded-2xl p-3 text-center">
+                        <span class="text-[9px] font-bold ${theme.subText} uppercase tracking-widest">Rank</span>
+                        <div class="text-2xl font-black text-amber-500 mt-1">#${rank}</div>
+                        <span class="text-[9px] ${theme.subTextMuted} font-medium">of ${totalCategoryStudents}</span>
+                      </div>
+                      <div class="${theme.cardBgInner} rounded-2xl p-3 text-center">
+                        <span class="text-[9px] font-bold ${theme.subText} uppercase tracking-widest">Registered</span>
+                        <div class="text-2xl font-black ${theme.titleColor} mt-1">${allPrograms.length}</div>
+                        <span class="text-[9px] ${theme.subTextMuted} font-medium">Programs</span>
+                      </div>
+                      <div class="${theme.cardBgInner} rounded-2xl p-3 text-center">
+                        <span class="text-[9px] font-bold ${theme.subText} uppercase tracking-widest">Prized</span>
+                        <div class="text-2xl font-black text-orange-500 mt-1">${prizedPrograms.length}</div>
+                        <span class="text-[9px] ${theme.subTextMuted} font-medium">Awards</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Instruction -->
+                  <div class="pt-4 border-t border-gray-500/10 text-center">
+                    <p class="text-xs ${theme.subTextMuted} font-medium">Screen auto-resets in 15 seconds after scan.</p>
+                  </div>
+                </div>
+
+                <!-- Right Programs List (8 cols) -->
+                <div class="col-span-8 flex flex-col min-h-0 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+                  
+                  ${penaltiesHtml}
+
+                  <!-- 1. Prized Programs & Achievements Section -->
+                  <div>
+                    <h3 class="text-xs font-bold text-amber-500 uppercase tracking-[0.2em] mb-3 flex items-center justify-between">
+                      <span class="flex items-center gap-2"><i class="fas fa-trophy text-amber-400"></i> Prized Programs & Achievements (${prizedPrograms.length})</span>
+                      <span class="text-[10px] text-gray-400 font-normal">Winners & Position Holders</span>
+                    </h3>
+                    <div class="space-y-2.5">
+                      ${prizedRowsHtml}
+                    </div>
+                  </div>
+
+                  <!-- 2. All Registered Programs Section -->
+                  <div>
+                    <h3 class="text-xs font-bold ${theme.subText} uppercase tracking-[0.2em] mb-3 flex items-center justify-between">
+                      <span class="flex items-center gap-2"><i class="fas fa-list-check text-blue-400"></i> All Registered Programs (${allPrograms.length})</span>
+                      <span class="text-[10px] text-gray-400 font-normal">Full Registration Roster</span>
+                    </h3>
+                    <div class="space-y-2.5">
+                      ${registeredRowsHtml}
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+
+          </div>`;
+        return;
+      }
+    }
+
+    // ── Global Barcode Listener ──
+    window.addEventListener('keydown', e => {
+      // Don't capture keys if user is typing into an input element manually
+      if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+        return;
+      }
+
+      const currentTime = Date.now();
+      
+      // Reset buffer if delay between keystrokes is long (> 500ms)
+      if (currentTime - lastKeyTime > 500) {
+        scanBuffer = '';
+      }
+      lastKeyTime = currentTime;
+
+      if (e.key === 'Enter') {
+        if (scanBuffer.length > 0) {
+          processScannedCode(scanBuffer);
+          scanBuffer = '';
+        }
+      } else if (e.key.length === 1) {
+        scanBuffer += e.key;
+      }
+    });
+
+    // ── Firebase Realtime Sync ──
+    db.ref().on('value', snapshot => {
+      const raw = snapshot.val() || {};
+      appData = {
+        teams:            raw.teams            || {},
+        students:         raw.students         || {},
+        programs:         raw.programs         || {},
+        results:          raw.results          || {},
+        teamDirectScores: raw.teamDirectScores || {},
+        teamPenalties:    raw.teamPenalties    || {},
+        studentPenalties: raw.studentPenalties || {},
+        pointsConfig:     raw.pointsConfig     || { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 },
+        groupPointsConfig:raw.groupPointsConfig|| { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 },
+        teamPointsConfig: raw.teamPointsConfig || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 }
+      };
+      render();
+    }, err => {
+      document.getElementById('app').innerHTML = `
+        <div class="h-screen bg-gray-950 flex items-center justify-center">
+          <div class="text-center">
+            <i class="fas fa-wifi text-4xl text-red-500/50 mb-4"></i>
+            <h2 class="text-xl font-bold text-white/50 mb-2">Connection Error</h2>
+            <p class="text-white/25 text-sm mb-6">Unable to connect to database.</p>
+            <button onclick="location.reload()" class="px-6 py-2.5 bg-white/10 text-white/60 rounded-xl font-bold text-sm hover:bg-white/15">Retry</button>
+          </div>
+        </div>`;
+    });
+  </script>
+</body>
+</html>

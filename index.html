@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>We're Building Something Cool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff6b6b;
+            --secondary: #4ecdc4;
+            --bg-color: #f7f9fc;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Soft, organic background blobs for light mode */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        .blob-1 {
+            top: -10%;
+            right: -5%;
+            width: 45vw;
+            height: 45vw;
+            background: radial-gradient(circle, #ff6b6b40 0%, transparent 70%);
+            animation: drift 12s infinite alternate ease-in-out;
+        }
+
+        .blob-2 {
+            bottom: -15%;
+            left: -10%;
+            width: 55vw;
+            height: 55vw;
+            background: radial-gradient(circle, #4ecdc440 0%, transparent 70%);
+            animation: drift 15s infinite alternate-reverse ease-in-out;
+        }
+
+        @keyframes drift {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.1) translate(-30px, 30px); }
+        }
+
+        /* Light Glassmorphism Card */
+        .glass-card {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 1);
+            border-radius: 30px;
+            padding: 4rem 3rem;
+            max-width: 650px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Floating Organic Vector */
+        .vector-art {
+            margin-bottom: 1.5rem;
+            width: 130px;
+            height: auto;
+            display: inline-block;
+        }
+
+        .vector-art svg {
+            width: 100%;
+            height: 100%;
+            fill: url(#gradient);
+            animation: float 5s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(3deg); }
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+            line-height: 1.2;
+            letter-spacing: -1px;
+        }
+
+        p.chatty-text {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        /* Registration Area */
+        .reg-container {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 1.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .reg-container:hover {
+            transform: translateY(-4px);
+        }
+
+        .reg-text {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary) 0%, #ff8e8e 100%);
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 15px -5px rgba(255, 107, 107, 0.4);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            box-shadow: 0 12px 20px -5px rgba(255, 107, 107, 0.6);
+            transform: scale(1.03);
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            h1 { font-size: 2.2rem; }
+            .glass-card { padding: 2.5rem 1.5rem; }
+            .btn { padding: 0.8rem 2rem; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="glass-card">
+        
+        <div class="vector-art">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ff6b6b" />
+                        <stop offset="100%" stop-color="#4ecdc4" />
+                    </linearGradient>
+                </defs>
+                <path d="M42.7,-73.4C55.9,-65.2,67.8,-53.1,76.3,-38.3C84.8,-23.5,89.8,-6,87.5,10.1C85.2,26.2,75.6,40.9,63.2,52.2C50.8,63.5,35.6,71.4,19.3,76.6C3,81.8,-14.4,84.3,-30.5,79.1C-46.6,73.9,-61.4,61,-71.7,45.3C-82,29.6,-87.8,11.1,-84.9,-5.2C-82,-21.5,-70.4,-35.6,-57.8,-43.9C-45.2,-52.2,-31.6,-54.7,-19.8,-59.9C-8,-65.1,2,-73,15.1,-75.4C28.2,-77.8,29.5,-81.6,42.7,-73.4Z" transform="translate(100 100)" />
+            </svg>
+        </div>
+
+        <h1>Hey there! 👋<br>We're doing some remodeling.</h1>
+        <p class="chatty-text">Things are a little messy right now while we build out the site, but we promise it'll be worth the wait. Grab a coffee, hang tight, and check back with us soon!</p>
+
+        <div class="reg-container">
+            <span class="reg-text">Oh, and if you are looking for registration, click here:</span>
+            <a href="#register" class="btn">Get Registered</a>
+        </div>
+    </div>
+
+</body>
+</html>

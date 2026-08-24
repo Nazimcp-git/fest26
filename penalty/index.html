@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Penalty Portal - PORU 2K25</title>
+
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase Legacy Web SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/security.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-display {
+      font-family: 'Outfit', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 antialiased selection:bg-red-500 selection:text-white">
+
+  <!-- Root App Container -->
+  <div id="app" class="min-h-full"></div>
+
+  <script>
+    // Global State
+    let appData = {
+      students: {},
+      teams: {},
+      studentPenalties: {}
+    };
+
+    let session = typeof SecurityEngine !== 'undefined' ? SecurityEngine.verifySession('poru_penalty_session') : JSON.parse(sessionStorage.getItem('poru_penalty_session') || 'null');
+    let selectedStudentId = null;
+    let studentSearchQuery = '';
+    let selectedCategoryFilter = 'All';
+    let selectedTeamFilter = 'All';
+    let historySearchQuery = '';
+    let selectedPointPill = 5;
+
+    var CATEGORIES_LIST = window.CATEGORIES || ["BIDAYA","UOOLA","THANIYA","THANAWIYYA","ALIYA","KULLIYYA"];
+
+    const PRESET_REASONS = [
+      "Late reporting to stage",
+      "Time limit exceeded",
+      "Code of conduct breach",
+      "Unauthorized assistance",
+      "Identity verification issue",
+      "Stage rule violation"
+    ];
+
+    function sanitize(str) {
+      if (!str) return '';
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function formatDateTime(ts) {
+      if (!ts) return 'N/A';
+      return new Date(ts).toLocaleString('en-US', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    // Toast Notification Engine
+    const Toast = {
+      show(msg, type = 'info') {
+        const colors = {
+          success: 'bg-emerald-600 text-white shadow-emerald-500/20',
+          error: 'bg-red-600 text-white shadow-red-500/20',
+          info: 'bg-slate-900 text-white shadow-slate-900/20'
+        };
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 right-6 px-5 py-3.5 rounded-2xl shadow-xl ${colors[type]} text-xs font-bold tracking-wide z-[9999] animate-fade-in flex items-center gap-3 border border-white/10`;
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} text-base"></i> ${sanitize(msg)}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
+      }
+    };
+
+    // Firebase Realtime Listener
+    db.ref().on('value', snapshot => {
+      const raw = snapshot.val() || {};
+      appData = {
+        students: raw.students || {},
+        teams: raw.teams || {},
+        studentPenalties: raw.studentPenalties || {}
+      };
+      render();
+    });
+
+    // Passcode Login — Secure SHA-256 Hash Verification
+    async function handleLogin(e) {
+      e.preventDefault();
+      const codeInput = document.getElementById('passcode-input').value.trim().toUpperCase();
+      const errEl = document.getElementById('login-error');
+
+      const codeHash = await SecurityEngine.hashPasscode(codeInput);
+      const validCodeHashes = [
+        '5dfc92691f7fa0a4f9f8dd9b05b69b1720baad084182c7c4d492cbbab1f23333', // PIN: 850392
+        '835d6dc88b708bc646d6db82c853ef4182fabbd4a8de59c213f2b5ab3ae7d9be', // ADMIN
+        '64e48f3bf07307f751c02213b95e0b5e1e8351597dfbe12bce5cbf115591ce3f', // ADMIN2026
+        'ad0ee11b4ee66abb29207fdb6f105cb2b771cc549e7917b239b4cab56c9bfa5d', // ADMIN2025
+        '4f1de095b16f9d608499e3df9a17348834e0b3f5efaf734820ce978bca2abf45', // PENALTY
+        '37f7347937b096cfe5c2d8a507b0b904a79076b4908f11cca1d004de59b4c8ea', // PENALTY2026
+        '71b330bf90f329a4d7429461ca5ca29da56e171c61c4d0fa1912d6a526bf4b1e', // PENALTY101
+        '112ab1d6a27d3537b84b20cb29f2e76fcccf96a5eaf27a74b9f43b285662ff04', // PORU
+        '542fcaea5bb1c9e731206706ff06a4833575826a86915c76016abeb02379cc41', // PORU2026
+        'b37f4f0db1c97cca96a1da6af60aa6676c9b0a568501f06cbae398310d2c2c70', // PORU2025
+        'b6982ab2451094949ba42a5e89ef8a86ac4bec5a0a9d46492e3820c6da74d63e', // READEX
+        'dbdc5ba8bb43bd51c700e185e084a97e4c56ef0e31c9b0bef5a7ba912acff3be', // READEX2026
+        '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
+        '468e8ca0217038e8ec43fef825c04b8b64e03b306b9a896d859733a1e34551d7',
+        '545672922765360fb1bfef4eb03a55bd4db760bf037d8d21ff1dd3eb7bf19f8f',
+        'a6813bfb35439cefa5c9ec65a085d774771e1f1a5bbbc1e6fef95b77e8055627',
+        'c5539eb87431e51b1424ed0f0a514d3a8241b9d4df2e923e20023a9d5dd408d6'
+      ];
+
+      if (validCodeHashes.includes(codeHash)) {
+        session = { code: codeInput, loggedInAt: Date.now() };
+        sessionStorage.setItem('poru_penalty_session', JSON.stringify(session));
+        Toast.show('Authenticated to Student Penalty Portal', 'success');
+        render();
+      } else {
+        errEl.textContent = `Invalid access passcode. Please check with event control.`;
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      session = null;
+      sessionStorage.removeItem('poru_penalty_session');
+      Toast.show('Logged out from Penalty Portal', 'info');
+      render();
+    }
+
+    function togglePasscodeVisibility() {
+      const input = document.getElementById('passcode-input');
+      const icon = document.querySelector('#toggle-passcode-btn i');
+      if (!input || !icon) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash text-sm';
+      } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye text-sm';
+      }
+    }
+
+    // Set Point Pill Value
+    function setPointPill(pts) {
+      selectedPointPill = pts;
+      const ptsInput = document.getElementById('student-penalty-points');
+      if (ptsInput) ptsInput.value = pts;
+      render();
+    }
+
+    // Use Preset Reason
+    function setReasonPreset(reasonText) {
+      const reasonEl = document.getElementById('student-penalty-reason');
+      if (reasonEl) {
+        reasonEl.value = reasonText;
+      }
+    }
+
+    // Select Student
+    function selectStudent(studentId) {
+      selectedStudentId = studentId;
+      render();
+    }
+
+    // Submit Penalty
+    async function submitStudentPenalty(e) {
+      e.preventDefault();
+      if (!selectedStudentId || !appData.students[selectedStudentId]) {
+        Toast.show('Please search and select a student first.', 'error');
+        return;
+      }
+
+      const pointsInput = document.getElementById('student-penalty-points');
+      const reasonInput = document.getElementById('student-penalty-reason');
+      
+      const points = parseInt(pointsInput.value, 10);
+      const reason = reasonInput.value.trim();
+
+      if (!points || points <= 0) {
+        Toast.show('Penalty points must be greater than 0.', 'error');
+        return;
+      }
+      if (!reason) {
+        Toast.show('Please enter or select a reason for the penalty.', 'error');
+        return;
+      }
+
+      const targetStudent = appData.students[selectedStudentId];
+
+      try {
+        await db.ref('studentPenalties').push({
+          studentId: selectedStudentId,
+          chestNo: targetStudent.chestNo || '',
+          studentName: targetStudent.name || '',
+          teamId: targetStudent.teamId || '',
+          className: targetStudent.className || '',
+          category: targetStudent.category || '',
+          points: points,
+          reason: reason,
+          createdAt: Date.now()
+        });
+
+        Toast.show(`Successfully applied -${points} PTS penalty to ${targetStudent.name}!`, 'success');
+        selectedStudentId = null;
+        render();
+      } catch (err) {
+        console.error('Failed to submit student penalty:', err);
+        Toast.show('Submission error: ' + err.message, 'error');
+      }
+    }
+
+    // Revoke Penalty
+    async function deletePenalty(penaltyId) {
+      if (!confirm('Are you sure you want to revoke this student penalty? The deducted points will be restored.')) return;
+
+      try {
+        await db.ref(`studentPenalties/${penaltyId}`).remove();
+        Toast.show('Penalty revoked successfully!', 'success');
+      } catch (err) {
+        console.error('Failed to revoke penalty:', err);
+        Toast.show('Error revoking penalty: ' + err.message, 'error');
+      }
+    }
+
+    // MAIN RENDER
+    function render() {
+      const appEl = document.getElementById('app');
+
+      // 1. LIGHT THEME LOGIN
+      if (!session) {
+        appEl.innerHTML = `
+          <div class="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-gradient-to-br from-slate-100 via-white to-red-50/40 text-slate-800">
+            
+            <div class="w-full max-w-md animate-fade-in">
+              
+              <!-- Brand Header -->
+              <div class="text-center mb-8">
+                <div class="w-16 h-16 rounded-3xl bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center mx-auto mb-3 shadow-xl shadow-red-600/20 text-white">
+                  <i class="fas fa-user-minus text-2xl"></i>
+                </div>
+                <h1 class="font-display text-3xl font-black tracking-tight text-slate-900">PORU 2K25</h1>
+                <p class="text-red-600 font-bold text-xs uppercase tracking-[0.2em] mt-1">Student Penalty Portal</p>
+              </div>
+
+              <!-- Login Card -->
+              <div class="bg-white border border-slate-200/80 rounded-3xl p-8 shadow-xl shadow-slate-200/50">
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                  <div class="w-10 h-10 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center">
+                    <i class="fas fa-lock text-base"></i>
+                  </div>
+                  <div>
+                    <h2 class="text-base font-bold text-slate-900">Penalty Officer Login</h2>
+                    <p class="text-xs text-slate-500 font-medium">Enter your assigned passcode to proceed.</p>
+                  </div>
+                </div>
+
+                <form onsubmit="handleLogin(event)" class="space-y-4">
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">Access Passcode</label>
+                    <div class="relative flex items-center">
+                      <i class="fas fa-key text-slate-400 absolute left-4 text-xs"></i>
+                      <input type="password" id="passcode-input" required placeholder="Enter passcode" autocomplete="off"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-12 py-3 text-slate-900 font-mono font-bold text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all uppercase">
+                      <button type="button" onclick="togglePasscodeVisibility()" id="toggle-passcode-btn" class="absolute right-4 text-slate-400 hover:text-slate-700 transition-colors">
+                        <i class="fas fa-eye text-sm"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div id="login-error" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold text-center"></div>
+
+                  <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs rounded-2xl shadow-lg shadow-red-600/20 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-right-to-bracket"></i> Authenticate & Open Portal
+                  </button>
+                </form>
+
+                <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+                  <p class="text-[11px] text-slate-400 font-medium"><i class="fas fa-shield-alt mr-1"></i>Authorized access for festival officials only.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>`;
+        return;
+      }
+
+      // 2. LIGHT THEME DASHBOARD
+      const penaltiesList = Object.entries(appData.studentPenalties || {}).map(([id, p]) => ({ id, ...p })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      const totalPointsDeducted = penaltiesList.reduce((acc, p) => acc + (p.points || 0), 0);
+
+      // Student Search Results with Filters (ALL STUDENTS, NO TRUNCATION)
+      const allStudents = Object.entries(appData.students || {}).map(([id, s]) => ({ id, ...s })).sort((a,b) => (parseInt(a.chestNo) || 0) - (parseInt(b.chestNo) || 0) || (a.name || '').localeCompare(b.name || ''));
+      
+      const filteredStudents = allStudents.filter(s => {
+        // Category Filter
+        if (selectedCategoryFilter !== 'All' && s.category !== selectedCategoryFilter) return false;
+
+        // Team Filter
+        if (selectedTeamFilter !== 'All' && s.teamId !== selectedTeamFilter) return false;
+
+        // Text Search Filter
+        if (studentSearchQuery) {
+          const q = studentSearchQuery.toLowerCase();
+          const name = (s.name || '').toLowerCase();
+          const chest = String(s.chestNo || '').toLowerCase();
+          const cls = (s.className || '').toLowerCase();
+          const teamName = (appData.teams[s.teamId]?.name || '').toLowerCase();
+          const cat = (s.category || '').toLowerCase();
+          return name.includes(q) || chest.includes(q) || cls.includes(q) || teamName.includes(q) || cat.includes(q);
+        }
+        return true;
+      });
+
+      const selectedStudent = selectedStudentId ? appData.students[selectedStudentId] : null;
+
+      // History Search Filter
+      const filteredHistory = penaltiesList.filter(p => {
+        if (!historySearchQuery) return true;
+        const q = historySearchQuery.toLowerCase();
+        const sName = (p.studentName || '').toLowerCase();
+        const chest = String(p.chestNo || '').toLowerCase();
+        const teamName = (appData.teams[p.teamId]?.name || '').toLowerCase();
+        const reason = (p.reason || '').toLowerCase();
+        return sName.includes(q) || chest.includes(q) || teamName.includes(q) || reason.includes(q);
+      });
+
+      appEl.innerHTML = `
+        <div class="min-h-screen bg-slate-50 pb-20 animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 py-8">
+          
+          <!-- Top Navigation Header -->
+          <div class="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-red-600/20 flex-shrink-0">
+                <i class="fas fa-user-minus text-xl"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h1 class="text-xl sm:text-2xl font-black font-display text-slate-900 tracking-tight">Student Penalty Management</h1>
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700">
+                    Live Real-Time
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 font-medium mt-0.5">Filter all enrolled students, select points & reason to deduct points instantly.</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <span class="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-700 font-mono font-bold text-xs border border-slate-200">
+                Officer Code: ${sanitize(session.code)}
+              </span>
+              <button onclick="handleLogout()" class="px-4 py-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold text-xs transition-all border border-red-200/60">
+                Logout
+              </button>
+            </div>
+          </div>
+
+          <!-- Stats Overview Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Penalties Applied</span>
+                <p class="text-3xl font-black font-display text-slate-900 mt-1">${penaltiesList.length}</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-lg">
+                <i class="fas fa-clipboard-list"></i>
+              </div>
+            </div>
+
+            <div class="bg-white border border-red-200/80 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold text-red-600 uppercase tracking-wider">Total Deducted Points</span>
+                <p class="text-3xl font-black font-display text-red-600 mt-1">-${totalPointsDeducted} <span class="text-xs font-bold text-slate-400">PTS</span></p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-lg">
+                <i class="fas fa-minus-circle"></i>
+              </div>
+            </div>
+
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Enrolled Students</span>
+                <p class="text-3xl font-black font-display text-slate-900 mt-1">${allStudents.length}</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-lg">
+                <i class="fas fa-user-graduate"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Layout Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Column: Penalty Form & Student Filters -->
+            <div class="lg:col-span-5">
+              <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm sticky top-6">
+                
+                <h2 class="text-sm font-bold text-slate-900 mb-1 flex items-center gap-2">
+                  <i class="fas fa-user-minus text-red-600"></i> Apply Student Penalty
+                </h2>
+                <p class="text-xs text-slate-500 mb-5">Filter all students, choose points, and submit deduction.</p>
+
+                <form onsubmit="submitStudentPenalty(event)" class="space-y-5">
+                  
+                  <!-- 1. Student Filters & Search (ALL STUDENTS) -->
+                  <div>
+                    <div class="flex items-center justify-between mb-2">
+                      <label class="block text-xs font-bold text-slate-700">1. Select Student (${filteredStudents.length} Found)</label>
+                      ${selectedStudent ? `<button type="button" onclick="selectedStudentId = null; render();" class="text-[10px] text-red-600 font-bold hover:underline">Change Selection</button>` : ''}
+                    </div>
+
+                    <!-- Category Filter Buttons -->
+                    <div class="flex items-center gap-1 overflow-x-auto custom-scrollbar pb-2 mb-2">
+                      <button type="button" onclick="selectedCategoryFilter = 'All'; render();" class="text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all ${selectedCategoryFilter === 'All' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">All</button>
+                      ${CATEGORIES_LIST.map(cat => `
+                        <button type="button" onclick="selectedCategoryFilter = '${cat}'; render();" class="text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all ${selectedCategoryFilter === cat ? 'bg-red-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">${cat}</button>
+                      `).join('')}
+                    </div>
+
+                    <!-- Team Filter Select & Search Box -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 mb-2">
+                      <div class="sm:col-span-5">
+                        <select onchange="selectedTeamFilter = this.value; render();" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-red-500">
+                          <option value="All" ${selectedTeamFilter === 'All' ? 'selected' : ''}>All Teams</option>
+                          ${Object.entries(appData.teams || {}).map(([id, t]) => `
+                            <option value="${id}" ${selectedTeamFilter === id ? 'selected' : ''}>${sanitize(t.name)}</option>
+                          `).join('')}
+                        </select>
+                      </div>
+
+                      <div class="sm:col-span-7 relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="student-search-input" placeholder="Search Chest #, Name..." oninput="studentSearchQuery = this.value; render();" value="${sanitize(studentSearchQuery)}"
+                          class="w-full pl-8 pr-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 font-medium">
+                      </div>
+                    </div>
+
+                    <!-- Selected Student Card Preview -->
+                    ${selectedStudent ? `
+                      <div class="p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between mb-3 shadow-xs">
+                        <div class="flex items-center gap-3">
+                          <div class="w-9 h-9 rounded-lg bg-red-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0">
+                            #${sanitize(selectedStudent.chestNo || '—')}
+                          </div>
+                          <div>
+                            <h4 class="font-bold text-slate-900 text-xs">${sanitize(selectedStudent.name)}</h4>
+                            <p class="text-[10px] font-semibold text-slate-500">
+                              Team: <span class="text-red-700 font-bold">${sanitize(appData.teams[selectedStudent.teamId]?.name || 'No Team')}</span> · Class: ${sanitize(selectedStudent.className || 'N/A')} (${sanitize(selectedStudent.category || '')})
+                            </p>
+                          </div>
+                        </div>
+                        <span class="px-2 py-1 bg-red-600 text-white text-[10px] font-black rounded-lg uppercase">Selected</span>
+                      </div>
+                    ` : ''}
+
+                    <!-- All Students Results List (Unlimited Scroll) -->
+                    <div class="max-h-56 overflow-y-auto custom-scrollbar space-y-1.5 p-1.5 bg-slate-50 border border-slate-200 rounded-xl">
+                      ${filteredStudents.length === 0 ? '<p class="text-xs text-slate-400 p-4 text-center font-medium">No students match active filters.</p>' : filteredStudents.map(s => {
+                        const isSelected = selectedStudentId === s.id;
+                        const teamName = appData.teams[s.teamId]?.name || 'No Team';
+                        return `
+                          <div onclick="selectStudent('${s.id}')" class="p-2.5 rounded-lg cursor-pointer transition-all flex items-center justify-between text-xs ${isSelected ? 'bg-red-600 text-white font-bold shadow-xs' : 'bg-white hover:bg-slate-100 border border-slate-100 text-slate-800'}">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                              <span class="px-1.5 py-0.5 ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'} text-[10px] font-black rounded font-mono flex-shrink-0">
+                                #${sanitize(s.chestNo)}
+                              </span>
+                              <div class="truncate">
+                                <span class="font-bold truncate block">${sanitize(s.name)}</span>
+                                <span class="text-[10px] ${isSelected ? 'text-red-100' : 'text-slate-400'} font-semibold truncate block">
+                                  ${sanitize(teamName)} · ${sanitize(s.className || 'N/A')} (${sanitize(s.category || '')})
+                                </span>
+                              </div>
+                            </div>
+                            <i class="fas fa-${isSelected ? 'check-circle text-white' : 'chevron-right text-slate-300 text-xs'} ml-2 flex-shrink-0"></i>
+                          </div>`;
+                      }).join('')}
+                    </div>
+                  </div>
+
+                  <!-- 2. Point Deduction Pills & Input -->
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">2. Deduction Points</label>
+                    
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                      ${[1, 2, 3, 5, 10, 15, 20].map(pts => `
+                        <button type="button" onclick="setPointPill(${pts})" class="px-3 py-1.5 rounded-xl text-xs font-black transition-all ${selectedPointPill === pts ? 'bg-red-600 text-white shadow-md shadow-red-600/20' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}">
+                          -${pts} PTS
+                        </button>
+                      `).join('')}
+                    </div>
+
+                    <div class="relative">
+                      <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-black text-red-600">-</span>
+                      <input type="number" id="student-penalty-points" min="1" max="200" required value="${selectedPointPill}"
+                        class="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500">
+                    </div>
+                  </div>
+
+                  <!-- 3. Reason & Presets -->
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">3. Penalty Reason</label>
+                    
+                    <!-- Reason Quick Presets -->
+                    <div class="flex flex-wrap gap-1.5 mb-2">
+                      ${PRESET_REASONS.map(r => `
+                        <button type="button" onclick="setReasonPreset('${r}')" class="px-2.5 py-1 bg-slate-100 hover:bg-red-50 hover:text-red-700 hover:border-red-200 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 transition-colors">
+                          + ${r}
+                        </button>
+                      `).join('')}
+                    </div>
+
+                    <textarea id="student-penalty-reason" rows="3" required placeholder="Type reason or click a preset above..."
+                      class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 font-medium"></textarea>
+                  </div>
+
+                  <!-- Submit Button -->
+                  <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs rounded-2xl shadow-lg shadow-red-600/20 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-minus-circle"></i> Apply Student Penalty
+                  </button>
+
+                </form>
+              </div>
+            </div>
+
+            <!-- Right Column: Live Penalty Feed & History -->
+            <div class="lg:col-span-7">
+              <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm">
+                
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+                  <div>
+                    <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <i class="fas fa-history text-red-600"></i> Applied Student Penalties Log
+                    </h2>
+                    <p class="text-xs text-slate-500">Live feed of all penalized students. Click trash button to revoke a penalty anytime.</p>
+                  </div>
+
+                  <span class="px-3 py-1 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 self-start sm:self-auto">
+                    ${filteredHistory.length} Logged Entries
+                  </span>
+                </div>
+
+                <!-- History Search Bar -->
+                <div class="relative mb-4">
+                  <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                  <input type="text" id="history-search-input" placeholder="Search history by name, chest #, team, or reason..." oninput="historySearchQuery = this.value; render();" value="${sanitize(historySearchQuery)}"
+                    class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 font-medium">
+                </div>
+
+                <!-- Penalties List Container -->
+                <div class="space-y-3 max-h-[580px] overflow-y-auto custom-scrollbar pr-1">
+                  ${filteredHistory.length === 0 ? `
+                    <div class="py-16 text-center text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                      <i class="fas fa-shield-check text-4xl mb-3 text-slate-300"></i>
+                      <p class="text-xs font-bold text-slate-600">No student penalties applied yet.</p>
+                      <p class="text-[11px] text-slate-400 mt-1">Use the form on the left to apply student penalties.</p>
+                    </div>
+                  ` : filteredHistory.map(p => {
+                    const student = appData.students[p.studentId] || {};
+                    const teamName = appData.teams[p.teamId || student.teamId]?.name || 'No Team';
+                    const chestNo = p.chestNo || student.chestNo || '—';
+                    const studentName = p.studentName || student.name || 'Student';
+
+                    return `
+                      <div class="p-4 bg-white border border-slate-200/80 hover:border-red-300 rounded-2xl flex items-start justify-between gap-4 transition-all shadow-xs hover:shadow-md">
+                        <div class="min-w-0 flex-grow">
+                          <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <span class="px-2.5 py-1 bg-red-600 text-white rounded-lg text-xs font-black shadow-xs">-${p.points} PTS</span>
+                            <h4 class="font-bold text-slate-900 text-sm truncate">${sanitize(studentName)}</h4>
+                            <span class="text-xs font-bold text-slate-400">(Chest #${sanitize(chestNo)})</span>
+                          </div>
+                          
+                          <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500 mb-2">
+                            <span>Team: <strong class="text-slate-800">${sanitize(teamName)}</strong></span>
+                            ${p.className ? `· <span>Class: ${sanitize(p.className)}</span>` : ''}
+                            ${p.category ? `· <span class="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-black uppercase rounded">${sanitize(p.category)}</span>` : ''}
+                          </div>
+                          
+                          <div class="p-2.5 bg-red-50/60 border border-red-100 rounded-xl text-xs text-red-950 font-medium">
+                            <i class="fas fa-quote-left text-[10px] text-red-400 mr-1.5"></i>${sanitize(p.reason)}
+                          </div>
+                          
+                          <p class="text-[10px] text-slate-400 mt-2 font-medium flex items-center gap-1">
+                            <i class="far fa-clock text-slate-300"></i> Applied on ${formatDateTime(p.createdAt)}
+                          </p>
+                        </div>
+
+                        <button onclick="deletePenalty('${p.id}')" title="Revoke Penalty (Restore Points)" class="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-xl transition-all border border-red-200/60 shadow-xs group">
+                          <i class="fas fa-trash text-xs"></i>
+                        </button>
+                      </div>`;
+                  }).join('')}
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </div>`;
+    }
+
+    // Initial Render
+    render();
+  </script>
+</body>
+</html>

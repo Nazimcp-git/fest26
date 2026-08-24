@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PORU 2K25 - Festival Management</title>
+
+  <!-- External Styles -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/print.css" />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.2s ease-out forwards',
+            'blob': 'blob 7s infinite alternate ease-in-out',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(4px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            blob: {
+              '0%': { transform: 'translate(0px, 0px) scale(1)' },
+              '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+              '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+              '100%': { transform: 'translate(0px, 0px) scale(1)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Scrollbar -->
+  <style>
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #e5e7eb;
+      border-radius: 20px;
+    }
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+      background-color: #d1d5db;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+    .animation-delay-2000 {
+      animation-delay: 2s;
+    }
+    .animation-delay-4000 {
+      animation-delay: 4s;
+    }
+
+    /* TV Display ticker animation */
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .animate-ticker {
+      animation: ticker 30s linear infinite;
+    }
+
+    /* Hide scrollbar utility */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+
+  <!-- External Libraries -->
+  <!-- Firebase (compat version) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <!-- SheetJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+</head>
+<body class="bg-[#fafafa] font-sans text-gray-900 antialiased selection:bg-indigo-100 selection:text-indigo-900 overflow-y-scroll">
+
+  <!-- SPA Mount Point -->
+  <div id="app">
+    <!-- Initial Loading State -->
+    <div class="min-h-screen flex items-center justify-center">
+      <div class="text-center">
+        <div class="w-12 h-12 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-sm font-medium text-gray-500">Loading PORU 2K25...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic Modules -->
+  <!-- 1. Infrastructure -->
+  <script src="js/firebase-config.js"></script>
+  <script src="../js/security.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/modals.js"></script>
+  
+  <!-- 2. Data & Calculations -->
+  <script src="js/calculations.js"></script>
+  <script src="js/data.js"></script>
+
+  <!-- 3. Views -->
+  <script src="js/pages-public.js"></script>
+  <script src="js/pages-admin.js"></script>
+  <script src="js/pages-admin-tabs.js"></script>
+  <script src="js/admin-forms.js"></script>
+  <script src="js/admin-actions.js"></script>
+  <script src="js/print.js"></script>
+
+  <!-- 4. Router & Bootstrap -->
+  <script src="js/router.js"></script>
+  <script src="js/events.js"></script>
+
+</body>
+</html>

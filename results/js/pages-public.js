@@ -884,7 +884,7 @@ function renderTVDisplayPage() {
               <i class="fas fa-trophy text-white text-lg"></i>
             </div>
             <div>
-              <span class="text-white/90 font-black text-xl tracking-tight">PORU 2K25</span>
+              <span class="text-white/90 font-black text-xl tracking-tight">ART FEST 2K25</span>
               <span class="text-white/30 text-sm font-medium ml-3">Result Announcement</span>
             </div>
           </div>

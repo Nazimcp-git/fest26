@@ -1,5 +1,5 @@
 // results/js/firebase-config.js
-// Centralized Firebase Configuration & App Constants for PORU 2K25
+// Centralized Firebase Configuration & App Constants for ART FEST 2K25
 
 if (typeof firebaseConfig === 'undefined') {
   var firebaseConfig = {

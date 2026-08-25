@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Penalty Portal - PORU 2K25</title>
+  <title>Student Penalty Portal - ART FEST 2K25</title>
 
   <!-- Google Fonts & FontAwesome -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,7 +63,7 @@
       studentPenalties: {}
     };
 
-    let session = typeof SecurityEngine !== 'undefined' ? SecurityEngine.verifySession('poru_penalty_session') : JSON.parse(sessionStorage.getItem('poru_penalty_session') || 'null');
+    let session = typeof SecurityEngine !== 'undefined' ? SecurityEngine.verifySession('artfest_penalty_session') : JSON.parse(sessionStorage.getItem('artfest_penalty_session') || 'null');
     let selectedStudentId = null;
     let studentSearchQuery = '';
     let selectedCategoryFilter = 'All';
@@ -138,9 +138,13 @@
         '4f1de095b16f9d608499e3df9a17348834e0b3f5efaf734820ce978bca2abf45', // PENALTY
         '37f7347937b096cfe5c2d8a507b0b904a79076b4908f11cca1d004de59b4c8ea', // PENALTY2026
         '71b330bf90f329a4d7429461ca5ca29da56e171c61c4d0fa1912d6a526bf4b1e', // PENALTY101
-        '112ab1d6a27d3537b84b20cb29f2e76fcccf96a5eaf27a74b9f43b285662ff04', // PORU
-        '542fcaea5bb1c9e731206706ff06a4833575826a86915c76016abeb02379cc41', // PORU2026
-        'b37f4f0db1c97cca96a1da6af60aa6676c9b0a568501f06cbae398310d2c2c70', // PORU2025
+        'b73bb2cc8f6b985f6f31f67ea753f59beeb442149fc71788799bb23172ec2020', // ART FEST
+        'b7a26a755f920f697bf83f7a0037746b0c7c0baaf4e0dbdbad93913a01bd96b2', // ARTFEST
+        '3510af5f5287cc747c0701eedc1c8285799a08a02b277bd2a81433cfc6192ddd', // ARTFEST2026
+        'e8a411e3e61fbbd175d356c7a349ca725dae4ff41a0387b5c9260684fb0c2ef6', // ARTFEST2025
+        '112ab1d6a27d3537b84b20cb29f2e76fcccf96a5eaf27a74b9f43b285662ff04', // LEGACY CODE
+        '542fcaea5bb1c9e731206706ff06a4833575826a86915c76016abeb02379cc41', // LEGACY CODE
+        'b37f4f0db1c97cca96a1da6af60aa6676c9b0a568501f06cbae398310d2c2c70', // LEGACY CODE
         'b6982ab2451094949ba42a5e89ef8a86ac4bec5a0a9d46492e3820c6da74d63e', // READEX
         'dbdc5ba8bb43bd51c700e185e084a97e4c56ef0e31c9b0bef5a7ba912acff3be', // READEX2026
         '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
@@ -152,7 +156,7 @@
 
       if (validCodeHashes.includes(codeHash)) {
         session = { code: codeInput, loggedInAt: Date.now() };
-        sessionStorage.setItem('poru_penalty_session', JSON.stringify(session));
+        sessionStorage.setItem('artfest_penalty_session', JSON.stringify(session));
         Toast.show('Authenticated to Student Penalty Portal', 'success');
         render();
       } else {
@@ -163,7 +167,7 @@
 
     function handleLogout() {
       session = null;
-      sessionStorage.removeItem('poru_penalty_session');
+      sessionStorage.removeItem('artfest_penalty_session');
       Toast.show('Logged out from Penalty Portal', 'info');
       render();
     }
@@ -279,7 +283,7 @@
                 <div class="w-16 h-16 rounded-3xl bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center mx-auto mb-3 shadow-xl shadow-red-600/20 text-white">
                   <i class="fas fa-user-minus text-2xl"></i>
                 </div>
-                <h1 class="font-display text-3xl font-black tracking-tight text-slate-900">PORU 2K25</h1>
+                <h1 class="font-display text-3xl font-black tracking-tight text-slate-900">ART FEST 2K25</h1>
                 <p class="text-red-600 font-bold text-xs uppercase tracking-[0.2em] mt-1">Student Penalty Portal</p>
               </div>
 

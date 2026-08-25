@@ -76,7 +76,7 @@ function renderSinglePrintResult(result) {
   return `
     <div class="print-page">
       <div class="print-header text-center">
-        <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">PORU 2K25 OFFICIAL RESULT</h1>
+        <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">ART FEST 2K25 OFFICIAL RESULT</h1>
         <p class="text-sm text-gray-600">Darunnajath Islamic Complex</p>
       </div>
       

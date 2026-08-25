@@ -53,7 +53,7 @@ async function router(softUpdate = false) {
                 <div class="w-10 h-10 rounded-[1.25rem] bg-orange-500/10 text-orange-600 border border-orange-500/20 flex items-center justify-center transition-all group-hover:scale-105">
                   <i class="fas fa-trophy text-sm"></i>
                 </div>
-                <span class="font-bold text-gray-900 text-lg tracking-tight">PORU <span class="text-orange-600">2K25</span></span>
+                <span class="font-bold text-gray-900 text-lg tracking-tight">ART FEST <span class="text-orange-600">2K25</span></span>
               </a>
               <div class="hidden md:flex items-center gap-2" id="desktop-nav">
                 ${generateNavLinks()}
@@ -76,7 +76,7 @@ async function router(softUpdate = false) {
         <!-- Footer -->
         <footer class="mt-auto border-t border-white/50 bg-white/30 backdrop-blur-xl">
           <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
-            <p class="text-xs text-gray-500 font-medium">© 2025 PORU 2K25</p>
+            <p class="text-xs text-gray-500 font-medium">© 2025 ART FEST 2K25</p>
             <p class="text-xs text-gray-500 font-medium">Darunnajath Islamic Complex</p>
           </div>
         </footer>

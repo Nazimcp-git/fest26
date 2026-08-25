@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PORU 2K25 — Judge Portal</title>
+  <title>ART FEST 2K25 — Judge Portal</title>
   
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,7 +70,7 @@
       participantRegistrations: {},
       results: {},
       judgeCodes: {}
-    };    let judgeSession = typeof SecurityEngine !== 'undefined' ? SecurityEngine.verifySession('poru_judge_session') : JSON.parse(sessionStorage.getItem('poru_judge_session') || 'null');
+    };    let judgeSession = typeof SecurityEngine !== 'undefined' ? SecurityEngine.verifySession('artfest_judge_session') : JSON.parse(sessionStorage.getItem('artfest_judge_session') || 'null');
     let selectedProgramId = null;
     let tempParticipants = [];
     let currentCategoryFilter = 'All';
@@ -132,7 +132,7 @@
         if (currentTeacher) {
           judgeSession.name = currentTeacher.name || judgeSession.name;
           judgeSession.assignedPrograms = currentTeacher.assignedPrograms || [];
-          sessionStorage.setItem('poru_judge_session', JSON.stringify(judgeSession));
+          sessionStorage.setItem('artfest_judge_session', JSON.stringify(judgeSession));
         }
       }
 
@@ -167,7 +167,7 @@
           assignedPrograms: teacherMatch.assignedPrograms || [],
           loggedInAt: Date.now()
         };
-        sessionStorage.setItem('poru_judge_session', JSON.stringify(judgeSession));
+        sessionStorage.setItem('artfest_judge_session', JSON.stringify(judgeSession));
         Toast.show(`Welcome ${teacherMatch.name}! Your judging session is ready.`, 'success');
         render();
         return;
@@ -182,8 +182,12 @@
         'be5aa6e7e0036550d40ac77e3f5f7e7b2e04d5ad7d00f11e259538852a9ef017', // JUDGE
         '85f4a8c06e53b3f06d18eb254ab50b240b706f523754ea85a32eb669ef85a242', // JUDGE2026
         'e09d0ec5b93fa93d2c6429c8965c34117e0e7454273ba540313f1bfd341915a1', // JUDGE2025
-        '542fcaea5bb1c9e731206706ff06a4833575826a86915c76016abeb02379cc41', // PORU2026
-        'b37f4f0db1c97cca96a1da6af60aa6676c9b0a568501f06cbae398310d2c2c70', // PORU2025
+        'b73bb2cc8f6b985f6f31f67ea753f59beeb442149fc71788799bb23172ec2020', // ART FEST
+        'b7a26a755f920f697bf83f7a0037746b0c7c0baaf4e0dbdbad93913a01bd96b2', // ARTFEST
+        '3510af5f5287cc747c0701eedc1c8285799a08a02b277bd2a81433cfc6192ddd', // ARTFEST2026
+        'e8a411e3e61fbbd175d356c7a349ca725dae4ff41a0387b5c9260684fb0c2ef6', // ARTFEST2025
+        '542fcaea5bb1c9e731206706ff06a4833575826a86915c76016abeb02379cc41', // LEGACY CODE
+        'b37f4f0db1c97cca96a1da6af60aa6676c9b0a568501f06cbae398310d2c2c70', // LEGACY CODE
         'a6813bfb35439cefa5c9ec65a085d774771e1f1a5bbbc1e6fef95b77e8055627',
         '468e8ca0217038e8ec43fef825c04b8b64e03b306b9a896d859733a1e34551d7',
         '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
@@ -197,7 +201,7 @@
           assignedPrograms: [], // Empty = all programs (admin mode)
           loggedInAt: Date.now()
         };
-        sessionStorage.setItem('poru_judge_session', JSON.stringify(judgeSession));
+        sessionStorage.setItem('artfest_judge_session', JSON.stringify(judgeSession));
         Toast.show('Authenticated as Admin Judge.', 'success');
         render();
         return;
@@ -210,7 +214,7 @@
     function handleLogout() {
       judgeSession = null;
       selectedProgramId = null;
-      sessionStorage.removeItem('poru_judge_session');
+      sessionStorage.removeItem('artfest_judge_session');
       Toast.show('Logged out from Judge Portal.', 'info');
       render();
     }
@@ -442,7 +446,7 @@
                 <div class="w-16 h-16 rounded-3xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-orange-500/20">
                   <i class="fas fa-shield-halved text-white text-2xl"></i>
                 </div>
-                <h1 class="font-display text-4xl font-black tracking-tight text-white">PORU 2K25</h1>
+                <h1 class="font-display text-4xl font-black tracking-tight text-white">ART FEST 2K25</h1>
                 <p class="text-orange-400 font-bold text-xs uppercase tracking-[0.2em] mt-1">Secure Judge Portal</p>
               </div>
 

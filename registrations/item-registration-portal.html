@@ -976,7 +976,10 @@ function printTeamRegistrations() {
             <h1 style="font-size: 26pt; margin: 0; font-weight: 800; color: #ae752a;">ART FEST 2K25</h1>
             <h2 style="font-size: 18pt; margin: 6px 0 0 0; color: #1F2937; font-weight: 700;">${program.name}</h2>
             <p style="font-size: 14pt; margin: 4px 0 0 0; color: #6B7280; font-weight: 500;">
-                Category: ${program.category}
+                Category: <strong style="color: #1F2937;">${program.category}</strong> &bull; 
+                <span style="font-weight: 700; color: ${(program.stageType || 'stage') !== 'non-stage' ? '#7e22ce' : '#b45309'};">
+                    ${(program.stageType || 'stage') !== 'non-stage' ? 'STAGE' : 'NON-STAGE'}
+                </span>
             </p>
         </div>
     </div>
@@ -1055,16 +1058,37 @@ function printTeamRegistrations() {
             printArea.innerHTML = ''; // Clean up after printing
         }
 
-        function printAllRegistrations() {
-            const activeRegProgramIds = Object.keys(appData.registrationProgramss || {});
-            const activePrograms = getDataAsArray('programs')
-                .filter(p => activeRegProgramIds.includes(p.id))
-                .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+        function printAllRegistrations(stageFilter = 'all', categoryFilter = 'all') {
+            const activeRegProgramIds = Object.keys(appData.registrationPrograms || appData.registrationProgramss || {});
+            let activePrograms = getDataAsArray('programs')
+                .filter(p => activeRegProgramIds.includes(p.id));
+
+            if (stageFilter === 'stage') {
+                activePrograms = activePrograms.filter(p => (p.stageType || 'stage') !== 'non-stage');
+            } else if (stageFilter === 'non-stage') {
+                activePrograms = activePrograms.filter(p => (p.stageType || 'stage') === 'non-stage');
+            }
+            if (categoryFilter !== 'all') {
+                activePrograms = activePrograms.filter(p => p.category === categoryFilter);
+            }
+
+            // Sort: Stage events first, then Category (CATEGORIES order), then Name
+            activePrograms.sort((a, b) => {
+                const aStage = (a.stageType || 'stage') !== 'non-stage' ? 0 : 1;
+                const bStage = (b.stageType || 'stage') !== 'non-stage' ? 0 : 1;
+                if (aStage !== bStage) return aStage - bStage;
+
+                const aCatIdx = CATEGORIES.indexOf(a.category);
+                const bCatIdx = CATEGORIES.indexOf(b.category);
+                if (aCatIdx !== bCatIdx) return aCatIdx - bCatIdx;
+
+                return a.name.localeCompare(b.name);
+            });
 
             const allRegistrations = getDataAsArray('registrations');
 
             if (activePrograms.length === 0) {
-                alert('No active programs to print.');
+                alert('No active programs match the selected filter.');
                 return;
             }
 
@@ -1077,7 +1101,7 @@ function printTeamRegistrations() {
             });
 
             if (allPagesHTML === '') {
-                alert('There are no registrations for any active program.');
+                alert('There are no registrations for the selected active programs.');
                 return;
             }
 

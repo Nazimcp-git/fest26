@@ -29,9 +29,11 @@ document.addEventListener('click', e => {
     }
   }
 
-  // Team card → open modal
+  // Team card → navigate to team profile page
   const teamCard = e.target.closest('.team-card-clickable');
-  if (teamCard) openTeamModal(teamCard.dataset.teamId);
+  if (teamCard && teamCard.dataset.teamId) {
+    window.location.hash = `/team/${teamCard.dataset.teamId}`;
+  }
 
   // Close mobile nav when any nav-link or logout is tapped
   if (e.target.closest(".nav-link") || e.target.closest("#logout-btn")) {

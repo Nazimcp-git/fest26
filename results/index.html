@@ -5,44 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ART FEST 2K25 - Festival Management</title>
 
+  <!-- Preconnect to external origins for faster DNS/TLS -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
   <!-- External Styles -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/print.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" /></noscript>
+  <link rel="stylesheet" href="styles/print.css" media="print" />
   
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
-          animation: {
-            'fade-in': 'fadeIn 0.2s ease-out forwards',
-            'blob': 'blob 7s infinite alternate ease-in-out',
-          },
-          keyframes: {
-            fadeIn: {
-              '0%': { opacity: '0', transform: 'translateY(4px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            },
-            blob: {
-              '0%': { transform: 'translate(0px, 0px) scale(1)' },
-              '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-              '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-              '100%': { transform: 'translate(0px, 0px) scale(1)' }
-            }
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Tailwind (pre-built, no runtime JIT) -->
+  <link rel="stylesheet" href="styles/tailwind.css" />
 
   <!-- Custom Scrollbar -->
   <style>
@@ -86,12 +64,12 @@
   </style>
 
   <!-- External Libraries -->
-  <!-- Firebase (compat version) -->
+  <!-- Firebase (compat version) - critical, loaded sync -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <!-- SheetJS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- SheetJS - deferred, only needed for admin export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 
 </head>
 <body class="bg-[#fafafa] font-sans text-gray-900 antialiased selection:bg-indigo-100 selection:text-indigo-900 overflow-y-scroll">
@@ -109,28 +87,29 @@
 
   <!-- Application Logic Modules -->
   <!-- 1. Infrastructure -->
-  <script src="js/firebase-config.js"></script>
+  <script src="../js/firebase-config.js"></script>
   <script src="../js/security.js"></script>
-  <script src="js/state.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/notifications.js"></script>
-  <script src="js/modals.js"></script>
+  <script src="../js/state.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/notifications.js"></script>
+  <script src="../js/modals.js"></script>
   
   <!-- 2. Data & Calculations -->
-  <script src="js/calculations.js"></script>
-  <script src="js/data.js"></script>
+  <script src="../js/calculations.js"></script>
+  <script src="../js/data.js"></script>
 
   <!-- 3. Views -->
-  <script src="js/pages-public.js"></script>
-  <script src="js/pages-admin.js"></script>
-  <script src="js/pages-admin-tabs.js"></script>
-  <script src="js/admin-forms.js"></script>
-  <script src="js/admin-actions.js"></script>
-  <script src="js/print.js"></script>
+  <script src="../js/pages-public.js"></script>
+  <script src="../js/pages-admin.js"></script>
+  <script src="../js/pages-admin-tabs.js"></script>
+  <script src="../js/admin-forms.js"></script>
+  <script src="../js/admin-actions.js"></script>
+  <script src="../js/print.js"></script>
 
   <!-- 4. Router & Bootstrap -->
-  <script src="js/router.js"></script>
-  <script src="js/events.js"></script>
+  <script src="../js/router.js"></script>
+  <script src="../js/events.js"></script>
 
 </body>
 </html>
+

@@ -127,6 +127,9 @@ async function router(softUpdate = false) {
   if (hash.startsWith('/student/')) {
     const studentId = hash.split('/')[2];
     content = await renderStudentPage(studentId);
+  } else if (hash.startsWith('/team/')) {
+    const teamId = decodeURIComponent(hash.split('/')[2]);
+    content = await renderTeamPage(teamId);
   } else {
     const routes = {
       '/':            renderHomePage,
@@ -261,5 +264,11 @@ function attachPageEventListeners(hash) {
         });
       }
     });
+  }
+
+  if (hash.startsWith("/team/")) {
+    if (typeof attachTeamPageListeners === "function") {
+      attachTeamPageListeners();
+    }
   }
 }

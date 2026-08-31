@@ -24,6 +24,11 @@ function calculateTeamPenalties() {
  * @returns {{ teamsArray: Array, studentsArray: Array }}
  */
 function _calculateScores(filter) {
+  // Check memoization cache
+  if (_calcCache[filter] && _calcCache[filter].gen === _calcGeneration) {
+    return _calcCache[filter].result;
+  }
+
   const studentPoints    = {};
   const teamDirectPoints = {};
   const teamPenalties    = calculateTeamPenalties();
@@ -116,7 +121,9 @@ function _calculateScores(filter) {
     totalPoints: classScoresMap[className]
   })).sort((a, b) => b.totalPoints - a.totalPoints);
 
-  return { teamsArray, studentsArray, classesArray };
+  const result = { teamsArray, studentsArray, classesArray };
+  _calcCache[filter] = { gen: _calcGeneration, result };
+  return result;
 }
 
 /**

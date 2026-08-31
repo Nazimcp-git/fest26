@@ -34,15 +34,28 @@ async function renderHomePage() {
         const isFirst = i === 0;
         const medalCls = ['text-yellow-500', 'text-gray-400', 'text-amber-600'][i] || 'text-gray-300';
         return `
-          <div class="bg-gradient-to-br from-white/60 to-white/10 backdrop-blur-3xl backdrop-saturate-200 border-[0.5px] border-white/60 rounded-[2rem] p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] hover:shadow-[0_16px_48px_0_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+          <a href="#/team/${t.id}" class="team-card-clickable block bg-gradient-to-br from-white/60 to-white/10 backdrop-blur-3xl backdrop-saturate-200 border-[0.5px] border-white/60 rounded-[2rem] p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] hover:shadow-[0_16px_48px_0_rgba(249,115,22,0.18)] hover:-translate-y-1.5 hover:border-orange-400/50 transition-all duration-300 relative overflow-hidden group cursor-pointer" data-team-id="${t.id}">
             ${isFirst ? '<div class="absolute -top-10 -right-10 w-32 h-32 bg-orange-400/20 rounded-full blur-2xl -z-0"></div>' : ''}
             <div class="absolute inset-0 bg-gradient-to-b from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-            <div class="flex justify-between items-start mb-6 relative z-10">
-              <h3 class="text-xl font-bold text-gray-900 tracking-tight">${sanitize(t.name)}</h3>
-              <i class="fas fa-medal text-2xl ${medalCls}"></i>
+            <div class="flex justify-between items-start mb-4 relative z-10">
+              <div>
+                <span class="inline-block text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-500/10 px-2.5 py-0.5 rounded-md border border-orange-500/20">Rank #${i+1}</span>
+                <h3 class="text-xl font-black text-gray-900 tracking-tight mt-1.5 group-hover:text-orange-600 transition-colors">${sanitize(t.name)}</h3>
+              </div>
+              <div class="w-10 h-10 rounded-2xl bg-white/70 border border-white/60 shadow-sm flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                <i class="fas fa-medal text-xl ${medalCls}"></i>
+              </div>
             </div>
-            <p class="text-5xl font-black text-gray-900 relative z-10 tracking-tighter">${t.totalPoints}</p>
-          </div>
+            <div class="relative z-10 flex items-baseline justify-between pt-2 border-t border-black/5">
+              <div>
+                <p class="text-4xl font-black text-gray-900 tracking-tighter">${t.totalPoints}</p>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500 mt-0.5">Total Points</p>
+              </div>
+              <span class="text-xs font-bold text-orange-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                Team Roster <i class="fas fa-arrow-right text-[10px]"></i>
+              </span>
+            </div>
+          </a>
         `;
       }).join('');
 
@@ -383,9 +396,12 @@ async function renderLeaderboardPage(categoryFilter = 'All') {
           </div>
           <div class="overflow-y-auto flex-grow custom-scrollbar p-6 space-y-6">
             ${teamsArray.map(t => `
-              <div class="bg-white/40 p-4 rounded-2xl border border-white/60">
+              <a href="#/team/${t.id}" class="team-card-clickable block bg-white/40 hover:bg-white/70 p-4 rounded-2xl border border-white/60 hover:border-orange-300 hover:shadow-md transition-all group" data-team-id="${t.id}">
                 <div class="flex justify-between items-end mb-3">
-                  <h3 class="font-bold text-base text-gray-900">${sanitize(t.name)}</h3>
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-base text-gray-900 group-hover:text-orange-600 transition-colors">${sanitize(t.name)}</h3>
+                    <span class="text-xs text-orange-600 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fas fa-arrow-right text-[10px]"></i></span>
+                  </div>
                   <span class="font-black text-2xl text-gray-900">${t.totalPoints}</span>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
@@ -396,7 +412,7 @@ async function renderLeaderboardPage(categoryFilter = 'All') {
                     </div>
                   `).join('')}
                 </div>
-              </div>
+              </a>
             `).join('')}
           </div>
         </div>
@@ -639,4 +655,573 @@ window.handleProfileSearch = function(e) {
     errEl.textContent = `No student found with Chest Number "${val}"`;
     errEl.classList.remove("hidden");
   }
+};
+
+/**
+ * TEAM PROFILE & SUMMARY PAGE
+ */
+async function renderTeamPage(teamId) {
+  const { teamsArray, studentsArray } = getPublishedScores();
+  const team = appData.teams[teamId];
+
+  if (!team) {
+    return `
+      <div class="py-20 text-center text-gray-500 font-medium bg-white/60 backdrop-blur-xl rounded-3xl border border-white/60 max-w-2xl mx-auto mt-12 shadow-lg">
+        <div class="w-16 h-16 rounded-2xl bg-orange-500/10 text-orange-600 flex items-center justify-center mx-auto mb-4 text-2xl border border-orange-500/20">
+          <i class="fas fa-users"></i>
+        </div>
+        <h2 class="text-2xl font-black text-gray-900 mb-2">Team Not Found</h2>
+        <p class="text-sm text-gray-500 mb-6 font-medium">The team you are looking for does not exist or festival data is loading.</p>
+        <a href="#/" class="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white font-bold rounded-2xl text-sm hover:bg-black transition-colors shadow-md">
+          <i class="fas fa-arrow-left"></i> Return to Dashboard
+        </a>
+      </div>`;
+  }
+
+  const teamRank = teamsArray.findIndex(t => t.id === teamId) + 1;
+  const tData = teamsArray.find(t => t.id === teamId) || { totalPoints: 0, categoryPoints: {} };
+  const teamPenalties = calculateTeamPenalties()[teamId] || 0;
+  const penaltiesList = Object.values(appData.teamPenalties || {}).filter(p => p.teamId === teamId);
+
+  // All students of this team
+  const rawStudents = getDataAsArray("students").filter(s => s.teamId === teamId);
+
+  // Calculate live published points per student
+  const studentPointsMap = {};
+  studentsArray.forEach(s => { studentPointsMap[s.id] = s.totalPoints || 0; });
+
+  const teamStudents = rawStudents.map(s => ({
+    ...s,
+    totalPoints: studentPointsMap[s.id] || 0
+  }));
+
+  // Sort students strictly by chest number ascending (e.g. 101, 102, 103...)
+  // Per specifications: Team leaders are the first chest numbers
+  teamStudents.sort((a, b) => {
+    const numA = parseInt(a.chestNo, 10);
+    const numB = parseInt(b.chestNo, 10);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return (String(a.chestNo || '')).localeCompare(String(b.chestNo || ''), undefined, { numeric: true }) || (a.name || '').localeCompare(b.name || '');
+  });
+
+  // Identify Team Leader(s): First chest number or explicit isLeader flag
+  const firstChestNo = teamStudents.length > 0 ? teamStudents[0].chestNo : null;
+  teamStudents.forEach(s => {
+    s.isTeamLeader = (s.chestNo === firstChestNo || s.isLeader === true || s.role === 'leader');
+  });
+  const leader = teamStudents.find(s => s.isTeamLeader) || teamStudents[0] || null;
+
+  // Published Results & Achievements for this team
+  const teamAchievements = [];
+  const publishedResults = getDataAsArray("results").filter(r => r.status === "published");
+  
+  let firstCount = 0;
+  let secondCount = 0;
+  let thirdCount = 0;
+  let aGradeCount = 0;
+  let bGradeCount = 0;
+  let totalPodiums = 0;
+
+  publishedResults.forEach(r => {
+    (r.participants || []).forEach(p => {
+      const s = appData.students[p.studentId];
+      if (s && s.teamId === teamId) {
+        if (p.position === 'first') firstCount++;
+        if (p.position === 'second') secondCount++;
+        if (p.position === 'third') thirdCount++;
+        if (p.position && p.position !== 'none') totalPodiums++;
+        if (p.grade === 'a_grade') aGradeCount++;
+        if (p.grade === 'b_grade') bGradeCount++;
+
+        teamAchievements.push({
+          resultId: r.id,
+          programId: r.programId,
+          programName: r.programName,
+          category: r.category,
+          stageType: r.stageType || 'stage',
+          programType: r.programType || 'single',
+          studentId: p.studentId,
+          studentName: p.name || s.name,
+          chestNo: s.chestNo,
+          className: s.className,
+          position: p.position || 'none',
+          grade: p.grade || 'none',
+          timestamp: r.timestamp || 0
+        });
+      }
+    });
+  });
+
+  teamAchievements.sort((a, b) => b.timestamp - a.timestamp);
+
+  const directScores = appData.teamDirectScores[teamId] || {};
+  let totalDirectPoints = 0;
+  CATEGORIES.forEach(cat => { totalDirectPoints += (directScores[cat] || 0); });
+  const totalStudentPoints = teamStudents.reduce((acc, s) => acc + (s.totalPoints || 0), 0);
+
+  // Rank badge decoration
+  const medalIcons = ['fa-medal text-yellow-500', 'fa-medal text-gray-400', 'fa-medal text-amber-600'];
+  const rankMedal = teamRank <= 3 ? medalIcons[teamRank - 1] : 'fa-trophy text-orange-500';
+
+  // Quick Team Switcher Pills
+  const teamSwitcherHtml = teamsArray.map((t, idx) => {
+    const isCurrent = t.id === teamId;
+    return `
+      <a href="#/team/${t.id}" class="flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap border ${
+        isCurrent
+          ? 'bg-gray-900 text-white border-gray-900 shadow-md shadow-black/10 scale-105'
+          : 'bg-white/60 text-gray-700 border-white/60 hover:bg-white hover:text-orange-600'
+      }">
+        <span class="w-2 h-2 rounded-full ${isCurrent ? 'bg-orange-400' : 'bg-gray-400'}"></span>
+        <span>${sanitize(t.name)}</span>
+        <span class="px-2 py-0.5 rounded-lg text-[10px] ${isCurrent ? 'bg-white/20 text-white' : 'bg-black/5 text-gray-600'} font-black">${t.totalPoints} pts</span>
+      </a>`;
+  }).join('');
+
+  // Category Breakdown Progress Cards
+  const maxCatPoints = Math.max(...CATEGORIES.map(cat => tData.categoryPoints?.[cat] || 0), 1);
+  const categoryCardsHtml = CATEGORIES.map(cat => {
+    const pts = tData.categoryPoints?.[cat] || 0;
+    const catStudentsCount = teamStudents.filter(s => s.category === cat).length;
+    const pct = Math.round((pts / maxCatPoints) * 100);
+    const catColor = CATEGORY_COLORS[cat] || { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200', dot: 'bg-gray-500' };
+
+    return `
+      <div class="bg-white/60 backdrop-blur-xl border border-white/60 rounded-2xl p-4 shadow-sm hover:bg-white/80 transition-all flex flex-col justify-between">
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            ${glassCategoryBadge(cat)}
+            <span class="text-xs font-bold text-gray-500">${catStudentsCount} students</span>
+          </div>
+          <p class="text-2xl font-black text-gray-900 mt-1">${pts} <span class="text-xs font-bold text-gray-400 font-normal">pts</span></p>
+        </div>
+        <div class="mt-4">
+          <div class="h-1.5 w-full bg-black/5 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full transition-all duration-700" style="width: ${pct}%"></div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Student Roster List Items
+  const studentRowsHtml = teamStudents.map((s, index) => {
+    const avatarUrl = `https://raw.githubusercontent.com/Nazimcp-git/azinco/refs/heads/main/images/${encodeURIComponent(s.chestNo)}.jpg`;
+    const initials = sanitize((s.name || 'ST').slice(0, 2).toUpperCase());
+
+    return `
+      <div class="team-student-item bg-white/60 hover:bg-white/90 backdrop-blur-xl border ${s.isTeamLeader ? 'border-amber-400/80 bg-amber-50/40 shadow-amber-500/10' : 'border-white/60'} rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
+           data-category="${sanitize(s.category || '')}"
+           data-name="${sanitize(s.name || '')}"
+           data-chest="${sanitize(s.chestNo || '')}"
+           data-class="${sanitize(s.className || '')}">
+        
+        <div class="flex items-center gap-4 min-w-0">
+          <!-- Student Avatar -->
+          <div class="w-12 h-12 rounded-2xl overflow-hidden bg-white border border-black/5 flex-shrink-0 shadow-sm relative group-hover:scale-105 transition-transform">
+            <img src="${avatarUrl}" alt="${sanitize(s.name)}" loading="lazy"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                 class="w-full h-full object-cover" />
+            <div class="w-full h-full hidden items-center justify-center font-black text-xs text-orange-600 bg-orange-100">
+              ${initials}
+            </div>
+            ${s.isTeamLeader ? `
+              <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] shadow-sm">
+                <i class="fas fa-crown"></i>
+              </div>` : ''}
+          </div>
+
+          <!-- Student Information -->
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-0.5">
+              <span class="px-2 py-0.5 rounded-lg bg-black/5 text-gray-800 font-mono font-black text-xs">
+                #${sanitize(s.chestNo)}
+              </span>
+              ${s.isTeamLeader ? `
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-500 text-white text-[10px] font-black uppercase tracking-wider shadow-sm">
+                  <i class="fas fa-crown text-[9px]"></i> Team Leader
+                </span>` : ''}
+              ${glassCategoryBadge(s.category)}
+            </div>
+            <a href="#/student/${s.id}" class="block">
+              <h4 class="font-bold text-gray-900 text-base group-hover:text-orange-600 transition-colors truncate">
+                ${sanitize(s.name)}
+              </h4>
+            </a>
+            <p class="text-[11px] text-gray-500 mt-0.5 font-medium">
+              Class: <span class="font-bold text-gray-700">${sanitize(s.className || 'N/A')}</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Student Points & Action -->
+        <div class="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-black/5">
+          <div class="text-left sm:text-right">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Points</span>
+            <span class="text-xl font-black text-gray-900">${s.totalPoints || 0}</span>
+          </div>
+          <a href="#/student/${s.id}" class="w-9 h-9 rounded-xl bg-white/80 border border-white/60 hover:bg-orange-500 hover:text-white flex items-center justify-center text-gray-500 text-xs shadow-sm transition-all flex-shrink-0" title="View Student Profile">
+            <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+
+      </div>`;
+  }).join('');
+
+  // Results & Achievements List Items
+  const resultsRowsHtml = teamAchievements.length === 0
+    ? `<div class="py-12 text-center text-gray-500 font-medium bg-white/30 backdrop-blur-md rounded-2xl border border-dashed border-black/10">No competition results published for this team yet.</div>`
+    : teamAchievements.map(r => {
+        let prizeBadges = [];
+        if (r.position && r.position !== 'none') {
+          prizeBadges.push(`<span class="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 border border-amber-500/20 font-bold text-xs"><i class="fas fa-trophy mr-1 text-amber-600"></i>${POSITION_LABELS[r.position] || r.position}</span>`);
+        }
+        if (r.grade && r.grade !== 'none') {
+          prizeBadges.push(`<span class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-700 border border-blue-500/20 font-bold text-xs"><i class="fas fa-medal mr-1 text-blue-600"></i>${GRADE_LABELS[r.grade] || r.grade}</span>`);
+        }
+
+        return `
+          <div class="bg-white/60 backdrop-blur-xl border border-white/60 rounded-2xl p-5 shadow-sm hover:bg-white/80 transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 group">
+            <div>
+              <div class="flex items-center gap-2 mb-1.5">
+                ${glassCategoryBadge(r.category)}
+                <span class="text-[9px] uppercase tracking-widest font-bold text-gray-500 bg-black/5 px-2 py-0.5 rounded-md">${r.stageType === 'non-stage' ? 'Non-Stage' : 'Stage'}</span>
+              </div>
+              <h4 class="font-black text-gray-900 text-base group-hover:text-orange-600 transition-colors">
+                ${sanitize(r.programName)}
+              </h4>
+              <div class="flex items-center gap-2 mt-1 text-xs text-gray-600">
+                <span>By</span>
+                <a href="#/student/${r.studentId}" class="font-bold text-gray-800 hover:text-orange-600 hover:underline">
+                  ${sanitize(r.studentName)} (#${sanitize(r.chestNo)})
+                </a>
+                <span>• Class ${sanitize(r.className || 'N/A')}</span>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 sm:self-center">
+              ${prizeBadges.join('')}
+            </div>
+          </div>`;
+      }).join('');
+
+  return `
+    <div class="space-y-8 pb-16 animate-fade-in max-w-6xl mx-auto mt-6">
+      
+      <!-- Top Navigation & Quick Switcher -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+        <div class="flex items-center gap-2">
+          <a href="#/" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/60 hover:bg-white border border-white/60 text-xs font-bold text-gray-700 hover:text-orange-600 shadow-sm transition-all">
+            <i class="fas fa-arrow-left text-[10px]"></i> Dashboard
+          </a>
+          <span class="text-gray-400 font-bold">/</span>
+          <span class="text-xs font-black text-gray-500 uppercase tracking-wider">Team Profile</span>
+        </div>
+        
+        <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
+          ${teamSwitcherHtml}
+        </div>
+      </div>
+
+      <!-- Hero Header Card -->
+      <div class="bg-gradient-to-br from-white/80 via-white/40 to-white/10 backdrop-blur-3xl backdrop-saturate-200 border-[0.5px] border-white/70 rounded-[2.5rem] p-8 sm:p-10 shadow-[0_12px_40px_0_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.9)] relative overflow-hidden">
+        <div class="absolute -top-24 -right-24 w-80 h-80 bg-orange-400/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-80 h-80 bg-teal-400/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-orange-500/10 text-orange-600 border border-orange-500/20 text-xs font-black uppercase tracking-wider mb-3">
+              <i class="fas ${rankMedal}"></i> Overall Rank #${teamRank} of ${teamsArray.length}
+            </div>
+            <h1 class="text-4xl sm:text-5xl font-black text-gray-900 tracking-tighter leading-none mb-2">
+              ${sanitize(team.name)}
+            </h1>
+            <p class="text-sm text-gray-600 font-medium">Official Team Roster, Performance Breakdown & Summary</p>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 self-stretch sm:self-auto">
+            <!-- Points Display -->
+            <div class="bg-white/60 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/80 shadow-sm text-center min-w-[140px]">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Total Points</span>
+              <p class="text-4xl sm:text-5xl font-black text-gray-900 tracking-tighter leading-none mt-1 text-orange-600">
+                ${tData.totalPoints}
+              </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div>
+              <a href="#/leaderboard" class="px-6 py-3 rounded-2xl bg-gray-900 hover:bg-black text-white font-bold text-xs transition-colors shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-chart-bar"></i> Full Leaderboard
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5 Key Summary Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-8 pt-8 border-t border-black/5 relative z-10">
+          <div class="bg-white/50 backdrop-blur-md p-4 rounded-2xl border border-white/70 shadow-sm">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Total Students</span>
+            <p class="text-2xl font-black text-gray-900 mt-1">${teamStudents.length}</p>
+            <span class="text-[10px] text-gray-400 font-medium">Registered</span>
+          </div>
+
+          <div class="bg-white/50 backdrop-blur-md p-4 rounded-2xl border border-white/70 shadow-sm">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Podiums Won</span>
+            <p class="text-2xl font-black text-gray-900 mt-1">${totalPodiums}</p>
+            <span class="text-[10px] text-orange-600 font-bold">${firstCount} First • ${secondCount} Sec • ${thirdCount} 3rd</span>
+          </div>
+
+          <div class="bg-white/50 backdrop-blur-md p-4 rounded-2xl border border-white/70 shadow-sm">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Grades Won</span>
+            <p class="text-2xl font-black text-gray-900 mt-1">${aGradeCount + bGradeCount}</p>
+            <span class="text-[10px] text-blue-600 font-bold">${aGradeCount} 'A' • ${bGradeCount} 'B'</span>
+          </div>
+
+          <div class="bg-white/50 backdrop-blur-md p-4 rounded-2xl border border-white/70 shadow-sm">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Direct Points</span>
+            <p class="text-2xl font-black text-gray-900 mt-1">${totalDirectPoints}</p>
+            <span class="text-[10px] text-gray-400 font-medium">Group / Team Items</span>
+          </div>
+
+          <div class="bg-white/50 backdrop-blur-md p-4 rounded-2xl border border-white/70 shadow-sm col-span-2 sm:col-span-1">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Penalties</span>
+            <p class="text-2xl font-black ${teamPenalties > 0 ? 'text-red-600' : 'text-gray-900'} mt-1">
+              ${teamPenalties > 0 ? `-${teamPenalties}` : '0'}
+            </p>
+            <span class="text-[10px] ${teamPenalties > 0 ? 'text-red-500 font-bold' : 'text-gray-400 font-medium'}">
+              ${teamPenalties > 0 ? 'Deducted Points' : 'Clean Record'}
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Team Leader Spotlight (Specification: First Chest Number) -->
+      ${leader ? `
+        <div class="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-yellow-500/15 backdrop-blur-2xl border border-amber-400/40 rounded-[2.5rem] p-6 sm:p-8 shadow-lg shadow-amber-500/5 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-64 h-64 bg-amber-400/15 rounded-full blur-3xl -z-0"></div>
+          
+          <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10 text-center sm:text-left">
+            <!-- Leader Avatar -->
+            <div class="relative flex-shrink-0">
+              <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden border-2 border-amber-400 shadow-xl bg-white relative group">
+                <img src="https://raw.githubusercontent.com/Nazimcp-git/azinco/refs/heads/main/images/${encodeURIComponent(leader.chestNo)}.jpg"
+                     alt="${sanitize(leader.name)}" loading="lazy"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                     class="w-full h-full object-cover" />
+                <div class="w-full h-full hidden items-center justify-center bg-gradient-to-br from-amber-100 to-orange-100 text-amber-800 font-black text-2xl">
+                  ${sanitize((leader.name || 'TL').slice(0, 2).toUpperCase())}
+                </div>
+              </div>
+              <span class="absolute -bottom-2 -right-2 w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-500 text-white flex items-center justify-center text-sm shadow-md border-2 border-white">
+                <i class="fas fa-crown"></i>
+              </span>
+            </div>
+
+            <!-- Leader Details -->
+            <div class="flex-grow min-w-0">
+              <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
+                <span class="px-3 py-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-sm inline-flex items-center gap-1.5">
+                  <i class="fas fa-crown"></i> TEAM LEADER
+                </span>
+                <span class="px-3 py-1 bg-white/80 text-gray-900 font-mono font-black text-xs rounded-xl border border-white/80 shadow-sm">
+                  CHEST #${sanitize(leader.chestNo)}
+                </span>
+                ${glassCategoryBadge(leader.category)}
+              </div>
+
+              <a href="#/student/${leader.id}" class="group inline-block">
+                <h3 class="text-2xl sm:text-3xl font-black text-gray-900 group-hover:text-orange-600 transition-colors tracking-tight">
+                  ${sanitize(leader.name)}
+                </h3>
+              </a>
+
+              <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 mt-2 text-xs text-gray-600 font-medium">
+                <span>Class: <strong class="text-gray-900 font-bold">${sanitize(leader.className || 'N/A')}</strong></span>
+                <span>•</span>
+                <span>Individual Points: <strong class="text-orange-600 font-bold">${leader.totalPoints || 0} pts</strong></span>
+              </div>
+            </div>
+
+            <!-- Profile CTA -->
+            <div class="sm:self-center">
+              <a href="#/student/${leader.id}" class="px-5 py-3 rounded-2xl bg-white hover:bg-gray-50 text-gray-900 font-bold text-xs shadow-sm border border-amber-300/60 hover:text-orange-600 transition-all inline-flex items-center gap-2">
+                Leader Profile <i class="fas fa-arrow-right text-[10px]"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Penalty Notification (If any) -->
+      ${penaltiesList.length > 0 ? `
+        <div class="bg-red-500/10 backdrop-blur-xl border border-red-500/20 rounded-3xl p-6 shadow-sm">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-2xl bg-red-500 text-white flex items-center justify-center flex-shrink-0 text-sm shadow-md">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="flex-grow">
+              <h3 class="text-base font-bold text-red-900">Penalty Points Deducted: -${teamPenalties} pts</h3>
+              <p class="text-xs text-red-700 mt-0.5">The following infractions were recorded for this team:</p>
+              <div class="mt-3 space-y-2">
+                ${penaltiesList.map(p => `
+                  <div class="flex justify-between items-center py-1.5 px-3 rounded-xl bg-white/60 border border-red-200 text-xs">
+                    <span class="font-medium text-gray-800">${sanitize(p.reason || 'Team infraction')}</span>
+                    <span class="font-black text-red-600">-${p.points} pts</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Interactive View Tabs -->
+      <div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div id="team-view-tabs" class="flex flex-wrap p-1.5 bg-white/40 backdrop-blur-md border border-white/60 rounded-2xl shadow-sm gap-1">
+            <button data-view="students" class="team-view-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-gray-900 shadow-sm border border-white/60">
+              <i class="fas fa-user-graduate mr-1.5 text-orange-600"></i> Students Roster (${teamStudents.length})
+            </button>
+            <button data-view="results" class="team-view-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all text-gray-600 hover:text-gray-900 hover:bg-white/40">
+              <i class="fas fa-trophy mr-1.5 text-yellow-500"></i> Program Wins (${teamAchievements.length})
+            </button>
+            <button data-view="categories" class="team-view-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all text-gray-600 hover:text-gray-900 hover:bg-white/40">
+              <i class="fas fa-layer-group mr-1.5 text-purple-500"></i> Category Breakdown
+            </button>
+          </div>
+
+          <!-- Counter badge -->
+          <div class="text-xs font-bold text-gray-500 bg-white/50 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/60">
+            Showing <span id="team-filtered-count" class="text-gray-900 font-black">${teamStudents.length}</span> students
+          </div>
+        </div>
+
+        <!-- SECTION 1: STUDENTS ROSTER -->
+        <div id="team-section-students" class="team-view-section space-y-6">
+          <!-- Search & Filter Controls -->
+          <div class="flex flex-col md:flex-row gap-3">
+            <div class="relative flex-grow">
+              <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+              <input type="text" id="team-student-search-input" placeholder="Search by student name, chest no, or class..."
+                class="w-full pl-10 pr-4 py-3 bg-white/60 backdrop-blur-md border border-white/60 shadow-sm rounded-2xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium">
+            </div>
+
+            <!-- Category filter pill list -->
+            <div class="overflow-x-auto hide-scrollbar pb-1">
+              <div id="team-cat-filter-container" class="flex w-max bg-white/40 backdrop-blur-md border border-white/60 rounded-2xl p-1 shadow-sm gap-1">
+                <button data-category="All" class="category-filter-btn flex-shrink-0 px-4 py-1.5 text-xs font-bold rounded-xl transition-all bg-orange-500 text-white shadow-sm">All</button>
+                ${CATEGORIES.map(c => `
+                  <button data-category="${c}" class="category-filter-btn flex-shrink-0 px-4 py-1.5 text-xs font-bold rounded-xl transition-all text-gray-600 hover:text-gray-900 hover:bg-white/50">${c}</button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Students List (Leaders at the top, sorted strictly by chest number) -->
+          <div id="team-students-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${studentRowsHtml}
+          </div>
+
+          <!-- Empty Search State -->
+          <div id="team-students-empty" class="hidden py-16 text-center bg-white/30 backdrop-blur-md rounded-3xl border border-dashed border-black/10">
+            <i class="fas fa-search text-3xl text-gray-400 mb-3 opacity-50"></i>
+            <h4 class="text-base font-bold text-gray-800">No matching students found</h4>
+            <p class="text-xs text-gray-500 mt-1">Try adjusting your search terms or category filter.</p>
+          </div>
+        </div>
+
+        <!-- SECTION 2: PROGRAM RESULTS -->
+        <div id="team-section-results" class="team-view-section space-y-4 hidden">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${resultsRowsHtml}
+          </div>
+        </div>
+
+        <!-- SECTION 3: CATEGORY BREAKDOWN -->
+        <div id="team-section-categories" class="team-view-section space-y-6 hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${categoryCardsHtml}
+          </div>
+        </div>
+
+      </div>
+
+    </div>`;
+}
+
+/**
+ * Event Listeners for the Team Profile page
+ */
+window.attachTeamPageListeners = function() {
+  // Category filter
+  const catContainer = document.getElementById('team-cat-filter-container');
+  if (catContainer) {
+    catContainer.addEventListener('click', e => {
+      const btn = e.target.closest('.category-filter-btn');
+      if (!btn) return;
+      const cat = btn.dataset.category;
+      catContainer.querySelectorAll('.category-filter-btn').forEach(b => {
+        const active = b.dataset.category === cat;
+        b.className = `category-filter-btn flex-shrink-0 px-4 py-1.5 text-xs font-bold rounded-xl transition-all ${
+          active ? 'bg-orange-500 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+        }`;
+      });
+      filterTeamStudents();
+    });
+  }
+
+  // Live search input
+  const searchInput = document.getElementById('team-student-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      filterTeamStudents();
+    });
+  }
+
+  // View tab switcher
+  const tabsContainer = document.getElementById('team-view-tabs');
+  if (tabsContainer) {
+    tabsContainer.addEventListener('click', e => {
+      const btn = e.target.closest('.team-view-tab-btn');
+      if (!btn) return;
+      const targetView = btn.dataset.view;
+      tabsContainer.querySelectorAll('.team-view-tab-btn').forEach(b => {
+        const active = b.dataset.view === targetView;
+        b.className = `team-view-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          active ? 'bg-white text-gray-900 shadow-sm border border-white/60' : 'text-gray-600 hover:text-gray-900 hover:bg-white/40'
+        }`;
+      });
+      document.querySelectorAll('.team-view-section').forEach(sec => {
+        sec.classList.toggle('hidden', sec.id !== `team-section-${targetView}`);
+      });
+    });
+  }
+};
+
+/**
+ * Filter team students by category and search keyword
+ */
+window.filterTeamStudents = function() {
+  const search = (document.getElementById('team-student-search-input')?.value || '').toLowerCase().trim();
+  const activeBtn = document.querySelector('#team-cat-filter-container .bg-orange-500');
+  const cat = activeBtn?.dataset.category || 'All';
+
+  let visibleCount = 0;
+  document.querySelectorAll('.team-student-item').forEach(el => {
+    const sCat = el.dataset.category || '';
+    const sName = (el.dataset.name || '').toLowerCase();
+    const sChest = (el.dataset.chest || '').toLowerCase();
+    const sClass = (el.dataset.class || '').toLowerCase();
+
+    const matchesCat = (cat === 'All' || sCat === cat);
+    const matchesSearch = (!search || sName.includes(search) || sChest.includes(search) || sClass.includes(search));
+
+    const visible = matchesCat && matchesSearch;
+    el.style.display = visible ? '' : 'none';
+    if (visible) visibleCount++;
+  });
+
+  const countEl = document.getElementById('team-filtered-count');
+  if (countEl) countEl.textContent = visibleCount;
+  const noMatchesEl = document.getElementById('team-students-empty');
+  if (noMatchesEl) noMatchesEl.classList.toggle('hidden', visibleCount > 0);
 };

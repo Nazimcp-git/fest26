@@ -30,18 +30,13 @@ let activeStatusStageFilter = 'All';
 // Keys are Firebase paths, values are the data (null = delete)
 let pendingWrites = {};
 
-// Cache for memoized calculations
-const _calcCache = {
-  teamScores: null,
-  studentScores: null,
-  lastDataHash: null
-};
+// Cache for memoized calculations — generation-based invalidation
+let _calcGeneration = 0;
+const _calcCache = {};
 
 /**
  * Invalidate calculation caches. Called whenever appData changes.
  */
 function invalidateCache() {
-  _calcCache.teamScores = null;
-  _calcCache.studentScores = null;
-  _calcCache.lastDataHash = null;
+  _calcGeneration++;
 }

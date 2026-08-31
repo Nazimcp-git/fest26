@@ -4,6 +4,11 @@
 /** Active listeners for cleanup */
 const _activeListeners = [];
 
+/** Throttle public re-renders to avoid thrashing */
+let _lastRenderTime = 0;
+let _pendingRenderTimer = null;
+const RENDER_THROTTLE_MS = 2000;
+
 /**
  * Opens a real-time listener on the root of the database and
  * keeps appData in sync. Triggers the router after the first load.
@@ -39,7 +44,20 @@ function syncData() {
       // Fresh data shows up when the user switches tabs.
       const hash = window.location.hash.slice(1) || '/';
       if (!hash.startsWith('/admin')) {
-        router(true);
+        // Throttle public re-renders: at most once per RENDER_THROTTLE_MS
+        const now = Date.now();
+        const elapsed = now - _lastRenderTime;
+        if (elapsed >= RENDER_THROTTLE_MS) {
+          _lastRenderTime = now;
+          if (_pendingRenderTimer) { clearTimeout(_pendingRenderTimer); _pendingRenderTimer = null; }
+          router(true);
+        } else if (!_pendingRenderTimer) {
+          _pendingRenderTimer = setTimeout(() => {
+            _pendingRenderTimer = null;
+            _lastRenderTime = Date.now();
+            router(true);
+          }, RENDER_THROTTLE_MS - elapsed);
+        }
       }
     }
   }, error => {
@@ -64,6 +82,7 @@ function syncData() {
 
   _activeListeners.push({ ref: rootRef, event: 'value', callback: listener });
 }
+
 
 /**
  * Cleanup all active Firebase listeners.

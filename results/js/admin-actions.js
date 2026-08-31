@@ -54,9 +54,15 @@ async function flushPendingWrites() {
   try {
     await db.ref().update(pendingWrites);
     
-    // NOTE: We intentionally do NOT recalculate scores here.
-    // Scores are only updated when the admin clicks "Update Scores".
-    // This ensures the public leaderboard is controlled explicitly.
+    // Check if any published results were changed — recalculate if needed
+    const hasPublished = Object.entries(pendingWrites).some(([path, val]) => 
+      path.endsWith('/status') && (val === 'published' || val === 'pending')
+    );
+    const hasDeletes = Object.values(pendingWrites).some(v => v === null);
+    
+    if (hasPublished || hasDeletes) {
+      await recalculateAllPoints();
+    }
     
     pendingWrites = {};
     updateSaveButton();
@@ -99,69 +105,6 @@ async function handleAdminListClick(e) {
   const editBtn = target.closest(".edit-result-btn");
   if (editBtn) {
     await editResult(editBtn.dataset.id);
-    return;
-  }
-
-  // ── Live Announce: Publish Now writes IMMEDIATELY to Firebase ──
-
-  if (activeAdminTab === 'announce' && target.closest(".publish-btn")) {
-    const publishBtn = target.closest(".publish-btn");
-    const id = publishBtn.dataset.id;
-    const resultCard = publishBtn.closest('.bg-white.rounded-xl');
-
-    // Disable button to prevent double-clicks
-    publishBtn.disabled = true;
-    publishBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>Publishing...';
-
-    try {
-      // Write directly to Firebase — immediate, not queued
-      await db.ref(`results/${id}/status`).set('published');
-
-      // Update local appData so score calculations pick it up
-      if (appData.results[id]) {
-        appData.results[id].status = 'published';
-      }
-      invalidateCache();
-
-      // Animate the card out
-      if (resultCard) {
-        resultCard.style.transition = 'all 0.4s ease';
-        resultCard.style.opacity = '0';
-        resultCard.style.transform = 'translateX(40px) scale(0.95)';
-        resultCard.style.maxHeight = resultCard.scrollHeight + 'px';
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            resultCard.style.maxHeight = '0';
-            resultCard.style.padding = '0';
-            resultCard.style.marginBottom = '0';
-            resultCard.style.borderWidth = '0';
-            resultCard.style.overflow = 'hidden';
-            setTimeout(() => {
-              resultCard.remove();
-              // If no more cards left in the category group, remove the group
-              document.querySelectorAll('#admin-tab-content .mb-10').forEach(group => {
-                if (group.querySelectorAll('.bg-white.rounded-xl').length === 0) {
-                  group.remove();
-                }
-              });
-              // If everything is published, show empty state
-              const contentArea = document.querySelector('#admin-tab-content .max-w-5xl > div:last-child');
-              if (contentArea && contentArea.querySelectorAll('.bg-white.rounded-xl').length === 0) {
-                contentArea.innerHTML = emptyState('fa-check-circle', 'All results published!', 'All ready results have been announced.');
-              }
-            }, 300);
-          }, 50);
-        });
-      }
-
-      const resultName = appData.results[id] ? appData.results[id].programName : 'Result';
-      ToastEngine.success(`"${resultName}" published live!`);
-
-    } catch (err) {
-      ToastEngine.error("Publish failed: " + err.message);
-      publishBtn.disabled = false;
-      publishBtn.innerHTML = '<i class="fas fa-bullhorn mr-2"></i>Publish Now';
-    }
     return;
   }
 
@@ -262,7 +205,9 @@ async function handleAdminListClick(e) {
 
   const updateScoresBtn = target.closest('#update-all-scores-btn');
   if (updateScoresBtn) {
-    const doUpdate = async () => {
+    ModalEngine.confirm("Recalculate all public scores?", { title: 'Update Scores' }).then(async confirmed => {
+      if (!confirmed) return;
+      
       // Flush any pending writes first
       if (Object.keys(pendingWrites).length > 0) {
         await flushPendingWrites();
@@ -273,59 +218,37 @@ async function handleAdminListClick(e) {
       updateScoresBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>Updating...';
       try {
         await recalculateAllPoints();
-        ToastEngine.success("All scores updated — leaderboard refreshed!");
+        ToastEngine.success("All scores updated");
       } catch(err) {
         ToastEngine.error("Error: " + err.message);
       } finally {
         updateScoresBtn.disabled = false;
         updateScoresBtn.innerHTML = originalHtml;
       }
-    };
-
-    // In announce tab, skip confirmation for faster live workflow
-    if (activeAdminTab === 'announce') {
-      doUpdate();
-    } else {
-      ModalEngine.confirm("Recalculate all public scores?", { title: 'Update Scores' }).then(confirmed => {
-        if (confirmed) doUpdate();
-      });
-    }
+    });
     return;
   }
 
-  // ── Delete — instant for penalties, queued for others ───────────────
+  // ── Delete — queue as null value ────────────────────────────
 
   const deleteBtn = target.closest(".delete-btn");
   if (deleteBtn) {
     const { id, collection } = deleteBtn.dataset;
-    const itemType = collection === 'studentPenalties' ? 'student penalty' : collection === 'teamPenalties' ? 'team penalty' : collection.slice(0,-1);
-    
-    ModalEngine.confirm(`Delete this ${itemType}?`, { title: 'Confirm Delete', danger: true, confirmText: 'Delete' }).then(async confirmed => {
+    ModalEngine.confirm(`Delete this ${collection.slice(0,-1)}?`, { title: 'Confirm Delete', danger: true, confirmText: 'Delete' }).then(confirmed => {
       if (!confirmed) return;
-
-      if (collection === 'studentPenalties' || collection === 'teamPenalties') {
-        try {
-          await db.ref(`${collection}/${id}`).remove();
-          invalidateCache();
-          ToastEngine.success(`${itemType} deleted & scores restored`);
-          loadItemsList('penalty');
-        } catch (err) {
-          ToastEngine.error("Failed to delete penalty: " + err.message);
-        }
-      } else {
-        queueWrite(`${collection}/${id}`, null);
-        
-        // Dim the row visually
-        const row = deleteBtn.closest('.program-item-container')
-                  || deleteBtn.closest('div[class*="rounded-xl"]')
-                  || deleteBtn.closest('div[class*="rounded-lg"]');
-        if (row) {
-          row.style.opacity = '0.3';
-          row.style.pointerEvents = 'none';
-        }
-        
-        ToastEngine.info("Queued for deletion — click Save to Database");
+      
+      queueWrite(`${collection}/${id}`, null);
+      
+      // Dim the row visually
+      const row = deleteBtn.closest('.program-item-container')
+                || deleteBtn.closest('div[class*="rounded-xl"]')
+                || deleteBtn.closest('div[class*="rounded-lg"]');
+      if (row) {
+        row.style.opacity = '0.3';
+        row.style.pointerEvents = 'none';
       }
+      
+      ToastEngine.info("Queued for deletion — click Save to Database");
     });
     return;
   }

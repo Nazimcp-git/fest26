@@ -249,19 +249,7 @@ function openPublishResultsModal(resultId) {
             const grade = p.grade && p.grade !== 'none' ? GRADE_LABELS[p.grade] || p.grade : '—';
             return `
             <tr>
-              <td class="py-2.5 text-gray-500">
-                <div class="flex items-center gap-2">
-                  <div class="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden relative">
-                    <img src="https://raw.githubusercontent.com/Nazimcp-git/azinco/refs/heads/main/images/${encodeURIComponent(student.chestNo || '')}.jpg" alt="${sanitize(p.name || '')}"
-                      class="w-full h-full object-cover rounded-lg"
-                      onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
-                    <div class="w-full h-full rounded-lg flex items-center justify-center bg-gray-100 text-gray-500 font-mono text-[10px]">
-                      #${sanitize(student.chestNo || '—')}
-                    </div>
-                  </div>
-                  <span>${sanitize(student.chestNo || 'N/A')}</span>
-                </div>
-              </td>
+              <td class="py-2.5 text-gray-500">${sanitize(student.chestNo || 'N/A')}</td>
               <td class="py-2.5 font-medium text-gray-900">${sanitize(p.name || 'N/A')}</td>
               <td class="py-2.5 text-gray-500">${sanitize(teamObj.name || 'N/A')}</td>
               <td class="py-2.5 font-medium text-gray-800">${pos}</td>

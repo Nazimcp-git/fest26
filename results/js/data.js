@@ -23,8 +23,6 @@ function syncData() {
       teamPointsConfig:     raw.teamPointsConfig     || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 },
       teamDirectScores:     raw.teamDirectScores     || {},
       teamPenalties:        raw.teamPenalties        || {},
-      studentPenalties:     raw.studentPenalties     || {},
-      teacherJudges:        raw.teacherJudges        || {},
       participantRegistrations: raw.participantRegistrations || {}
     };
 
@@ -40,15 +38,8 @@ function syncData() {
       // The admin panel stays frozen — no scroll jumps, no re-renders.
       // Fresh data shows up when the user switches tabs.
       const hash = window.location.hash.slice(1) || '/';
-      if (hash === '/tv') {
-        // TV page: always re-render to show latest results
-        router();
-      } else if (!hash.startsWith('/admin')) {
+      if (!hash.startsWith('/admin')) {
         router(true);
-      } else {
-        if (typeof loadItemsList === 'function' && ['students', 'teams', 'programs', 'penalty', 'judges'].includes(activeAdminTab)) {
-          loadItemsList(activeAdminTab);
-        }
       }
     }
   }, error => {

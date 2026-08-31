@@ -5,25 +5,28 @@ async function renderAdminPage() {
   if (!currentUser) {
     return `
       <div class="flex items-center justify-center min-h-[calc(100vh-160px)]">
-        <div class="w-full max-w-sm bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <div class="text-center mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Admin Sign In</h2>
-            <p class="text-xs text-gray-500 mt-1">Enter your credentials to access the admin panel.</p>
+        <div class="w-full max-w-md bg-white rounded-2xl border border-gray-200/60 p-8 shadow-sm">
+          <div class="text-center mb-8">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-lock text-indigo-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Admin Access</h2>
+            <p class="text-sm text-gray-500 mt-1">Sign in to manage the festival data.</p>
           </div>
-          <form id="login-form" class="space-y-4">
+          <form id="login-form" class="space-y-5">
             <div>
-              <label for="email" class="block text-xs font-semibold text-gray-700 mb-1">Email</label>
+              <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
               <input id="email" name="email" type="email" required 
-                class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-gray-900" 
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" 
                 placeholder="admin@example.com">
             </div>
             <div>
-              <label for="password" class="block text-xs font-semibold text-gray-700 mb-1">Password</label>
+              <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
               <input id="password" name="password" type="password" required 
-                class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-gray-900" 
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" 
                 placeholder="••••••••">
             </div>
-            <button type="submit" class="w-full py-2 px-4 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-lg transition-colors">
+            <button type="submit" class="w-full flex justify-center items-center py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
               Sign in
             </button>
             <p id="login-error" class="text-red-500 text-xs text-center mt-2"></p>
@@ -33,8 +36,6 @@ async function renderAdminPage() {
   }
   return renderAdminDashboard();
 }
-
-let isAdminNavMinimized = false;
 
 async function renderAdminDashboard() {
   setTimeout(() => renderAdminTab(activeAdminTab), 0);
@@ -49,55 +50,56 @@ async function renderAdminDashboard() {
     { id: 'students', icon: 'fa-user-graduate', label: 'Students' },
     { id: 'teams', icon: 'fa-users', label: 'Teams' },
     { id: 'programs', icon: 'fa-list-alt', label: 'Programs' },
-    { id: 'judges', icon: 'fa-gavel', label: 'Judges Config' },
     { id: 'points', icon: 'fa-cog', label: 'Points Config' },
     { id: 'penalty', icon: 'fa-minus-circle', label: 'Penalty' }
   ];
 
-  const activeTabObj = tabs.find(t => t.id === activeAdminTab) || tabs[0];
-
   const tabsHtml = tabs.map(t => `
-    <button data-tab="${t.id}" class="admin-tab flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors border border-gray-200/80 bg-gray-50/50">
-      <i class="fas ${t.icon} text-xs"></i>
-      <span>${t.label}</span>
+    <button data-tab="${t.id}" class="admin-tab w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-white/40 border border-transparent hover:border-white/60 rounded-2xl transition-all text-left group">
+      <div class="w-8 h-8 rounded-xl bg-black/5 flex items-center justify-center border border-black/5 group-hover:bg-orange-500/10 group-hover:text-orange-600 transition-colors">
+        <i class="fas ${t.icon} text-sm"></i>
+      </div>
+      ${t.label}
     </button>`).join('');
 
   return `
-    <div class="max-w-7xl mx-auto pb-12 px-4 sm:px-6 lg:px-8 space-y-4 mt-6">
+    <div class="max-w-7xl mx-auto pb-12 px-4 sm:px-6 lg:px-8 animate-fade-in flex flex-col lg:flex-row gap-6 mt-8 relative z-10">
       
-      <!-- Top Minimizable Admin Header & Navigation Bar -->
-      <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm" id="admin-top-nav-card">
-        <div class="flex items-center justify-between gap-3 ${isAdminNavMinimized ? '' : 'pb-3 mb-3 border-b border-gray-100'}">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-gray-900 text-white flex items-center justify-center text-xs font-bold">
-              <i class="fas fa-user-shield"></i>
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h1 class="text-sm font-bold text-gray-900 leading-none">Admin Panel</h1>
-                ${isAdminNavMinimized ? `<span id="minimized-tab-badge" class="px-2.5 py-0.5 bg-gray-900 text-white rounded text-[11px] font-bold"><i class="fas ${activeTabObj.icon} mr-1"></i>${activeTabObj.label}</span>` : ''}
-              </div>
-              <p class="text-[10px] text-gray-400 font-medium mt-0.5">Festival Management</p>
-            </div>
-          </div>
-          <button id="toggle-admin-nav-btn" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5">
-            <i class="fas ${isAdminNavMinimized ? 'fa-chevron-down' : 'fa-chevron-up'} text-xs"></i>
-            <span>${isAdminNavMinimized ? 'Expand Menu' : 'Minimize Menu'}</span>
-          </button>
-        </div>
+      <!-- Sidebar Toggle Button (Mobile Only) -->
+      <button id="admin-sidebar-toggle" class="lg:hidden fixed top-[5.5rem] left-4 z-[60] w-10 h-10 flex items-center justify-center bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl shadow-lg text-gray-700 hover:bg-white/60 hover:text-orange-600 transition-all" title="Toggle sidebar">
+        <i class="fas fa-bars text-sm"></i>
+      </button>
 
-        <!-- Non-scrollable All-in-One Flex Wrap Grid -->
-        <div id="admin-tabs-wrapper" class="${isAdminNavMinimized ? 'hidden' : ''}">
-          <div class="flex flex-wrap items-center gap-2" id="admin-tabs">
-            ${tabsHtml}
+      <!-- Sidebar Backdrop (Mobile Only) -->
+      <div id="admin-sidebar-backdrop" class="lg:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-[59] hidden transition-opacity"></div>
+      
+      <!-- Sidebar -->
+      <aside id="admin-sidebar" class="fixed lg:sticky top-0 lg:top-24 left-0 h-full lg:h-auto w-72 z-[60] lg:z-10 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex-shrink-0">
+        <div class="h-full overflow-y-auto lg:overflow-visible pt-24 lg:pt-0 pb-8 lg:pb-0 px-4 lg:px-0">
+          <div class="bg-gradient-to-br from-white/80 to-white/30 backdrop-blur-3xl backdrop-saturate-[2.5] border-[0.5px] border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-[2rem] p-6 lg:top-24">
+            <div class="flex items-center justify-between mb-6 px-2">
+              <div>
+                <h1 class="text-2xl font-black text-gray-900 tracking-tighter">Admin Panel</h1>
+                <p class="text-xs text-gray-500 font-medium mt-1 uppercase tracking-widest">Manage Festival</p>
+              </div>
+              <button id="admin-sidebar-close" class="lg:hidden w-8 h-8 flex items-center justify-center rounded-xl text-gray-500 hover:text-gray-900 hover:bg-black/5 transition-colors">
+                <i class="fas fa-times text-sm"></i>
+              </button>
+            </div>
+            <div class="flex flex-col gap-2" id="admin-tabs">
+              ${tabsHtml}
+            </div>
           </div>
         </div>
-      </div>
+      </aside>
       
-      <!-- Main Content Container -->
-      <main class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm min-h-[600px]">
-        <div id="admin-tab-content">
-          ${spinner('lg')}
+      <!-- Main Content -->
+      <main class="flex-grow min-w-0">
+        <div class="bg-gradient-to-br from-white/60 to-white/10 backdrop-blur-3xl backdrop-saturate-[2.5] border-[0.5px] border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-[2rem] p-6 sm:p-8 min-h-[600px] relative overflow-hidden group">
+          <div class="absolute inset-0 bg-gradient-to-b from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-[2rem]"></div>
+          <div id="admin-tab-content" class="relative z-10">
+            ${spinner('lg')}
+          </div>
         </div>
       </main>
 
@@ -107,11 +109,11 @@ async function renderAdminDashboard() {
 // Global reference for table components
 const TableComponents = {
   header: (columns) => `
-    <thead class="bg-gray-50 border-b border-gray-200">
-      <tr>${columns.map(c => `<th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider ${c.cls || ''}">${c.label}</th>`).join('')}</tr>
+    <thead class="bg-gray-50/50">
+      <tr>${columns.map(c => `<th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${c.cls || ''}">${c.label}</th>`).join('')}</tr>
     </thead>`,
   wrapper: (content) => `
-    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-xl border border-gray-200/60 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           ${content}
@@ -126,34 +128,21 @@ async function renderAdminTab(tabId) {
 
   document.querySelectorAll(".admin-tab").forEach(tab => {
     const isActive = tab.dataset.tab === tabId;
-    tab.classList.toggle("bg-gray-900", isActive);
-    tab.classList.toggle("text-white", isActive);
-    tab.classList.toggle("font-semibold", isActive);
-    tab.classList.toggle("shadow-xs", isActive);
-    tab.classList.toggle("border-gray-900", isActive);
-    tab.classList.toggle("text-gray-700", !isActive);
-    tab.classList.toggle("hover:bg-gray-100", !isActive);
-    tab.classList.toggle("hover:text-gray-900", !isActive);
+    tab.classList.toggle("bg-white/60", isActive);
+    tab.classList.toggle("shadow-sm", isActive);
+    tab.classList.toggle("border-white/50", isActive);
+    tab.classList.toggle("text-gray-900", isActive);
+    tab.classList.toggle("text-gray-600", !isActive);
+    tab.classList.toggle("border-transparent", !isActive);
+    
+    // Icon styling
+    const iconContainer = tab.querySelector('div');
+    if (iconContainer) {
+       iconContainer.classList.toggle("bg-orange-500/10", isActive);
+       iconContainer.classList.toggle("text-orange-600", isActive);
+       iconContainer.classList.toggle("bg-black/5", !isActive);
+    }
   });
-
-  const minBadge = document.getElementById('minimized-tab-badge');
-  if (minBadge) {
-    const tabObj = [
-      { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
-      { id: 'status', icon: 'fa-tasks', label: 'Program Status' },
-      { id: 'results', icon: 'fa-upload', label: 'Upload Results' },
-      { id: 'publish', icon: 'fa-check-double', label: 'Publish' },
-      { id: 'announce', icon: 'fa-bullhorn', label: 'Announce Live' },
-      { id: 'preview', icon: 'fa-eye', label: 'Score Preview' },
-      { id: 'students', icon: 'fa-user-graduate', label: 'Students' },
-      { id: 'teams', icon: 'fa-users', label: 'Teams' },
-      { id: 'programs', icon: 'fa-list-alt', label: 'Programs' },
-      { id: 'judges', icon: 'fa-gavel', label: 'Judges Config' },
-      { id: 'points', icon: 'fa-cog', label: 'Points Config' },
-      { id: 'penalty', icon: 'fa-minus-circle', label: 'Penalty' }
-    ].find(t => t.id === tabId);
-    if (tabObj) minBadge.innerHTML = `<i class="fas ${tabObj.icon} mr-1"></i>${tabObj.label}`;
-  }
 
   let html = '';
   switch (tabId) {
@@ -166,7 +155,6 @@ async function renderAdminTab(tabId) {
     case 'students':  html = renderStudentsTab(); break;
     case 'teams':     html = renderTeamsTab(); break;
     case 'programs':  html = renderProgramsTab(); break;
-    case 'judges':    html = renderJudgesTab(); break;
     case 'points':    html = renderPointsConfigTab(); break;
     case 'penalty':   html = renderPenaltyTab(); break;
   }
@@ -175,41 +163,24 @@ async function renderAdminTab(tabId) {
 
   // Post-render actions
   if (tabId === "results") loadRecentResults();
-  if (['students', 'teams', 'programs', 'penalty', 'judges'].includes(tabId)) loadItemsList(tabId);
+  if (['students', 'teams', 'programs', 'penalty'].includes(tabId)) loadItemsList(tabId);
 }
 
 // ── Tab Renderers ────────────────────────────────────────────────────────
 
 async function renderDashboardTab() {
-  const { teamsArray, studentsArray, classesArray } = calculateAllScoresInternal();
+  const { teamsArray, studentsArray } = calculateAllScoresInternal();
 
-  const allResults = getDataAsArray("results");
-  const pendingCount   = allResults.filter(r => r.status === "pending" || !r.status).length;
-  const readyCount     = allResults.filter(r => r.status === "ready").length;
-  const publishedCount = allResults.filter(r => r.status === "published").length;
-  const totalPrograms  = Object.keys(appData.programs || {}).length;
+  const teamsHtml = teamsArray.length === 0 ? emptyState('fa-users', 'No teams data') : teamsArray.map((team, i) => `
+    <div class="bg-white rounded-xl border border-gray-200/60 p-5 shadow-sm">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-semibold text-gray-900">${sanitize(team.name)}</h3>
+        ${i < 3 ? `<i class="fas fa-medal text-${['yellow-500','gray-400','amber-600'][i]}"></i>` : `<span class="text-xs text-gray-400 font-medium">#${i+1}</span>`}
+      </div>
+      <p class="text-3xl font-bold text-gray-900">${team.totalPoints}</p>
+    </div>`).join('');
 
-  const teamsHtml = teamsArray.length === 0 ? emptyState('fa-users', 'No teams data') : teamsArray.map((team, i) => {
-    const catChips = CATEGORIES.map(cat => {
-      const pts = (team.categoryPoints && team.categoryPoints[cat]) || 0;
-      return `<span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-600">${cat}: ${pts}</span>`;
-    }).join(' ');
-
-    return `
-      <div class="bg-white rounded-xl border border-gray-200/60 p-5 shadow-sm flex flex-col justify-between">
-        <div>
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-semibold text-gray-900">${sanitize(team.name)}</h3>
-            ${i < 3 ? `<i class="fas fa-medal text-${['yellow-500','gray-400','amber-600'][i]}"></i>` : `<span class="text-xs text-gray-400 font-medium">#${i+1}</span>`}
-          </div>
-          <p class="text-3xl font-bold text-gray-900 mb-3">${team.totalPoints}</p>
-        </div>
-        <div class="flex flex-wrap gap-1 pt-2 border-t border-gray-100 mt-2">
-          ${catChips}
-        </div>
-      </div>`;
-  }).join('');
-
+  const { classesArray } = calculateAllScoresInternal();
   const classesHtml = !classesArray || classesArray.length === 0 ? emptyState('fa-chalkboard-teacher', 'No class data') : classesArray.slice(0, 10).map((c, i) => `
     <div class="bg-white rounded-xl border border-indigo-200/60 p-4 shadow-sm flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -239,49 +210,16 @@ async function renderDashboardTab() {
           <p class="text-xs text-amber-700 mt-1">This view shows ALL scores (Pending + Ready + Published). It is not the public leaderboard.</p>
         </div>
       </div>
-
-      <!-- Program Result Stages Summary -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl border border-gray-200/60 p-4 shadow-sm">
-          <div class="flex items-center justify-between text-xs text-gray-500 font-medium mb-1">
-            <span>Total Programs</span>
-            <i class="fas fa-list-alt text-gray-400"></i>
-          </div>
-          <p class="text-2xl font-bold text-gray-900">${totalPrograms}</p>
-        </div>
-        <div class="bg-amber-50/50 rounded-xl border border-amber-200/60 p-4 shadow-sm">
-          <div class="flex items-center justify-between text-xs text-amber-700 font-medium mb-1">
-            <span>Pending Results</span>
-            <i class="fas fa-hourglass-half text-amber-500"></i>
-          </div>
-          <p class="text-2xl font-bold text-amber-700">${pendingCount}</p>
-        </div>
-        <div class="bg-blue-50/50 rounded-xl border border-blue-200/60 p-4 shadow-sm">
-          <div class="flex items-center justify-between text-xs text-blue-700 font-medium mb-1">
-            <span>Ready to Publish</span>
-            <i class="fas fa-clock text-blue-500"></i>
-          </div>
-          <p class="text-2xl font-bold text-blue-700">${readyCount}</p>
-        </div>
-        <div class="bg-emerald-50/50 rounded-xl border border-emerald-200/60 p-4 shadow-sm">
-          <div class="flex items-center justify-between text-xs text-emerald-700 font-medium mb-1">
-            <span>Published Live</span>
-            <i class="fas fa-check-circle text-emerald-500"></i>
-          </div>
-          <p class="text-2xl font-bold text-emerald-700">${publishedCount}</p>
-        </div>
-      </div>
-
       <div>
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Live Team Standings (All Results Included)</h2>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Live Team Standings</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">${teamsHtml}</div>
       </div>
       <div>
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Live Class Standings (All Results Included)</h2>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Live Class Standings</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${classesHtml}</div>
       </div>
       <div>
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Live Student Leaders (Top 50 - All Results Included)</h2>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Live Student Leaders (Top 50)</h2>
         ${TableComponents.wrapper(`
           ${TableComponents.header([{label:'Rank'},{label:'Student'},{label:'Team'},{label:'Category'},{label:'Points'}])}
           <tbody class="divide-y divide-gray-50">${tableBody}</tbody>

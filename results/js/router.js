@@ -32,41 +32,19 @@ async function router(softUpdate = false) {
   const appEl   = document.getElementById("app");
 
   const isPublic = !hash.startsWith('/admin');
-
-  // ── TV Display / Score ATM: Full-screen modes ──
-  if (hash === '/atm') {
-    window.location.href = '../atm/score-atm.html';
-    return;
-  }
-
-  if (hash === '/tv') {
-    document.body.className = "font-sans antialiased overflow-hidden";
-    document.body.style.backgroundImage = 'none';
-    const content = renderTVDisplayPage();
-    appEl.innerHTML = content;
-    // Start the live clock
-    startTVClock();
-    return;
-  }
   
-  if (hash.startsWith('/admin')) {
-    document.body.className = "bg-gray-100/70 font-sans text-gray-800 antialiased overflow-y-scroll relative";
-    document.body.style.backgroundImage = 'none';
-  } else {
-    document.body.className = "bg-[#f5f3ef] font-sans text-gray-800 antialiased selection:bg-orange-200 overflow-y-scroll relative";
-    document.body.style.backgroundImage = "radial-gradient(at 0% 0%, hsla(28,100%,74%,0.15) 0px, transparent 50%), radial-gradient(at 100% 0%, hsla(189,100%,56%,0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, hsla(355,100%,93%,0.15) 0px, transparent 50%), radial-gradient(at 0% 100%, hsla(340,100%,76%,0.15) 0px, transparent 50%)";
-  }
+  document.body.className = "bg-[#f5f3ef] font-sans text-gray-800 antialiased selection:bg-orange-200 overflow-y-scroll relative";
+  document.body.style.backgroundImage = "radial-gradient(at 0% 0%, hsla(28,100%,74%,0.15) 0px, transparent 50%), radial-gradient(at 100% 0%, hsla(189,100%,56%,0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, hsla(355,100%,93%,0.15) 0px, transparent 50%), radial-gradient(at 0% 100%, hsla(340,100%,76%,0.15) 0px, transparent 50%)";
 
   if (!softUpdate) {
     appEl.innerHTML = `
       <div class="min-h-screen flex flex-col relative z-10 overflow-hidden">
-        <!-- Aurora Background (Public Only) -->
-        ${isPublic ? `
+        <!-- Aurora Background -->
         <div class="fixed inset-0 pointer-events-none z-0">
           <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-pink-400/30 mix-blend-multiply filter blur-[120px] animate-blob"></div>
           <div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-orange-400/30 mix-blend-multiply filter blur-[120px] animate-blob animation-delay-2000"></div>
           <div class="absolute bottom-[-20%] left-[20%] w-[50%] h-[50%] rounded-full bg-teal-400/30 mix-blend-multiply filter blur-[120px] animate-blob animation-delay-4000"></div>
-        </div>` : ''}
+        </div>
         <!-- Navigation -->
         <nav class="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-6xl bg-white/20 backdrop-blur-3xl backdrop-saturate-[2.5] border-[0.5px] border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-[2rem] z-50 transition-all">
           <div class="px-6">
@@ -146,30 +124,16 @@ async function router(softUpdate = false) {
 
 
   let content;
-  if (hash === '/judge') {
-    window.location.href = '../judge/judge.html';
-    return;
-  }
-
-  if (hash === '/penalty') {
-    window.location.href = '../penalty/penalty.html';
-    return;
-  }
-
   if (hash.startsWith('/student/')) {
     const studentId = hash.split('/')[2];
     content = await renderStudentPage(studentId);
-  } else if (hash.startsWith('/team/')) {
-    const teamId = hash.split('/')[2];
-    content = await renderTeamDetailPage(teamId);
   } else {
     const routes = {
       '/':            renderHomePage,
       '/results':     renderResultsPage,
       '/leaderboard': renderLeaderboardPage,
       '/search':      renderSearchPage,
-      '/admin':       renderAdminPage,
-      '/tv':          renderTVDisplayPage
+      '/admin':       renderAdminPage
     };
     const renderFn = routes[hash] || renderNotFoundPage;
     content = await renderFn();
@@ -190,62 +154,31 @@ async function router(softUpdate = false) {
 function attachPageEventListeners(hash) {
   if (hash.startsWith("/admin")) {
 
+    // ── Sidebar slide toggle (Mobile Only) ──
+    const sidebar = document.getElementById('admin-sidebar');
+    const backdrop = document.getElementById('admin-sidebar-backdrop');
+    
+    const openSidebar = () => {
+      sidebar?.classList.replace('-translate-x-full', 'translate-x-0');
+      backdrop?.classList.remove('hidden');
+    };
+    const closeSidebar = () => {
+      sidebar?.classList.replace('translate-x-0', '-translate-x-full');
+      backdrop?.classList.add('hidden');
+    };
+    
+    document.getElementById('admin-sidebar-toggle')?.addEventListener('click', openSidebar);
+    document.getElementById('admin-sidebar-close')?.addEventListener('click', closeSidebar);
+    backdrop?.addEventListener('click', closeSidebar);
+
     // ── Tab switching ──
     document.getElementById("admin-tabs")?.addEventListener("click", e => {
       const tab = e.target.closest(".admin-tab");
       if (tab) {
         activeAdminTab = tab.dataset.tab;
         renderAdminTab(activeAdminTab);
-      }
-    });
-
-    // ── Minimize / Expand Top Navigation Bar ──
-    document.getElementById("toggle-admin-nav-btn")?.addEventListener("click", () => {
-      isAdminNavMinimized = !isAdminNavMinimized;
-      const wrapper = document.getElementById("admin-tabs-wrapper");
-      const btn = document.getElementById("toggle-admin-nav-btn");
-      const card = document.getElementById("admin-top-nav-card");
-      
-      if (wrapper) wrapper.classList.toggle("hidden", isAdminNavMinimized);
-      if (card) {
-        const titleRow = card.firstElementChild;
-        if (titleRow) {
-          titleRow.classList.toggle("pb-3", !isAdminNavMinimized);
-          titleRow.classList.toggle("mb-3", !isAdminNavMinimized);
-          titleRow.classList.toggle("border-b", !isAdminNavMinimized);
-          titleRow.classList.toggle("border-gray-100", !isAdminNavMinimized);
-        }
-      }
-      
-      // Update badge in title
-      const titleFlex = card?.querySelector('.flex.items-center.gap-2');
-      if (titleFlex) {
-        let badge = titleFlex.querySelector('#minimized-tab-badge');
-        if (isAdminNavMinimized) {
-          if (!badge) {
-            const tabs = [
-              { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
-              { id: 'status', icon: 'fa-tasks', label: 'Program Status' },
-              { id: 'results', icon: 'fa-upload', label: 'Upload Results' },
-              { id: 'publish', icon: 'fa-check-double', label: 'Publish' },
-              { id: 'announce', icon: 'fa-bullhorn', label: 'Announce Live' },
-              { id: 'preview', icon: 'fa-eye', label: 'Score Preview' },
-              { id: 'students', icon: 'fa-user-graduate', label: 'Students' },
-              { id: 'teams', icon: 'fa-users', label: 'Teams' },
-              { id: 'programs', icon: 'fa-list-alt', label: 'Programs' },
-              { id: 'points', icon: 'fa-cog', label: 'Points Config' },
-              { id: 'penalty', icon: 'fa-minus-circle', label: 'Penalty' }
-            ];
-            const activeObj = tabs.find(t => t.id === activeAdminTab) || tabs[0];
-            titleFlex.insertAdjacentHTML('beforeend', `<span id="minimized-tab-badge" class="px-2.5 py-0.5 bg-gray-900 text-white rounded text-[11px] font-bold"><i class="fas ${activeObj.icon} mr-1"></i>${activeObj.label}</span>`);
-          }
-        } else {
-          if (badge) badge.remove();
-        }
-      }
-
-      if (btn) {
-        btn.innerHTML = `<i class="fas ${isAdminNavMinimized ? 'fa-chevron-down' : 'fa-chevron-up'} text-xs"></i><span>${isAdminNavMinimized ? 'Expand Menu' : 'Minimize Menu'}</span>`;
+        // Automatically close on mobile after selecting a tab
+        if (window.innerWidth < 1024) closeSidebar();
       }
     });
 
@@ -271,55 +204,9 @@ function attachPageEventListeners(hash) {
         activeStatusStageFilter = e.target.dataset.stage;
         renderAdminTab('status');
       }
-
-      // Penalty Tab: Preset Minus Points Buttons
-      const presetBtn = e.target.closest('.preset-penalty-btn');
-      if (presetBtn) {
-        const pts = presetBtn.dataset.pts;
-        const ptsInput = document.getElementById('student-penalty-points');
-        if (ptsInput) ptsInput.value = pts;
-      }
-
-      // Penalty Tab: History View Toggle (Students / Teams)
-      const toggleBtn = e.target.closest('.penalty-toggle-btn');
-      if (toggleBtn) {
-        document.querySelectorAll('.penalty-toggle-btn').forEach(btn => {
-          btn.classList.remove('bg-white', 'text-gray-900', 'shadow-xs', 'font-bold');
-          btn.classList.add('text-gray-500', 'font-medium');
-        });
-        toggleBtn.classList.add('bg-white', 'text-gray-900', 'shadow-xs', 'font-bold');
-        toggleBtn.classList.remove('text-gray-500', 'font-medium');
-        activePenaltyViewType = toggleBtn.dataset.type;
-        loadItemsList('penalty');
-      }
     });
 
-    // Student Filter helper in Penalty tab
-    const filterPenaltyStudents = () => {
-      const searchTerm = (document.getElementById('penalty-student-search')?.value || '').toLowerCase().trim();
-      const teamId     = document.getElementById('penalty-filter-team')?.value || '';
-      const category   = document.getElementById('penalty-filter-category')?.value || '';
-      const className  = document.getElementById('penalty-filter-class')?.value || '';
-
-      const selectEl = document.getElementById('student-penalty-student-id');
-      if (!selectEl) return;
-
-      Array.from(selectEl.options).forEach(opt => {
-        if (!opt.value) return; // Skip placeholder option
-        const matchSearch   = !searchTerm || opt.dataset.search?.includes(searchTerm);
-        const matchTeam     = !teamId     || opt.dataset.team === teamId;
-        const matchCategory = !category   || opt.dataset.category === category;
-        const matchClass    = !className  || opt.dataset.class === className;
-
-        if (matchSearch && matchTeam && matchCategory && matchClass) {
-          opt.style.display = '';
-        } else {
-          opt.style.display = 'none';
-        }
-      });
-    };
-
-    // Debounced publish search and penalty student filtering
+    // Debounced publish search
     const publishSearchHandler = debounce((term) => {
       document.querySelectorAll('#publish-list .program-item-container').forEach(item => {
         item.style.display = item.dataset.programName?.includes(term) ? '' : 'none';
@@ -329,15 +216,6 @@ function attachPageEventListeners(hash) {
     adminContent?.addEventListener('input', e => {
       if (e.target.id === 'publish-search-input') {
         publishSearchHandler(e.target.value.toLowerCase());
-      }
-      if (e.target.id === 'penalty-student-search') {
-        filterPenaltyStudents();
-      }
-    });
-
-    adminContent?.addEventListener('change', e => {
-      if (['penalty-filter-team', 'penalty-filter-category', 'penalty-filter-class'].includes(e.target.id)) {
-        filterPenaltyStudents();
       }
     });
   }

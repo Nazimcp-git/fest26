@@ -14,8 +14,6 @@ let appData = {
   teamPointsConfig:    {},
   teamDirectScores:    {},
   teamPenalties:       {},
-  studentPenalties:    {},
-  teacherJudges:       {},
   participantRegistrations: {}
 };
 

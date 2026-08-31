@@ -180,35 +180,3 @@ function spinner(size = 'md') {
     <div class="${sizes[size] || sizes.md} border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin"></div>
   </div>`;
 }
-
-/**
- * Starts a live clock on the TV display page.
- * Updates the #tv-clock element every second.
- */
-let _tvClockInterval = null;
-function startTVClock() {
-  if (_tvClockInterval) clearInterval(_tvClockInterval);
-  const update = () => {
-    const el = document.getElementById('tv-clock');
-    if (!el) { clearInterval(_tvClockInterval); _tvClockInterval = null; return; }
-    el.textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  };
-  update();
-  _tvClockInterval = setInterval(update, 1000);
-}
-
-/**
- * Renders a 404 Not Found page.
- */
-async function renderNotFoundPage() {
-  return `
-    <div class="flex flex-col items-center justify-center py-20 text-center">
-      <div class="w-20 h-20 rounded-3xl bg-gray-100 flex items-center justify-center mb-6">
-        <i class="fas fa-question text-4xl text-gray-400"></i>
-      </div>
-      <h1 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Page Not Found</h1>
-      <p class="text-gray-500 font-medium mb-6">The page you're looking for doesn't exist.</p>
-      <a href="#/" class="px-6 py-3 bg-gray-900 text-white rounded-2xl font-bold text-sm hover:bg-black transition-colors">Go Home</a>
-    </div>`;
-}
-

@@ -19,23 +19,6 @@ function calculateTeamPenalties() {
 }
 
 /**
- * Returns a map of { studentId: totalPenaltyPoints } for all students.
- * @returns {Object}
- */
-function calculateStudentPenalties() {
-  const penaltiesByStudent = {};
-  for (const studentId in appData.students) {
-    penaltiesByStudent[studentId] = 0;
-  }
-  Object.values(appData.studentPenalties || {}).forEach(penalty => {
-    if (penaltiesByStudent.hasOwnProperty(penalty.studentId)) {
-      penaltiesByStudent[penalty.studentId] += (penalty.points || 0);
-    }
-  });
-  return penaltiesByStudent;
-}
-
-/**
  * Core calculation: iterates results, accumulates points per student and per team.
  * @param {string} filter  'all' | 'published' | 'published+ready'
  * @returns {{ teamsArray: Array, studentsArray: Array }}
@@ -44,7 +27,6 @@ function _calculateScores(filter) {
   const studentPoints    = {};
   const teamDirectPoints = {};
   const teamPenalties    = calculateTeamPenalties();
-  const studentPenalties = calculateStudentPenalties();
 
   for (const studentId in appData.students) { studentPoints[studentId] = 0; }
   for (const teamId in appData.teams) {
@@ -92,11 +74,8 @@ function _calculateScores(filter) {
   const teamsArray    = JSON.parse(JSON.stringify(getDataAsArray("teams")));
   const studentsArray = JSON.parse(JSON.stringify(getDataAsArray("students")));
 
-  // Subtract student penalties from student points
   studentsArray.forEach(student => {
-    const rawPts = studentPoints[student.id] || 0;
-    const penPts = studentPenalties[student.id] || 0;
-    student.totalPoints = rawPts - penPts;
+    student.totalPoints = studentPoints[student.id] || 0;
   });
 
   teamsArray.forEach(team => {
@@ -175,7 +154,6 @@ function getPublishedScores() {
  */
 async function recalculateAllPoints() {
   const publishedResults = getDataAsArray("results").filter(r => r.status === "published");
-  const studentPenalties  = calculateStudentPenalties();
 
   const studentPoints   = {};
   const teamDirectPoints = {};
@@ -217,74 +195,10 @@ async function recalculateAllPoints() {
   }
 
   const updates = {};
-  for (const studentId in studentPoints) {
-    const raw = studentPoints[studentId] || 0;
-    const pen = studentPenalties[studentId] || 0;
-    updates[`/students/${studentId}/totalPoints`] = raw - pen;
-  }
+  for (const studentId in studentPoints)
+    updates[`/students/${studentId}/totalPoints`] = studentPoints[studentId];
   for (const teamId in teamDirectPoints)
     updates[`/teamDirectScores/${teamId}`] = teamDirectPoints[teamId];
 
   return db.ref().update(updates);
-}
-
-/**
- * Returns scores based on the STORED (pre-calculated) values in Firebase.
- * These are only updated when the admin clicks "Update Scores".
- * Used by public-facing pages so scores don't change until explicitly refreshed.
- * @returns {{ teamsArray: Array, studentsArray: Array, classesArray: Array }}
- */
-function getStoredScores() {
-  const teamPenalties = calculateTeamPenalties();
-  const teamsArray    = JSON.parse(JSON.stringify(getDataAsArray("teams")));
-  const studentsArray = JSON.parse(JSON.stringify(getDataAsArray("students")));
-
-  // Students already have totalPoints stored in Firebase (written by recalculateAllPoints)
-  studentsArray.forEach(student => {
-    student.totalPoints = student.totalPoints || 0;
-  });
-
-  // Teams: read from stored teamDirectScores and sum with student points
-  teamsArray.forEach(team => {
-    const storedDirect = appData.teamDirectScores[team.id] || {};
-    let totalDirectPoints = 0;
-    team.categoryPoints = {};
-    CATEGORIES.forEach(cat => {
-      const pts = storedDirect[cat] || 0;
-      team.categoryPoints[cat] = pts;
-      totalDirectPoints += pts;
-    });
-    team.totalPoints = totalDirectPoints;
-
-    // Add individual student points for students in this team
-    studentsArray.forEach(student => {
-      if (student.teamId === team.id) {
-        team.totalPoints += student.totalPoints;
-        if (student.category && team.categoryPoints.hasOwnProperty(student.category))
-          team.categoryPoints[student.category] += student.totalPoints;
-      }
-    });
-
-    // Subtract penalties
-    team.totalPoints -= (teamPenalties[team.id] || 0);
-  });
-
-  teamsArray.sort((a, b) => b.totalPoints - a.totalPoints);
-  studentsArray.sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0));
-
-  // Class scores from stored student points
-  const classScoresMap = {};
-  studentsArray.forEach(student => {
-    if (student.className) {
-      if (!classScoresMap[student.className]) classScoresMap[student.className] = 0;
-      classScoresMap[student.className] += (student.totalPoints || 0);
-    }
-  });
-
-  const classesArray = Object.keys(classScoresMap).map(className => ({
-    name: className,
-    totalPoints: classScoresMap[className]
-  })).sort((a, b) => b.totalPoints - a.totalPoints);
-
-  return { teamsArray, studentsArray, classesArray };
 }

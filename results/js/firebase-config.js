@@ -1,4 +1,4 @@
-// results/js/firebase-config.js
+// js/firebase-config.js
 // Centralized Firebase Configuration & App Constants for ART FEST 2K25
 
 if (typeof firebaseConfig === 'undefined') {

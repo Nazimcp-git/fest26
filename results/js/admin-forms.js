@@ -86,21 +86,10 @@ async function handleAdminFormSubmit(e) {
         
         const program = appData.programs[programId];
         const participants = tempParticipants.map((p, i) => {
-          const posEl = document.getElementById(`pos-select-${i}`);
-          const gradeEl = document.getElementById(`grade-select-${i}`);
-          const position = posEl ? posEl.value : (p.position || 'none');
-          const grade = gradeEl ? gradeEl.value : (p.grade || 'none');
+          const position = document.getElementById(`pos-select-${i}`).value;
+          const grade = document.getElementById(`grade-select-${i}`).value;
           return { ...p, position, grade };
-        }).filter(p => {
-          const hasPos = p.position && p.position !== 'none';
-          const hasGrade = p.grade && p.grade !== 'none';
-          const hasMarks = p.marks !== undefined && p.marks !== null && String(p.marks).trim() !== '';
-          return hasPos || hasGrade || hasMarks;
         });
-
-        if (participants.length === 0) {
-          throw new Error("Please assign a position or grade to at least one participant before saving.");
-        }
 
         const resultData = {
           programId,
@@ -123,35 +112,6 @@ async function handleAdminFormSubmit(e) {
         resetResultForm();
         break;
 
-      case "add-teacher-judge-form":
-        const editingJudgeId = form.querySelector('#judge-editing-id')?.value;
-        const jName = form.querySelector('#judge-teacher-name').value.trim();
-        const jCode = form.querySelector('#judge-teacher-code').value.trim().toUpperCase();
-        const jAssignedProgs = Array.from(form.querySelectorAll('input[name="judgeAssignedPrograms"]:checked')).map(cb => cb.value);
-
-        if (!jName || !jCode) throw new Error("Teacher name and access code are required.");
-        if (jAssignedProgs.length === 0) throw new Error("Please select at least one assigned program.");
-
-        const judgePayload = {
-          name: jName,
-          code: jCode,
-          assignedPrograms: jAssignedProgs,
-          updatedAt: Date.now()
-        };
-
-        if (editingJudgeId) {
-          await db.ref(`teacherJudges/${editingJudgeId}`).update(judgePayload);
-          ToastEngine.success(`Teacher Judge "${jName}" updated successfully!`);
-        } else {
-          judgePayload.createdAt = Date.now();
-          await db.ref("teacherJudges").push(judgePayload);
-          ToastEngine.success(`Teacher Judge "${jName}" configured successfully!`);
-        }
-
-        if (typeof window.resetTeacherJudgeForm === 'function') window.resetTeacherJudgeForm();
-        loadItemsList('judges');
-        break;
-
       case "bulk-upload-students-form":
       case "bulk-upload-programs-form":
         const type = form.id === "bulk-upload-students-form" ? "student" : "program";
@@ -168,32 +128,7 @@ async function handleAdminFormSubmit(e) {
         if (!tId || !pts || !reason || pts <= 0) throw new Error("Invalid penalty data");
         
         await db.ref("teamPenalties").push({ teamId: tId, points: pts, reason, createdAt: Date.now() });
-        ToastEngine.success("Team penalty applied successfully");
-        form.reset();
-        break;
-
-      case "apply-student-penalty-form":
-        const sId = form.querySelector('#student-penalty-student-id').value;
-        const sPts = parseInt(form.querySelector('#student-penalty-points').value, 10);
-        const sReason = form.querySelector('#student-penalty-reason').value.trim();
-        
-        if (!sId || !appData.students[sId]) throw new Error("Please select a student.");
-        if (!sPts || sPts <= 0) throw new Error("Penalty points must be greater than 0.");
-        if (!sReason) throw new Error("Please enter a reason for the penalty deduction.");
-        
-        const targetStudent = appData.students[sId];
-        await db.ref("studentPenalties").push({
-          studentId: sId,
-          chestNo: targetStudent.chestNo || '',
-          studentName: targetStudent.name || '',
-          teamId: targetStudent.teamId || '',
-          points: sPts,
-          reason: sReason,
-          createdAt: Date.now()
-        });
-
-        invalidateCache();
-        ToastEngine.success(`Applied -${sPts} penalty points to ${targetStudent.name}`);
+        ToastEngine.success("Penalty applied successfully");
         form.reset();
         break;
     }

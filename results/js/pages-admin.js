@@ -54,13 +54,25 @@ async function renderAdminDashboard() {
     { id: 'penalty', icon: 'fa-minus-circle', label: 'Penalty' }
   ];
 
-  const tabsHtml = tabs.map(t => `
+  const readyCount = (getDataAsArray("results") || []).filter(r => r.status === "ready").length;
+  const pendingScoresCount = (getDataAsArray("results") || []).filter(r => r.status === "published" && r.scoresCalculated === false).length;
+
+  const tabsHtml = tabs.map(t => {
+    let badgeHtml = '';
+    if (t.id === 'announce' && readyCount > 0) {
+      badgeHtml = `<span class="ml-auto px-2 py-0.5 text-xs font-black bg-indigo-600 text-white rounded-full shadow-sm">${readyCount}</span>`;
+    } else if (t.id === 'publish' && pendingScoresCount > 0) {
+      badgeHtml = `<span class="ml-auto px-2 py-0.5 text-xs font-black bg-amber-500 text-white rounded-full shadow-sm">${pendingScoresCount}</span>`;
+    }
+    return `
     <button data-tab="${t.id}" class="admin-tab w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-white/40 border border-transparent hover:border-white/60 rounded-2xl transition-all text-left group">
       <div class="w-8 h-8 rounded-xl bg-black/5 flex items-center justify-center border border-black/5 group-hover:bg-orange-500/10 group-hover:text-orange-600 transition-colors">
         <i class="fas ${t.icon} text-sm"></i>
       </div>
-      ${t.label}
-    </button>`).join('');
+      <span>${t.label}</span>
+      ${badgeHtml}
+    </button>`;
+  }).join('');
 
   return `
     <div class="max-w-7xl mx-auto pb-12 px-4 sm:px-6 lg:px-8 animate-fade-in flex flex-col lg:flex-row gap-6 mt-8 relative z-10">
@@ -128,19 +140,27 @@ async function renderAdminTab(tabId) {
 
   document.querySelectorAll(".admin-tab").forEach(tab => {
     const isActive = tab.dataset.tab === tabId;
-    tab.classList.toggle("bg-white/60", isActive);
-    tab.classList.toggle("shadow-sm", isActive);
-    tab.classList.toggle("border-white/50", isActive);
-    tab.classList.toggle("text-gray-900", isActive);
+    const isAnnounce = tab.dataset.tab === 'announce';
+    
+    tab.classList.toggle("bg-white", isActive);
+    tab.classList.toggle("shadow-md", isActive);
+    tab.classList.toggle("border-indigo-300", isActive && isAnnounce);
+    tab.classList.toggle("border-white/60", isActive && !isAnnounce);
+    tab.classList.toggle("text-indigo-900", isActive && isAnnounce);
+    tab.classList.toggle("text-gray-900", isActive && !isAnnounce);
     tab.classList.toggle("text-gray-600", !isActive);
     tab.classList.toggle("border-transparent", !isActive);
     
     // Icon styling
     const iconContainer = tab.querySelector('div');
     if (iconContainer) {
-       iconContainer.classList.toggle("bg-orange-500/10", isActive);
-       iconContainer.classList.toggle("text-orange-600", isActive);
-       iconContainer.classList.toggle("bg-black/5", !isActive);
+       if (isActive && isAnnounce) {
+         iconContainer.className = "w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm transition-colors";
+       } else if (isActive) {
+         iconContainer.className = "w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center border border-orange-500/20 transition-colors";
+       } else {
+         iconContainer.className = "w-8 h-8 rounded-xl bg-black/5 text-gray-600 flex items-center justify-center border border-black/5 group-hover:bg-orange-500/10 group-hover:text-orange-600 transition-colors";
+       }
     }
   });
 

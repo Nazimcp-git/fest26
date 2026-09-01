@@ -44,7 +44,10 @@ function _calculateScores(filter) {
     const result = allResults[resultId];
 
     // Apply filter
-    if (filter === 'published' && result.status !== 'published') continue;
+    if (filter === 'published') {
+      if (result.status !== 'published') continue;
+      if (result.scoresCalculated === false) continue;
+    }
     if (filter === 'published+ready' && result.status !== 'published' && result.status !== 'ready') continue;
 
     if (!result.participants) continue;
@@ -207,5 +210,27 @@ async function recalculateAllPoints() {
   for (const teamId in teamDirectPoints)
     updates[`/teamDirectScores/${teamId}`] = teamDirectPoints[teamId];
 
-  return db.ref().update(updates);
+  // Mark all published results as scored
+  publishedResults.forEach(r => {
+    updates[`/results/${r.id}/scoresCalculated`] = true;
+  });
+
+  await db.ref().update(updates);
+
+  // Synchronize local in-memory appData immediately
+  for (const studentId in studentPoints) {
+    if (appData.students[studentId]) {
+      appData.students[studentId].totalPoints = studentPoints[studentId];
+    }
+  }
+  for (const teamId in teamDirectPoints) {
+    appData.teamDirectScores[teamId] = teamDirectPoints[teamId];
+  }
+  publishedResults.forEach(r => {
+    if (appData.results[r.id]) {
+      appData.results[r.id].scoresCalculated = true;
+    }
+  });
+
+  invalidateCache();
 }

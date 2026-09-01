@@ -54,16 +54,6 @@ async function flushPendingWrites() {
   try {
     await db.ref().update(pendingWrites);
     
-    // Check if any published results were changed — recalculate if needed
-    const hasPublished = Object.entries(pendingWrites).some(([path, val]) => 
-      path.endsWith('/status') && (val === 'published' || val === 'pending')
-    );
-    const hasDeletes = Object.values(pendingWrites).some(v => v === null);
-    
-    if (hasPublished || hasDeletes) {
-      await recalculateAllPoints();
-    }
-    
     pendingWrites = {};
     updateSaveButton();
     ToastEngine.success(`${count} changes saved to database`);
@@ -108,6 +98,41 @@ async function handleAdminListClick(e) {
     return;
   }
 
+  // ── Announce Result Live (Direct DB save, no queue, holds scoreboard) ──
+  const announceBtn = target.closest(".announce-now-btn");
+  if (announceBtn) {
+    const id = announceBtn.dataset.id;
+    const r = appData.results[id];
+    if (!r) return;
+
+    const originalHtml = announceBtn.innerHTML;
+    announceBtn.disabled = true;
+    announceBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>Announcing...';
+
+    try {
+      await db.ref(`results/${id}`).update({
+        status: 'published',
+        scoresCalculated: false,
+        announcedAt: Date.now()
+      });
+
+      if (appData.results[id]) {
+        appData.results[id].status = 'published';
+        appData.results[id].scoresCalculated = false;
+        appData.results[id].announcedAt = Date.now();
+      }
+      invalidateCache();
+
+      ToastEngine.success(`"${r.programName}" announced live! Click "Update Scores" when ready to refresh the leaderboard.`);
+      renderAdminTab('announce');
+    } catch (err) {
+      ToastEngine.error("Failed to announce: " + err.message);
+      announceBtn.disabled = false;
+      announceBtn.innerHTML = originalHtml;
+    }
+    return;
+  }
+
   // ── Status Changes — queue locally, swap buttons to new state ──
 
   const statusBtn = target.closest(".publish-btn") || target.closest(".unpublish-btn") 
@@ -117,7 +142,10 @@ async function handleAdminListClick(e) {
     const id = statusBtn.dataset.id;
     let newStatus;
     
-    if (target.closest(".publish-btn"))     newStatus = "published";
+    if (target.closest(".publish-btn")) {
+      newStatus = "published";
+      queueWrite(`results/${id}/scoresCalculated`, false);
+    }
     if (target.closest(".unpublish-btn"))   newStatus = "pending";
     if (target.closest(".mark-ready-btn"))  newStatus = "ready";
     if (target.closest(".unmark-ready-btn")) newStatus = "pending";
@@ -189,6 +217,7 @@ async function handleAdminListClick(e) {
       getDataAsArray("results").forEach(r => {
         if (r.status === "ready") {
           queueWrite(`results/${r.id}/status`, "published");
+          queueWrite(`results/${r.id}/scoresCalculated`, false);
           count++;
         }
       });
@@ -205,7 +234,7 @@ async function handleAdminListClick(e) {
 
   const updateScoresBtn = target.closest('#update-all-scores-btn');
   if (updateScoresBtn) {
-    ModalEngine.confirm("Recalculate all public scores?", { title: 'Update Scores' }).then(async confirmed => {
+    ModalEngine.confirm("Recalculate all public scores and update festival leaderboards?", { title: 'Update Scores' }).then(async confirmed => {
       if (!confirmed) return;
       
       // Flush any pending writes first
@@ -215,10 +244,11 @@ async function handleAdminListClick(e) {
       
       const originalHtml = updateScoresBtn.innerHTML;
       updateScoresBtn.disabled = true;
-      updateScoresBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>Updating...';
+      updateScoresBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>Updating Scores...';
       try {
         await recalculateAllPoints();
-        ToastEngine.success("All scores updated");
+        ToastEngine.success("All scoreboard points and festival standings updated successfully!");
+        refreshCurrentAdminTab();
       } catch(err) {
         ToastEngine.error("Error: " + err.message);
       } finally {

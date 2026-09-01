@@ -96,12 +96,16 @@ function renderPublishTab() {
 }
 
 function renderAnnounceLiveTab() {
-  const readyResults = getDataAsArray("results").filter(r => r.status === "ready").sort((a, b) => {
+  const allResults = getDataAsArray("results");
+  const readyResults = allResults.filter(r => r.status === "ready").sort((a, b) => {
     const ca = CATEGORIES.indexOf(a.category);
     const cb = CATEGORIES.indexOf(b.category);
     if (ca !== cb) return ca - cb;
     return a.programName.localeCompare(b.programName);
   });
+
+  const pendingScoreResults = allResults.filter(r => r.status === "published" && r.scoresCalculated === false);
+  const pendingScoreCount = pendingScoreResults.length;
 
   const grouped = readyResults.reduce((acc, r) => {
     if (!acc[r.category]) acc[r.category] = [];
@@ -109,8 +113,8 @@ function renderAnnounceLiveTab() {
     return acc;
   }, {});
 
-  const html = Object.keys(grouped).length === 0
-    ? emptyState('fa-bullhorn', 'No results ready to announce', 'Mark results as "Ready" first.')
+  const readyHtml = Object.keys(grouped).length === 0
+    ? emptyState('fa-bullhorn', 'No results ready to announce', 'Mark results as "Ready" in Upload Results or Manage Publication first.')
     : CATEGORIES.map(cat => {
         const list = grouped[cat];
         if (!list) return '';
@@ -120,14 +124,15 @@ function renderAnnounceLiveTab() {
             <div class="space-y-4">
               ${list.map(r => `
                 <div class="bg-white rounded-xl border border-indigo-100 p-6 shadow-md relative overflow-hidden">
-                  <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                  <div class="absolute top-0 left-0 w-1.5 h-full bg-indigo-600"></div>
                   <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
                       <h3 class="text-2xl font-bold text-gray-900">${sanitize(r.programName)}</h3>
                       <p class="text-sm text-gray-500 mt-1">${r.category} • ${r.stageType === 'non-stage' ? 'Non-Stage' : 'Stage'}</p>
                     </div>
-                    <button class="publish-btn flex-shrink-0 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all hover:scale-105 shadow-sm" data-id="${r.id}">
-                      <i class="fas fa-bullhorn mr-2"></i>Publish Now
+                    <button class="announce-now-btn flex-shrink-0 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-indigo-600/30 flex items-center gap-2 border border-indigo-500/50 cursor-pointer" style="background-color: #4f46e5 !important; color: #ffffff !important;" data-id="${r.id}">
+                      <i class="fas fa-bullhorn text-sm text-white" style="color: #ffffff !important;"></i>
+                      <span class="text-white font-bold tracking-wide" style="color: #ffffff !important;">Announce Now</span>
                     </button>
                   </div>
                   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -140,7 +145,7 @@ function renderAnnounceLiveTab() {
                       const dn = r.programType !== 'individual' ? `${p.name} & Team` : p.name;
                       return `
                         <div class="bg-indigo-50/50 rounded-lg p-3 border border-indigo-100/50">
-                          <p class="font-bold text-gray-900">${sanitize(dn)} <span class="text-xs font-normal text-gray-500">(${sanitize(s.chestNo)})</span></p>
+                          <p class="font-bold text-gray-900">${sanitize(dn)} <span class="text-xs font-normal text-gray-500">(${sanitize(s ? s.chestNo : 'N/A')})</span></p>
                           <p class="text-sm font-semibold text-indigo-700 mt-0.5">${prize.join(' • ')}</p>
                           <p class="text-xs text-gray-600 mt-1">${sanitize(tn)}</p>
                         </div>`;
@@ -151,21 +156,93 @@ function renderAnnounceLiveTab() {
           </div>`;
       }).join('');
 
+  // Recently announced results section
+  const recentlyAnnounced = allResults
+    .filter(r => r.status === "published")
+    .sort((a, b) => (b.announcedAt || b.timestamp || 0) - (a.announcedAt || a.timestamp || 0))
+    .slice(0, 10);
+
+  const announcedHtml = recentlyAnnounced.length === 0 ? '' : `
+    <div class="mt-12 pt-8 border-t border-gray-200">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-bold text-gray-900">Recently Announced Programs</h3>
+          <p class="text-xs text-gray-500">Publicly visible results and their leaderboard score calculation status</p>
+        </div>
+        <span class="text-xs font-bold text-gray-500">${recentlyAnnounced.length} published</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        ${recentlyAnnounced.map(r => {
+          const isPending = r.scoresCalculated === false;
+          return `
+            <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <h4 class="font-bold text-sm text-gray-900 truncate">${sanitize(r.programName)}</h4>
+                <p class="text-xs text-gray-500 mt-0.5">${r.category} • ${(r.participants || []).length} participants</p>
+              </div>
+              <div class="flex-shrink-0">
+                ${isPending 
+                  ? `<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200"><i class="fas fa-clock mr-1.5 text-amber-500"></i>Scores Pending</span>`
+                  : `<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="fas fa-check-circle mr-1.5 text-emerald-500"></i>Scores Updated</span>`
+                }
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  const bannerHtml = pendingScoreCount > 0 ? `
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-2xl p-5 shadow-sm gap-4">
+      <div class="flex items-start gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5 border border-amber-500/20">
+          <i class="fas fa-bullhorn text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="text-base font-bold text-gray-900">Live Announce Mode</h3>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-200 text-amber-900 border border-amber-300">
+              <span class="w-2 h-2 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span>
+              ${pendingScoreCount} ${pendingScoreCount === 1 ? 'program' : 'programs'} awaiting score update
+            </span>
+          </div>
+          <p class="text-xs text-gray-600 mt-1">
+            Clicking <strong>Announce Now</strong> instantly makes the result public without modifying leaderboard scores. Click <strong>Update Scores</strong> when you want to update all scoreboards.
+          </p>
+        </div>
+      </div>
+      <button id="update-all-scores-btn" class="px-5 py-3 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-amber-600/30 flex-shrink-0 flex items-center justify-center gap-2 animate-pulse hover:scale-105 active:scale-95 border border-amber-500 cursor-pointer" style="background-color: #d97706 !important; color: #ffffff !important;">
+        <i class="fas fa-sync-alt text-sm text-white" style="color: #ffffff !important;"></i>
+        <span class="text-white font-bold" style="color: #ffffff !important;">Update Scores (${pendingScoreCount})</span>
+      </button>
+    </div>` : `
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white border border-gray-200/80 rounded-2xl p-5 shadow-sm gap-4">
+      <div class="flex items-start gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center flex-shrink-0 mt-0.5 border border-emerald-500/20">
+          <i class="fas fa-check-circle text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="text-base font-bold text-gray-900">Live Announce Mode</h3>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <i class="fas fa-check mr-1.5 text-xs"></i>All scores up to date
+            </span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">
+            Clicking <strong>Announce Now</strong> makes results public immediately while keeping leaderboard scores untouched. Remember to click <strong>Update Scores</strong> when you are ready to update the scoreboards.
+          </p>
+        </div>
+      </div>
+      <button id="update-all-scores-btn" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-bold transition-all flex-shrink-0 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 border border-gray-200">
+        <i class="fas fa-sync-alt text-sm text-gray-500"></i>
+        <span>Update Scores</span>
+      </button>
+    </div>`;
+
   return `
     <div class="max-w-5xl mx-auto space-y-6">
-      <div class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <div class="flex gap-3">
-          <i class="fas fa-exclamation-triangle text-amber-500 mt-0.5"></i>
-          <div>
-            <h3 class="text-sm font-bold text-amber-800">Live Announce Mode</h3>
-            <p class="text-xs text-amber-700 mt-1">Publishing a result here immediately makes it visible to the public. Remember to click "Update Scores" to refresh the leaderboard.</p>
-          </div>
-        </div>
-        <button id="update-all-scores-btn" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-bold transition-colors shadow-sm flex-shrink-0">
-          <i class="fas fa-sync-alt mr-1.5"></i>Update Scores
-        </button>
-      </div>
-      <div>${html}</div>
+      ${bannerHtml}
+      <div>${readyHtml}</div>
+      ${announcedHtml}
     </div>`;
 }
 

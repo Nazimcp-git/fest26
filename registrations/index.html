@@ -178,16 +178,16 @@
             `;
 
             const participantCard = `
-                <a href="${(isAdmin || isParticipantEnabled) ? 'student-participation-registration.html' : '#'}" 
-                   class="group relative bg-white/60 backdrop-blur-xl border border-white/60 p-8 rounded-3xl shadow-lg transition-all ${(!isAdmin && !isParticipantEnabled) ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-1 hover:shadow-xl'}">
+                <a href="student-participation-registration.html" 
+                   class="group relative bg-white/60 backdrop-blur-xl border border-white/60 p-8 rounded-3xl shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl">
                     <div class="w-14 h-14 rounded-2xl bg-green-500/10 text-green-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                         <i class="fas fa-user-plus text-2xl"></i>
                     </div>
                     <h3 class="text-2xl font-bold text-gray-900 mb-2">Participant Registration</h3>
-                    <p class="text-gray-600 mb-6">Assign students to their respective events and manage rosters.</p>
+                    <p class="text-gray-600 mb-6">${(!isAdmin && !isParticipantEnabled) ? 'View candidate lists and rosters for all programs (Registration currently closed).' : 'Assign students to their respective events and manage rosters.'}</p>
                     
                     ${(!isAdmin && !isParticipantEnabled) 
-                        ? `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700"><i class="fas fa-lock mr-1.5"></i> Currently Closed</span>` 
+                        ? `<span class="inline-flex items-center px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-sm"><i class="fas fa-eye mr-1.5 text-amber-600"></i> View Candidates (Read-Only) <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i></span>` 
                         : `<span class="text-green-600 font-bold text-sm flex items-center group-hover:text-green-700">Enter Portal <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i></span>`
                     }
                 </a>

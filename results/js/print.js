@@ -76,7 +76,7 @@ function renderSinglePrintResult(result) {
   return `
     <div class="print-page">
       <div class="print-header text-center">
-        <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">ART FEST 2K25 OFFICIAL RESULT</h1>
+        <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">ALERT 2K26 OFFICIAL RESULT</h1>
         <p class="text-sm text-gray-600">Darunnajath Islamic Complex</p>
       </div>
       
@@ -180,7 +180,7 @@ function printTeamSheet(teamId) {
       <div class="print-header mb-6 pb-2 border-b-2">
         <div class="flex justify-between items-end">
           <div>
-            <h1 class="font-bold uppercase tracking-wide">ART FEST 2K25</h1>
+            <h1 class="font-bold uppercase tracking-wide">ALERT 2K26</h1>
             <p class="text-sm">Official Team Roster & Summary Sheet</p>
           </div>
           <div class="text-right">

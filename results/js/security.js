@@ -1,6 +1,6 @@
 // js/security.js
 /**
- * ART FEST 2K25 — Security & Cryptographic Protection Engine
+ * Alert 2k26 — Security & Cryptographic Protection Engine
  * Prevents XSS, Hardcoded Credentials Exposure, Input Injection, and Session Tampering.
  */
 

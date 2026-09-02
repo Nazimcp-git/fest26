@@ -1,5 +1,5 @@
 // registrations/firebase.js
-// Centralized Firebase Configuration & App Constants for ART FEST 2K25
+// Centralized Firebase Configuration & App Constants for Alert 2k26
 
 if (typeof firebaseConfig === 'undefined') {
   var firebaseConfig = {

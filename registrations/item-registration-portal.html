@@ -662,8 +662,9 @@
                     <table style="width: 100%; border-collapse: collapse; font-size: 12pt;">
                         ${registrations.map(reg => `
                             <tr>
-                                <td style="padding: 6px 0; width: 40%; font-weight: 600;">${reg.studentName}</td>
-                                <td style="padding: 6px 0; color: #4B5563;">"${reg.pieceTitle || 'N/A'}"</td>
+                                <td style="padding: 6px 0; width: 35%; font-weight: 600;">${reg.studentName}</td>
+                                <td style="padding: 6px 0; width: 35%; color: #4B5563;">"${reg.pieceTitle || 'N/A'}"</td>
+                                <td style="padding: 6px 0; width: 30%; color: #6B7280; font-size: 10pt; text-align: right;">${formatDateTime(reg.timestamp)}</td>
                             </tr>
                         `).join('')}
                     </table>
@@ -832,7 +833,7 @@ function printTeamRegistrations() {
 
             const modalHTML = `
             <div id="program-modal-overlay" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex flex-col justify-end sm:justify-center p-0 sm:p-4 md:p-6 animate-fade-in" onclick="if(event.target.id === 'program-modal-overlay') closeModal();">
-                <div class="w-full h-full sm:h-[92vh] sm:max-h-[850px] max-w-5xl bg-white sm:rounded-[2.5rem] flex flex-col overflow-hidden shadow-2xl rounded-none relative" onclick="event.stopPropagation();">
+                <div class="w-full h-full sm:h-[92vh] sm:max-h-[850px] max-w-5xl bg-white sm:rounded-[2.5rem] flex flex-col overflow-hidden shadow-2xl rounded-none relative">
                     
                     <!-- Header -->
                     <div class="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 bg-white/80 backdrop-blur-md flex-shrink-0">
@@ -934,6 +935,21 @@ function printTeamRegistrations() {
             modalContainer.classList.remove('hidden');
         };
 
+        function formatDateTime(timestamp) {
+            if (!timestamp) return 'N/A';
+            const d = new Date(timestamp);
+            if (isNaN(d.getTime())) return 'N/A';
+            return d.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+        window.formatDateTime = formatDateTime;
+
         function renderRosterListHTML(programId, teamName) {
             const allRegistrations = getDataAsArray('registrations');
             const teamRegistrations = allRegistrations.filter(r => r.programId === programId && r.teamName === teamName);
@@ -964,20 +980,23 @@ function printTeamRegistrations() {
                             ${reg.firstLine ? `<p class="text-[11px] text-gray-500 italic mt-0.5 truncate pl-3 border-l-2 border-orange-200">"${reg.firstLine}"</p>` : ''}
                         </div>
                         <div class="flex items-center gap-1 flex-shrink-0">
-                            <button type="button" class="edit-reg-btn p-1.5 rounded-lg text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 text-xs font-bold transition-colors cursor-pointer" data-reg-id="${reg.id}" title="Edit Registration">
+                            <button type="button" onclick="editRegistration('${reg.id}')" class="edit-reg-btn p-1.5 rounded-lg text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 text-xs font-bold transition-colors cursor-pointer" data-reg-id="${reg.id}" title="Edit Registration">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button type="button" class="delete-reg-btn p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 text-xs font-bold transition-colors cursor-pointer" data-reg-id="${reg.id}" title="Remove Registration">
+                            <button type="button" onclick="deleteRegistration('${reg.id}')" class="delete-reg-btn p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 text-xs font-bold transition-colors cursor-pointer" data-reg-id="${reg.id}" title="Remove Registration">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
                     </div>
                     
-                    <div class="flex items-center justify-between pt-2 border-t border-gray-200/60 text-[10px] text-gray-400 font-medium">
-                        <span>${new Date(reg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-200/60 text-[11px] text-gray-500 font-medium">
+                        <span class="flex items-center gap-1.5 text-gray-600 font-semibold" title="Registration Date & Time">
+                            <i class="far fa-calendar-alt text-orange-500"></i>
+                            ${formatDateTime(reg.timestamp)}
+                        </span>
                         ${reg.youtubeLink ? `
-                            <a href="${reg.youtubeLink}" target="_blank" class="text-red-600 hover:text-red-700 font-bold flex items-center gap-1">
-                                <i class="fab fa-youtube"></i> Video Link
+                            <a href="${reg.youtubeLink}" target="_blank" class="text-red-600 hover:text-red-700 font-bold flex items-center gap-1 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded-md transition-colors">
+                                <i class="fab fa-youtube"></i> Video
                             </a>
                         ` : ''}
                     </div>
@@ -985,6 +1004,34 @@ function printTeamRegistrations() {
                 `;
             }).join('');
         }
+
+        async function deleteRegistration(regId) {
+            if (!regId) return;
+            const reg = appData.registrations[regId];
+            if (reg && reg.teamName) {
+                currentModalTeamName = reg.teamName;
+            }
+            const studentName = reg?.studentName || 'this candidate';
+            if (confirm(`Are you sure you want to remove the registration for ${studentName}?`)) {
+                try {
+                    await db.ref('registrations/' + regId).remove();
+                    if (selectedProgramId) {
+                        openProgramRegistrationModal(selectedProgramId, currentModalTeamName);
+                    } else {
+                        renderApp();
+                    }
+                } catch(err) {
+                    alert('Error removing registration: ' + err.message);
+                }
+            }
+        }
+        window.deleteRegistration = deleteRegistration;
+
+        function editRegistration(regId) {
+            if (!regId) return;
+            openEditModal(regId);
+        }
+        window.editRegistration = editRegistration;
 
         function updateModalRosterInPlace(programId, teamName) {
             if (!programId) return;
@@ -1045,6 +1092,7 @@ function printTeamRegistrations() {
                 alert('Registration not found!');
                 return;
             }
+            currentModalTeamName = registration.teamName;
             const program = appData.programs[registration.programId];
             const teamId = Object.keys(appData.teams).find(key => appData.teams[key].name === registration.teamName);
 
@@ -1057,6 +1105,9 @@ function printTeamRegistrations() {
                     .map(r => r.studentId)
             );
             const availableStudents = studentsForProgram.filter(s => !registeredStudentIds.has(s.id));
+            const candidateOptions = availableStudents.some(s => s.id === registration.studentId)
+                ? availableStudents
+                : [{ id: registration.studentId, name: registration.studentName, chestNo: appData.students[registration.studentId]?.chestNo }, ...availableStudents];
 
             const regType = program.registrationType || 'full';
             let formFields = '';
@@ -1072,13 +1123,13 @@ function printTeamRegistrations() {
 
             const modalHTML = `
             <div id="edit-modal-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in" onclick="if(event.target.id === 'edit-modal-overlay') { if(selectedProgramId) { openProgramRegistrationModal(selectedProgramId, currentModalTeamName); } else { closeModal(); } }">
-                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100" onclick="event.stopPropagation();">
+                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100">
                     <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/60">
                         <div>
                             <h3 class="text-lg font-black text-gray-900">Edit Registration</h3>
                             <p class="text-xs text-gray-500 font-medium">${program.name} (${registration.teamName})</p>
                         </div>
-                        <button type="button" class="close-edit-modal-btn w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 flex items-center justify-center text-sm font-bold transition-all">&times;</button>
+                        <button type="button" onclick="if(selectedProgramId) { openProgramRegistrationModal(selectedProgramId, currentModalTeamName); } else { closeModal(); }" class="close-edit-modal-btn w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 flex items-center justify-center text-sm font-bold transition-all cursor-pointer">&times;</button>
                     </div>
                     <form id="edit-registration-form" class="p-6 space-y-4">
                         <input type="hidden" name="registrationId" value="${regId}">
@@ -1086,14 +1137,13 @@ function printTeamRegistrations() {
                         <div>
                             <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Participant</label>
                             <select name="studentId" required class="w-full px-4 py-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all">
-                                <option value="${registration.studentId}">${registration.studentName}</option>
-                                ${availableStudents.map(s => `<option value="${s.id}" ${s.id === registration.studentId ? 'selected' : ''}>${s.name} (${s.chestNo || 'N/A'})</option>`).join('')}
+                                ${candidateOptions.map(s => `<option value="${s.id}" ${s.id === registration.studentId ? 'selected' : ''}>${s.name} (Chest #${s.chestNo || 'N/A'})</option>`).join('')}
                             </select>
                         </div>
                         ${formFields}
                         <div class="pt-4 flex justify-end gap-2 border-t border-gray-100">
-                            <button type="button" class="close-edit-modal-btn px-4 py-2.5 rounded-xl text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Cancel</button>
-                            <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all">Save Changes</button>
+                            <button type="button" onclick="if(selectedProgramId) { openProgramRegistrationModal(selectedProgramId, currentModalTeamName); } else { closeModal(); }" class="close-edit-modal-btn px-4 py-2.5 rounded-xl text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer">Cancel</button>
+                            <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all cursor-pointer">Save Changes</button>
                         </div>
                     </form>
                 </div>
@@ -1228,15 +1278,16 @@ function printTeamRegistrations() {
     </div>
                 </header>
                 
-                <table style="width: 100%; border-collapse: collapse; font-size: 14pt;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13pt;">
                     <thead>
                         <tr style="background-color: #EEF2FF; /* Light Indigo */ text-align: left; color: #374151; font-weight: 600;">
-                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 5%;">#</th>
-                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 15%;">Team</th>
-                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 20%;">Student Name</th>
-                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 10%;">Chest No</th>
-                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 25%;">Piece Title</th>
-                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 25%;">First Line</th>
+                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 4%;">#</th>
+                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 14%;">Team</th>
+                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 18%;">Student Name</th>
+                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 8%;">Chest No</th>
+                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 20%;">Piece Title</th>
+                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 18%;">First Line</th>
+                            <th style="padding: 10px 8px; border: 1px solid #D1D5DB; width: 18%; text-align: center;">Registered At</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1248,11 +1299,12 @@ function printTeamRegistrations() {
                 return `
                                 <tr style="${rowStyle} page-break-inside: avoid;">
                                     <td style="padding: 8px; border: 1px solid #D1D5DB; text-align: center;">${index + 1}</td>
-                                    <td style="padding: 8px; border: 1px solid #D1D5DB;">${reg.teamName}</td>
+                                    <td style="padding: 8px; border: 1px solid #D1D5DB; font-weight: 600;">${reg.teamName}</td>
                                     <td style="padding: 8px; border: 1px solid #D1D5DB;">${reg.studentName}</td>
                                     <td style="padding: 8px; border: 1px solid #D1D5DB; text-align: center;">${chestNo}</td>
                                     <td style="padding: 8px; border: 1px solid #D1D5DB;">${reg.pieceTitle || '-'}</td>
                                     <td style="padding: 8px; border: 1px solid #D1D5DB;">${reg.firstLine || '-'}</td>
+                                    <td style="padding: 8px; border: 1px solid #D1D5DB; text-align: center; font-size: 10pt; color: #374151; white-space: nowrap;">${formatDateTime(reg.timestamp)}</td>
                                 </tr>
                             `;
             }).join('')}
@@ -1493,11 +1545,18 @@ function printTeamRegistrations() {
             const deleteButton = e.target.closest('.delete-reg-btn');
             if (deleteButton) {
                 const regId = deleteButton.dataset.regId;
-                if (confirm('Are you sure you want to remove this registration?')) {
+                const reg = appData.registrations[regId];
+                if (reg && reg.teamName) {
+                    currentModalTeamName = reg.teamName;
+                }
+                const studentName = reg?.studentName || 'this candidate';
+                if (confirm(`Are you sure you want to remove the registration for ${studentName}?`)) {
                     try {
                         await db.ref('registrations/' + regId).remove();
                         if (selectedProgramId) {
                             openProgramRegistrationModal(selectedProgramId, currentModalTeamName);
+                        } else {
+                            renderApp();
                         }
                     } catch(err) {
                         alert('Error removing registration: ' + err.message);

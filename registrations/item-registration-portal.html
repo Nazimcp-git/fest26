@@ -912,7 +912,7 @@ function printTeamRegistrations() {
                                         <i class="fas fa-users text-orange-500"></i>
                                         Team Entries (${teamRegistrationCount})
                                     </h4>
-                                    <p class="text-xs text-gray-500 mt-0.5">Candidates registered from ${teamName}.</p>
+                                    <p id="modal-roster-subtitle" class="text-xs text-gray-500 mt-0.5">Candidates registered from ${teamName}.</p>
                                 </div>
                                 ${teamRegistrationCount > 0 ? `
                                     <button type="button" onclick="printRegistrations('${programId}')" class="text-xs font-bold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer" title="Print this event's list">
@@ -957,7 +957,7 @@ function printTeamRegistrations() {
 
             if (teamRegistrationCount === 0) {
                 return `
-                    <div class="h-full min-h-[220px] flex flex-col items-center justify-center p-6 text-center bg-gray-50/70 rounded-2xl border border-dashed border-gray-200 my-auto">
+                    <div class="h-full min-h-[220px] flex flex-col items-center justify-center p-6 text-center bg-gray-50/70 rounded-2xl border border-dashed border-gray-200 my-auto animate-fade-in">
                         <i class="fas fa-clipboard-list text-3xl text-gray-300 mb-2"></i>
                         <p class="text-xs font-bold text-gray-600">No participants registered yet.</p>
                         <p class="text-[11px] text-gray-400 mt-0.5">Use the registration form to add candidate entries.</p>
@@ -969,7 +969,7 @@ function printTeamRegistrations() {
                 const student = appData.students[reg.studentId];
                 const chestNo = student?.chestNo ? `#${student.chestNo}` : '';
                 return `
-                <div class="p-3.5 bg-gray-50/80 hover:bg-orange-50/30 border border-gray-200/80 rounded-2xl transition-all space-y-2">
+                <div class="p-3.5 bg-gray-50/80 hover:bg-orange-50/30 border border-gray-200/80 rounded-2xl transition-all duration-300 space-y-2 animate-fade-in shadow-xs">
                     <div class="flex items-start justify-between gap-2">
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2 flex-wrap">
@@ -1035,8 +1035,9 @@ function printTeamRegistrations() {
 
         function updateModalRosterInPlace(programId, teamName) {
             if (!programId) return;
+            const effectiveTeamName = teamName || currentModalTeamName || (currentUser?.type === 'admin' ? Object.values(appData.teams)[0]?.name : currentUser?.teamName) || 'ALETHEIA';
             const allRegistrations = getDataAsArray('registrations');
-            const teamRegistrations = allRegistrations.filter(r => r.programId === programId && r.teamName === teamName);
+            const teamRegistrations = allRegistrations.filter(r => r.programId === programId && r.teamName === effectiveTeamName);
             const count = teamRegistrations.length;
 
             const headerCounter = document.getElementById('modal-header-counter');
@@ -1054,9 +1055,14 @@ function printTeamRegistrations() {
                 rosterTitle.innerHTML = `<i class="fas fa-users text-orange-500"></i>Team Entries (${count})`;
             }
 
+            const rosterSubtitle = document.getElementById('modal-roster-subtitle');
+            if (rosterSubtitle) {
+                rosterSubtitle.textContent = `Candidates registered from ${effectiveTeamName}.`;
+            }
+
             const rosterList = document.getElementById('modal-roster-list');
             if (rosterList) {
-                rosterList.innerHTML = renderRosterListHTML(programId, teamName);
+                rosterList.innerHTML = renderRosterListHTML(programId, effectiveTeamName);
             }
 
             // Keep candidate dropdown options in sync without clearing what current user selected
@@ -1065,7 +1071,7 @@ function printTeamRegistrations() {
                 const currentValue = studentSelect.value;
                 const program = appData.programs[programId];
                 if (program) {
-                    const teamId = Object.keys(appData.teams).find(key => appData.teams[key].name === teamName);
+                    const teamId = Object.keys(appData.teams).find(key => appData.teams[key].name === effectiveTeamName);
                     const studentsForProgram = getDataAsArray('students').filter(s =>
                         s.teamId === teamId && s.category === program.category
                     );

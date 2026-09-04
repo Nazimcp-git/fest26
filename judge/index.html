@@ -124,6 +124,15 @@
         }
       }
 
+      // If judge is actively judging a program or typing in an input, don't re-render and wipe score inputs
+      if (selectedProgramId) {
+        return;
+      }
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA')) {
+        return;
+      }
+
       render();
     });
 

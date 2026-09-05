@@ -214,6 +214,31 @@
                 </a>
             `;
 
+            const contradictionCard = isAdmin ? `
+                <a href="contradiction-checker.html" 
+                   class="group relative bg-white/60 backdrop-blur-xl border border-white/60 p-8 rounded-3xl shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl md:col-span-2 bg-gradient-to-br from-white/70 via-orange-50/30 to-amber-50/40">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-start sm:items-center gap-5">
+                            <div class="w-14 h-14 rounded-2xl bg-orange-500/10 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+                                <i class="fas fa-user-check text-2xl"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h3 class="text-2xl font-bold text-gray-900">Contradiction Checker</h3>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200">Admin Only</span>
+                                </div>
+                                <p class="text-gray-600 text-sm max-w-2xl">Cross-reference candidate rosters across multiple programs, run festival-wide automated duplicate scans, and resolve timetable schedule collisions.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="text-orange-600 font-bold text-sm flex items-center group-hover:text-orange-700 px-4 py-2.5 rounded-xl bg-orange-100/60 group-hover:bg-orange-100 transition-colors">
+                                Launch Checker <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            ` : '';
+
             return `
                 <header class="mb-8">
                     <h1 class="text-4xl font-black text-gray-900 tracking-tight">Welcome, ${currentUser.type === 'admin' ? 'Admin' : currentUser.teamName}</h1>
@@ -223,6 +248,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     ${itemCard}
                     ${participantCard}
+                    ${contradictionCard}
                 </div>
             `;
         }

@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contradiction Checker | Alert 2k26 Admin</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                        }
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(8px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+            .print-card { box-shadow: none !important; border: 1px solid #e5e7eb !important; background: white !important; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="bg-[#f5f3ef] text-gray-800 min-h-screen relative overflow-x-hidden selection:bg-orange-500 selection:text-white">
+
+    <!-- Aurora Background -->
+    <div class="fixed inset-0 pointer-events-none z-0 no-print">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-pink-400/25 mix-blend-multiply filter blur-[120px] animate-blob"></div>
+        <div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-orange-400/25 mix-blend-multiply filter blur-[120px] animate-blob" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-[-20%] left-[20%] w-[50%] h-[50%] rounded-full bg-teal-400/25 mix-blend-multiply filter blur-[120px] animate-blob" style="animation-delay: 4s;"></div>
+    </div>
+
+    <!-- Branded Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#f5f3ef]" style="background-image: radial-gradient(at 50% 40%, hsla(28,100%,74%,0.18) 0px, transparent 60%);">
+        <style>
+            @keyframes loaderSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            @keyframes loaderPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.85; transform: scale(0.97); } }
+            @keyframes loaderFadeOut { 0% { opacity: 1; } 100% { opacity: 0; pointer-events: none; visibility: hidden; } }
+            .loader-logo { animation: loaderPulse 2.5s ease-in-out infinite; }
+            .loader-ring { animation: loaderSpin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite; }
+            .loader-hide { animation: loaderFadeOut 0.4s ease-out forwards; }
+        </style>
+        <div class="relative mb-6">
+            <img src="prelogo.webp" alt="Alert 2k26" class="loader-logo w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-xl border-2 border-white/60" />
+            <svg class="loader-ring absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)]" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="46" fill="none" stroke="#f9731620" stroke-width="3" />
+                <circle cx="50" cy="50" r="46" fill="none" stroke="#f97316" stroke-width="3" stroke-linecap="round" stroke-dasharray="72 220" />
+            </svg>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-1">Alert 2k26</h1>
+        <p class="text-xs sm:text-sm font-medium text-gray-400 tracking-wide">Loading Contradiction Checker...</p>
+    </div>
+
+    <!-- App Container -->
+    <div id="app" class="relative z-10 min-h-screen"></div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/security.js"></script>
+
+    <script type="module">
+        // --- ADMIN AUTH CONFIG ---
+        const ACCESS_CODE_HASHES = {
+            "5dfc92691f7fa0a4f9f8dd9b05b69b1720baad084182c7c4d492cbbab1f23333": { type: "admin" }, // PIN: 850392
+            "64e48f3bf07307f751c02213b95e0b5e1e8351597dfbe12bce5cbf115591ce3f": { type: "admin" }  // ADMIN2026
+        };
+
+        // --- APP STATE ---
+        let appData = {
+            students: {},
+            teams: {},
+            programs: {},
+            participantRegistrations: {},
+            registrations: {}
+        };
+        let currentUser = null;
+
+        // Checker State
+        let activeTab = 'compare'; // 'compare' | 'autoscan' | 'collision' | 'inspector'
+        let selectedProgramIds = []; // Array of program IDs selected for direct comparison
+        let activeSource = 'participants'; // 'participants' | 'items' | 'unified'
+
+        // Comparison Tab Filters
+        let compareCategoryFilter = 'ALL';
+        let compareStageFilter = 'ALL';
+        let compareSearchQuery = '';
+
+        // AutoScan Tab Filters
+        let autoCategoryFilter = 'ALL';
+        let autoStageFilter = 'ALL';
+        let autoTeamFilter = 'ALL';
+        let autoSeverityFilter = 'ALL'; // 'ALL' | 'STAGE_CLASH' | 'HEAVY_LOAD'
+        let autoSearchQuery = '';
+
+        // Inspector Tab State
+        let inspectorSearchQuery = '';
+        let inspectorSelectedStudentId = null;
+
+        const CATEGORIES = ['BIDAYA', 'ALIYA', 'UOOLA', 'THANIYA', 'THANAWIYYA', 'KULLIYYA'];
+        const TEAM_COLORS = {
+            'LIBERA': { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
+            'RELETIA': { bg: 'bg-purple-50 text-purple-700 border-purple-200', dot: 'bg-purple-500' },
+            'OPERA': { bg: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
+            'ALETHEIA': { bg: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' }
+        };
+
+        // --- HELPER FUNCTIONS ---
+        function dismissLoader() {
+            const loader = document.getElementById('loading-screen');
+            if (loader) {
+                loader.classList.add('loader-hide');
+                setTimeout(() => loader.remove(), 450);
+            }
+        }
+
+        function getTeamBadge(teamName) {
+            const c = TEAM_COLORS[teamName] || { bg: 'bg-gray-100 text-gray-700 border-gray-200', dot: 'bg-gray-400' };
+            return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${c.bg}">
+                <span class="w-1.5 h-1.5 rounded-full ${c.dot}"></span>
+                ${teamName || 'Unknown'}
+            </span>`;
+        }
+
+        function getStageBadge(stageType) {
+            const isStage = String(stageType || '').toLowerCase() === 'stage';
+            return isStage 
+                ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold bg-purple-100 text-purple-700 border border-purple-200"><i class="fas fa-theater-masks text-[10px]"></i> Stage</span>`
+                : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold bg-gray-100 text-gray-600 border border-gray-200"><i class="fas fa-file-alt text-[10px]"></i> Non-Stage</span>`;
+        }
+
+        // Get participants enrolled in a program based on selected source
+        function getProgramParticipants(programId, source = activeSource) {
+            const map = new Map(); // studentId -> { studentId, student, teamName, teamId, source }
+
+            // 1. Participant Registrations (Rosters)
+            if (source === 'participants' || source === 'unified') {
+                const progRegs = appData.participantRegistrations?.[programId] || {};
+                if (typeof progRegs === 'object' && progRegs !== null) {
+                    Object.entries(progRegs).forEach(([teamId, sIds]) => {
+                        if (Array.isArray(sIds)) {
+                            sIds.forEach(sid => {
+                                if (sid && !map.has(sid)) {
+                                    const student = appData.students?.[sid] || { name: 'Unknown', chestNo: 'N/A' };
+                                    const team = appData.teams?.[teamId] || appData.teams?.[student.teamId];
+                                    map.set(sid, {
+                                        studentId: sid,
+                                        student,
+                                        teamName: team?.name || 'Unknown',
+                                        teamId: student.teamId || teamId,
+                                        source: 'Participant Roster'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+
+            // 2. Item Registrations (if chosen)
+            if (source === 'items' || source === 'unified') {
+                const itemRegs = Object.values(appData.registrations || {});
+                itemRegs.filter(r => r.programId === programId).forEach(r => {
+                    const sid = r.studentId;
+                    if (sid && !map.has(sid)) {
+                        const student = appData.students?.[sid] || { name: r.studentName || 'Unknown', chestNo: 'N/A' };
+                        map.set(sid, {
+                            studentId: sid,
+                            student,
+                            teamName: r.teamName || appData.teams?.[student.teamId]?.name || 'Unknown',
+                            teamId: student.teamId,
+                            source: 'Item Registration'
+                        });
+                    }
+                });
+            }
+
+            return Array.from(map.values()).sort((a, b) => {
+                const chestA = parseInt(a.student.chestNo) || 0;
+                const chestB = parseInt(b.student.chestNo) || 0;
+                if (chestA !== chestB) return chestA - chestB;
+                return (a.student.name || '').localeCompare(b.student.name || '');
+            });
+        }
+
+        // Build a global map of studentId -> array of programIds enrolled
+        function buildStudentProgramMap(source = activeSource) {
+            const studentProgMap = new Map(); // studentId -> Set of programIds
+
+            function addEntry(studentId, programId) {
+                if (!studentId || !programId) return;
+                if (!studentProgMap.has(studentId)) {
+                    studentProgMap.set(studentId, new Set());
+                }
+                studentProgMap.get(studentId).add(programId);
+            }
+
+            if (source === 'participants' || source === 'unified') {
+                for (const [pid, teams] of Object.entries(appData.participantRegistrations || {})) {
+                    if (typeof teams === 'object' && teams !== null) {
+                        for (const [tid, sids] of Object.entries(teams)) {
+                            if (Array.isArray(sids)) {
+                                sids.forEach(sid => addEntry(sid, pid));
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (source === 'items' || source === 'unified') {
+                for (const reg of Object.values(appData.registrations || {})) {
+                    if (reg && reg.studentId && reg.programId) {
+                        addEntry(reg.studentId, reg.programId);
+                    }
+                }
+            }
+
+            return studentProgMap;
+        }
+
+        // --- AUTH & GUARD ---
+        function checkAuth() {
+            const storedUser = sessionStorage.getItem('user');
+            if (storedUser) {
+                try {
+                    currentUser = JSON.parse(storedUser);
+                } catch(e) {
+                    currentUser = null;
+                }
+            }
+            return currentUser && currentUser.type === 'admin';
+        }
+
+        // --- RENDER APP SHELL ---
+        function AppShell(content) {
+            return `
+            <div class="min-h-screen flex flex-col">
+                <!-- Navigation Bar -->
+                <nav class="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-7xl bg-white/40 backdrop-blur-3xl backdrop-saturate-[2.5] border border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-3xl z-50 transition-all no-print">
+                    <div class="px-5 sm:px-6">
+                        <div class="flex items-center justify-between h-16">
+                            <!-- Left: Hub Back & Title -->
+                            <div class="flex items-center gap-3">
+                                <a href="index.html" class="w-10 h-10 rounded-2xl bg-gray-500/10 text-gray-700 hover:text-gray-900 hover:bg-white/70 border border-transparent hover:border-white/60 flex items-center justify-center transition-all group" title="Back to Registration Hub">
+                                    <i class="fas fa-arrow-left text-sm transform group-hover:-translate-x-0.5 transition-transform"></i>
+                                </a>
+                                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20">
+                                    <i class="fas fa-user-check text-sm"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-black text-gray-900 text-lg tracking-tight">Contradiction Checker</span>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200">Admin</span>
+                                    </div>
+                                    <p class="text-[11px] font-medium text-gray-400 hidden sm:block">Participant duplicate & clash detection engine</p>
+                                </div>
+                            </div>
+
+                            <!-- Right: Controls -->
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                <!-- Source Selector -->
+                                <div class="hidden md:flex items-center bg-gray-100/70 p-1 rounded-2xl border border-gray-200/60 text-xs font-bold">
+                                    <button onclick="setDataSource('participants')" class="px-3 py-1.5 rounded-xl transition-all ${activeSource === 'participants' ? 'bg-white text-orange-600 shadow-sm font-black' : 'text-gray-500 hover:text-gray-800'}">
+                                        <i class="fas fa-users mr-1"></i> Rosters
+                                    </button>
+                                    <button onclick="setDataSource('items')" class="px-3 py-1.5 rounded-xl transition-all ${activeSource === 'items' ? 'bg-white text-orange-600 shadow-sm font-black' : 'text-gray-500 hover:text-gray-800'}">
+                                        <i class="fas fa-edit mr-1"></i> Items
+                                    </button>
+                                    <button onclick="setDataSource('unified')" class="px-3 py-1.5 rounded-xl transition-all ${activeSource === 'unified' ? 'bg-white text-orange-600 shadow-sm font-black' : 'text-gray-500 hover:text-gray-800'}">
+                                        <i class="fas fa-layer-group mr-1"></i> Unified
+                                    </button>
+                                </div>
+
+                                <!-- Print Action -->
+                                <button onclick="window.print()" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold text-gray-700 bg-white/70 hover:bg-white hover:text-orange-600 border border-white/80 shadow-sm transition-all flex items-center gap-1.5" title="Print formal report">
+                                    <i class="fas fa-print"></i>
+                                    <span class="hidden sm:inline">Print Report</span>
+                                </button>
+
+                                <!-- Logout -->
+                                <button id="logout-btn" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors border border-transparent hover:border-red-100 flex items-center gap-1.5">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span class="hidden sm:inline">Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Main Content Area -->
+                <main class="flex-grow pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+                    ${content}
+                </main>
+
+                <!-- Footer -->
+                <footer class="py-6 text-center text-xs font-medium text-gray-400 no-print border-t border-gray-200/40">
+                    Alert 2k26 Arts Festival &bull; Administrative Contradiction Audit Engine
+                </footer>
+            </div>
+            `;
+        }
+
+        // --- LOGIN VIEW ---
+        function renderLoginGate() {
+            return `
+            <div class="flex items-center justify-center min-h-screen px-4 animate-fade-in">
+                <div class="w-full max-w-md p-8 bg-white/70 backdrop-blur-2xl border border-white/60 rounded-3xl shadow-[0_12px_40px_0_rgba(0,0,0,0.08)]">
+                    <div class="flex flex-col items-center">
+                        <div class="relative mb-5">
+                            <img src="prelogo.webp" alt="Alert 2k26" class="w-20 h-20 rounded-full object-cover shadow-xl border-2 border-white/80" />
+                            <div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs shadow-md">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                        </div>
+                        <h2 class="text-center text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Admin Authorization</h2>
+                        <p class="mt-1.5 text-center text-xs sm:text-sm font-medium text-gray-500">
+                            The Contradiction Checker is reserved strictly for Festival Administrators.
+                        </p>
+                    </div>
+                    <form id="admin-login-form" class="mt-8 space-y-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1.5 ml-1">Admin Passcode / PIN</label>
+                            <input id="admin-passcode-input" type="password" required autofocus
+                                class="appearance-none block w-full px-4 py-3.5 bg-white/60 border border-gray-200 rounded-2xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:bg-white text-sm font-bold tracking-widest transition-all" 
+                                placeholder="Enter Admin PIN or Passcode">
+                        </div>
+                        <button type="submit" class="w-full py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 transition-all transform hover:-translate-y-0.5 cursor-pointer">
+                            <i class="fas fa-unlock-alt mr-2"></i> Access Contradiction Engine
+                        </button>
+                        <p id="admin-login-error" class="text-red-500 text-xs text-center font-bold min-h-[1rem]"></p>
+                    </form>
+                    <div class="mt-4 pt-4 border-t border-gray-100 text-center">
+                        <a href="index.html" class="text-xs font-bold text-gray-400 hover:text-gray-700 transition-colors">
+                            <i class="fas fa-arrow-left mr-1"></i> Return to Central Registration Hub
+                        </a>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        // --- MAIN DASHBOARD VIEW ---
+        function renderDashboard() {
+            return `
+            <div class="animate-fade-in space-y-6">
+                <!-- Page Header -->
+                <header class="no-print">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h1 class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                                Contradiction Checker
+                                <span class="text-xs font-black uppercase px-2.5 py-1 rounded-xl bg-orange-100 text-orange-700 border border-orange-200 shadow-sm">
+                                    <i class="fas fa-shield-alt mr-1"></i> Live Audit
+                                </span>
+                            </h1>
+                            <p class="mt-1 text-sm sm:text-base text-gray-600 font-medium">
+                                Cross-reference program participants, identify duplicate registrations, and prevent timetable schedule collisions.
+                            </p>
+                        </div>
+
+                        <!-- Mobile Source Toggle -->
+                        <div class="flex md:hidden items-center bg-white/60 backdrop-blur-xl p-1 rounded-2xl border border-white/60 text-xs font-bold w-fit shadow-sm">
+                            <button onclick="setDataSource('participants')" class="px-3 py-1.5 rounded-xl transition-all ${activeSource === 'participants' ? 'bg-orange-500 text-white font-black' : 'text-gray-600'}">Rosters</button>
+                            <button onclick="setDataSource('items')" class="px-3 py-1.5 rounded-xl transition-all ${activeSource === 'items' ? 'bg-orange-500 text-white font-black' : 'text-gray-600'}">Items</button>
+                            <button onclick="setDataSource('unified')" class="px-3 py-1.5 rounded-xl transition-all ${activeSource === 'unified' ? 'bg-orange-500 text-white font-black' : 'text-gray-600'}">Unified</button>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Tabs -->
+                    <div class="mt-6 flex flex-wrap gap-2 sm:gap-3 p-1.5 bg-white/40 backdrop-blur-xl rounded-2xl border border-white/60 shadow-sm">
+                        <button onclick="setActiveTab('compare')" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeTab === 'compare' ? 'bg-white text-orange-600 shadow-md font-black' : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'}">
+                            <i class="fas fa-code-compare"></i>
+                            <span>Multi-Program Compare</span>
+                            ${selectedProgramIds.length > 0 ? `<span class="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] flex items-center justify-center">${selectedProgramIds.length}</span>` : ''}
+                        </button>
+                        <button onclick="setActiveTab('autoscan')" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeTab === 'autoscan' ? 'bg-white text-orange-600 shadow-md font-black' : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'}">
+                            <i class="fas fa-radar"></i>
+                            <span>Global Auto-Scan</span>
+                            <span class="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase">Auto</span>
+                        </button>
+                        <button onclick="setActiveTab('collision')" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeTab === 'collision' ? 'bg-white text-orange-600 shadow-md font-black' : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'}">
+                            <i class="fas fa-table-cells"></i>
+                            <span>Collision Matrix</span>
+                        </button>
+                        <button onclick="setActiveTab('inspector')" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeTab === 'inspector' ? 'bg-white text-orange-600 shadow-md font-black' : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'}">
+                            <i class="fas fa-search"></i>
+                            <span>Candidate Inspector</span>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Active Tab Content -->
+                <div>
+                    ${activeTab === 'compare' ? renderCompareTab() : ''}
+                    ${activeTab === 'autoscan' ? renderAutoScanTab() : ''}
+                    ${activeTab === 'collision' ? renderCollisionMatrixTab() : ''}
+                    ${activeTab === 'inspector' ? renderInspectorTab() : ''}
+                </div>
+            </div>
+            `;
+        }
+
+        // ==========================================
+        // TAB 1: MULTI-PROGRAM COMPARISON
+        // ==========================================
+        function renderCompareTab() {
+            const allPrograms = Object.entries(appData.programs || {}).map(([id, p]) => ({ id, ...p }));
+            
+            // Filter programs for the selector
+            const filteredPrograms = allPrograms.filter(p => {
+                if (compareCategoryFilter !== 'ALL' && p.category !== compareCategoryFilter) return false;
+                if (compareStageFilter !== 'ALL') {
+                    const isStage = String(p.stageType || '').toLowerCase() === 'stage';
+                    if (compareStageFilter === 'stage' && !isStage) return false;
+                    if (compareStageFilter === 'non-stage' && isStage) return false;
+                }
+                if (compareSearchQuery) {
+                    const q = compareSearchQuery.toLowerCase();
+                    const name = (p.name || '').toLowerCase();
+                    const code = (p.code || '').toLowerCase();
+                    if (!name.includes(q) && !code.includes(q)) return false;
+                }
+                return true;
+            }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+            // Calculate contradictions among selected programs
+            const selectedProgs = selectedProgramIds.map(id => ({ id, ...(appData.programs[id] || { name: 'Unknown' }) }));
+            
+            // Map studentId -> list of selected programs they appear in
+            const studentAppearances = new Map(); // studentId -> { student, teamName, programs: [] }
+
+            selectedProgramIds.forEach(pid => {
+                const participants = getProgramParticipants(pid);
+                participants.forEach(p => {
+                    if (!studentAppearances.has(p.studentId)) {
+                        studentAppearances.set(p.studentId, {
+                            studentId: p.studentId,
+                            student: p.student,
+                            teamName: p.teamName,
+                            teamId: p.teamId,
+                            programs: []
+                        });
+                    }
+                    studentAppearances.get(p.studentId).programs.push(appData.programs[pid] || { id: pid, name: 'Unknown' });
+                });
+            });
+
+            // Contradictions are students in 2 or more selected programs
+            const contradictions = Array.from(studentAppearances.values())
+                .filter(item => item.programs.length >= 2)
+                .sort((a, b) => {
+                    const diff = b.programs.length - a.programs.length;
+                    if (diff !== 0) return diff;
+                    return (parseInt(a.student.chestNo) || 0) - (parseInt(b.student.chestNo) || 0);
+                });
+
+            const totalDistinctStudents = studentAppearances.size;
+
+            return `
+            <div class="space-y-6">
+                <!-- Program Selector Box -->
+                <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-5 sm:p-6 rounded-3xl shadow-lg no-print">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4 border-b border-gray-100">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <i class="fas fa-layer-group text-orange-500"></i>
+                                Select Programs to Cross-Reference
+                            </h2>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                Choose two or more programs to immediately identify if the same candidate is registered in both.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${selectedProgramIds.length > 0 ? `
+                                <button onclick="clearSelectedPrograms()" class="px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors flex items-center gap-1.5 cursor-pointer">
+                                    <i class="fas fa-trash-alt"></i> Clear Selection (${selectedProgramIds.length})
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Filter Controls -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                        <!-- Category Filter -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Category</label>
+                            <select onchange="setCompareCategory(this.value)" class="w-full px-3 py-2 bg-white/80 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <option value="ALL" ${compareCategoryFilter === 'ALL' ? 'selected' : ''}>All Categories</option>
+                                ${CATEGORIES.map(cat => `<option value="${cat}" ${compareCategoryFilter === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <!-- Stage Filter -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Stage Type</label>
+                            <select onchange="setCompareStage(this.value)" class="w-full px-3 py-2 bg-white/80 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <option value="ALL" ${compareStageFilter === 'ALL' ? 'selected' : ''}>All Stages</option>
+                                <option value="stage" ${compareStageFilter === 'stage' ? 'selected' : ''}>On-Stage Only</option>
+                                <option value="non-stage" ${compareStageFilter === 'non-stage' ? 'selected' : ''}>Non-Stage Only</option>
+                            </select>
+                        </div>
+
+                        <!-- Search Box -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Search Program</label>
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                                <input type="text" placeholder="Type program name..." value="${compareSearchQuery}" oninput="setCompareSearch(this.value)"
+                                    class="w-full pl-8 pr-3 py-2 bg-white/80 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Program Quick Chips / Dropdown Picker -->
+                    <div class="mt-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-gray-600">Available Programs (${filteredPrograms.length}):</span>
+                            <span class="text-[11px] font-medium text-gray-400">Click to add to comparison</span>
+                        </div>
+                        <div class="max-h-40 overflow-y-auto custom-scrollbar p-2 bg-gray-50/70 rounded-2xl border border-gray-100 flex flex-wrap gap-1.5">
+                            ${filteredPrograms.length === 0 ? `
+                                <div class="w-full py-4 text-center text-xs text-gray-400">No matching programs found.</div>
+                            ` : filteredPrograms.map(p => {
+                                const isSelected = selectedProgramIds.includes(p.id);
+                                return `
+                                    <button onclick="toggleProgramSelection('${p.id}')" class="group px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                        isSelected 
+                                            ? 'bg-orange-500 text-white shadow-sm ring-2 ring-orange-400/40' 
+                                            : 'bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-200/80 shadow-2xs'
+                                    }">
+                                        <i class="fas ${isSelected ? 'fa-check-circle' : 'fa-plus'} text-[10px] ${isSelected ? 'text-white' : 'text-gray-400 group-hover:text-orange-500'}"></i>
+                                        <span>${p.name}</span>
+                                        <span class="text-[10px] opacity-75 font-normal">(${p.category || 'GEN'})</span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Selected Programs Strip -->
+                    ${selectedProgramIds.length > 0 ? `
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <label class="block text-xs font-bold text-gray-700 mb-2">
+                                Currently Comparing (${selectedProgramIds.length} programs):
+                            </label>
+                            <div class="flex flex-wrap gap-2">
+                                ${selectedProgs.map(p => `
+                                    <div class="inline-flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-xl bg-orange-50 border border-orange-200 text-orange-800 text-xs font-bold shadow-xs animate-fade-in">
+                                        <span>${p.name}</span>
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-orange-200/60 text-orange-900">${p.category}</span>
+                                        ${getStageBadge(p.stageType)}
+                                        <button onclick="toggleProgramSelection('${p.id}')" class="w-5 h-5 rounded-lg hover:bg-orange-200 text-orange-600 hover:text-orange-900 flex items-center justify-center transition-colors cursor-pointer" title="Remove program">
+                                            <i class="fas fa-times text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Comparison Results Section -->
+                ${selectedProgramIds.length < 2 ? `
+                    <div class="bg-white/60 backdrop-blur-xl border border-white/60 p-12 rounded-3xl shadow-lg text-center">
+                        <div class="w-16 h-16 rounded-3xl bg-orange-100 text-orange-600 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-code-compare text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">Select At Least 2 Programs</h3>
+                        <p class="text-sm text-gray-500 max-w-md mx-auto mt-1.5">
+                            Pick two or more programs from the list above. The engine will instantly cross-reference all candidates and highlight any duplicate registrations.
+                        </p>
+                    </div>
+                ` : `
+                    <!-- Metric Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-5 rounded-3xl shadow-sm">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Selected Programs</span>
+                            <div class="text-3xl font-black text-gray-900 mt-1">${selectedProgramIds.length}</div>
+                            <span class="text-xs text-gray-500 font-medium">Cross-referenced programs</span>
+                        </div>
+                        <div class="bg-white/70 backdrop-blur-xl border ${contradictions.length > 0 ? 'border-red-300 bg-red-50/40' : 'border-white/60'} p-5 rounded-3xl shadow-sm">
+                            <span class="text-xs font-bold ${contradictions.length > 0 ? 'text-red-500' : 'text-gray-400'} uppercase tracking-wider">
+                                Conflicting Candidates
+                            </span>
+                            <div class="text-3xl font-black ${contradictions.length > 0 ? 'text-red-600' : 'text-emerald-600'} mt-1 flex items-center gap-2">
+                                ${contradictions.length}
+                                ${contradictions.length > 0 ? '<i class="fas fa-exclamation-triangle text-lg animate-pulse"></i>' : '<i class="fas fa-check-circle text-lg"></i>'}
+                            </div>
+                            <span class="text-xs font-medium ${contradictions.length > 0 ? 'text-red-600' : 'text-emerald-600'}">
+                                ${contradictions.length > 0 ? 'Duplicate candidates in 2+ programs' : 'Zero duplicates detected! Clean!'}
+                            </span>
+                        </div>
+                        <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-5 rounded-3xl shadow-sm">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Enrolled</span>
+                            <div class="text-3xl font-black text-gray-900 mt-1">${totalDistinctStudents}</div>
+                            <span class="text-xs text-gray-500 font-medium">Distinct participants involved</span>
+                        </div>
+                    </div>
+
+                    <!-- Contradiction Highlights -->
+                    ${contradictions.length > 0 ? `
+                        <div class="bg-white/70 backdrop-blur-xl border-2 border-red-200 p-6 rounded-3xl shadow-lg space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
+                                        <i class="fas fa-users-slash text-base"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-black text-red-700">Contradictions Detected (${contradictions.length})</h3>
+                                        <p class="text-xs text-gray-500">The following candidates are registered in multiple of the selected programs.</p>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-700 border border-red-200">
+                                    Action Required
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                                ${contradictions.map(item => `
+                                    <div class="p-4 rounded-2xl bg-white/90 border border-red-200/80 shadow-xs flex flex-col justify-between space-y-3">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-black text-gray-900 text-sm">${item.student.name || 'Unknown'}</span>
+                                                    <span class="px-2 py-0.5 rounded-lg text-xs font-extrabold bg-gray-100 text-gray-700">Chest #${item.student.chestNo || 'N/A'}</span>
+                                                </div>
+                                                <div class="mt-1">
+                                                    ${getTeamBadge(item.teamName)}
+                                                </div>
+                                            </div>
+                                            <span class="px-2 py-1 rounded-xl text-[11px] font-black bg-red-100 text-red-700 border border-red-200 flex items-center gap-1">
+                                                <i class="fas fa-exclamation-circle"></i> In ${item.programs.length} Programs
+                                            </span>
+                                        </div>
+                                        <div class="pt-2 border-t border-gray-100">
+                                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Conflicting Programs:</span>
+                                            <div class="flex flex-wrap gap-1.5">
+                                                ${item.programs.map(p => `
+                                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-gray-50 text-gray-800 border border-gray-200">
+                                                        <i class="fas fa-circle text-[6px] text-red-500"></i>
+                                                        ${p.name}
+                                                        ${getStageBadge(p.stageType)}
+                                                    </span>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="bg-white/70 backdrop-blur-xl border border-emerald-200 p-6 rounded-3xl shadow-lg flex items-center gap-4 bg-emerald-50/30">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-check-double text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-emerald-900">No Contradictions Found!</h3>
+                                <p class="text-xs text-emerald-700 mt-0.5">
+                                    All candidates in the selected programs are distinct. There are no duplicate candidate registrations between these programs.
+                                </p>
+                            </div>
+                        </div>
+                    `}
+
+                    <!-- Side-by-Side Rosters Breakdown -->
+                    <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-lg space-y-4">
+                        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <i class="fas fa-table-list text-orange-500"></i>
+                                    Side-by-Side Participant Rosters
+                                </h3>
+                                <p class="text-xs text-gray-500">Conflicting candidates are highlighted with a red badge in each program column.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-${Math.min(selectedProgs.length, 3)} gap-4 overflow-x-auto">
+                            ${selectedProgs.map(p => {
+                                const pList = getProgramParticipants(p.id);
+                                return `
+                                    <div class="bg-white/80 rounded-2xl border border-gray-200/80 p-4 flex flex-col h-full shadow-2xs">
+                                        <div class="pb-3 border-b border-gray-100 mb-3">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <h4 class="font-black text-gray-900 text-sm truncate" title="${p.name}">${p.name}</h4>
+                                                ${getStageBadge(p.stageType)}
+                                            </div>
+                                            <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
+                                                <span>Category: <strong class="text-gray-700">${p.category || 'N/A'}</strong></span>
+                                                <span>Enrolled: <strong class="text-orange-600 font-bold">${pList.length}</strong></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-2 flex-grow max-h-96 overflow-y-auto custom-scrollbar pr-1">
+                                            ${pList.length === 0 ? `
+                                                <div class="text-center py-8 text-xs text-gray-400">No participants enrolled yet.</div>
+                                            ` : pList.map(item => {
+                                                const isClash = contradictions.some(c => c.studentId === item.studentId);
+                                                return `
+                                                    <div class="p-2.5 rounded-xl text-xs flex items-center justify-between gap-2 border transition-all ${
+                                                        isClash 
+                                                            ? 'bg-red-50/80 border-red-200 text-red-900 font-bold' 
+                                                            : 'bg-gray-50/60 border-gray-200/60 text-gray-800'
+                                                    }">
+                                                        <div class="flex items-center gap-2 truncate">
+                                                            <span class="w-6 text-[10px] font-black opacity-60">#${item.student.chestNo || 'N/A'}</span>
+                                                            <span class="truncate font-bold">${item.student.name || 'Unknown'}</span>
+                                                        </div>
+                                                        <div class="flex items-center gap-1 flex-shrink-0">
+                                                            ${getTeamBadge(item.teamName)}
+                                                            ${isClash ? `<span class="w-2 h-2 rounded-full bg-red-500 animate-ping" title="Clash detected"></span>` : ''}
+                                                        </div>
+                                                    </div>
+                                                `;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `}
+            </div>
+            `;
+        }
+
+        // ==========================================
+        // TAB 2: GLOBAL AUTO-SCAN
+        // ==========================================
+        function renderAutoScanTab() {
+            const studentProgMap = buildStudentProgramMap(activeSource);
+            const allPrograms = appData.programs || {};
+
+            // Compile list of students with >= 2 programs
+            let clashList = [];
+
+            studentProgMap.forEach((pidsSet, sid) => {
+                if (pidsSet.size >= 2) {
+                    const student = appData.students?.[sid] || { name: 'Unknown', chestNo: 'N/A' };
+                    const team = appData.teams?.[student.teamId];
+                    const teamName = team?.name || 'Unknown';
+                    const progList = Array.from(pidsSet).map(pid => ({ id: pid, ...(allPrograms[pid] || { name: 'Unknown' }) }));
+                    
+                    // Count stage programs
+                    const stageCount = progList.filter(p => String(p.stageType || '').toLowerCase() === 'stage').length;
+
+                    clashList.push({
+                        studentId: sid,
+                        student,
+                        teamName,
+                        teamId: student.teamId,
+                        programs: progList,
+                        programCount: progList.length,
+                        stageCount,
+                        isStageClash: stageCount >= 2
+                    });
+                }
+            });
+
+            // Filter clashList
+            const filteredClashes = clashList.filter(item => {
+                if (autoTeamFilter !== 'ALL' && item.teamName !== autoTeamFilter) return false;
+                if (autoSeverityFilter === 'STAGE_CLASH' && !item.isStageClash) return false;
+                if (autoSeverityFilter === 'HEAVY_LOAD' && item.programCount < 4) return false;
+                if (autoCategoryFilter !== 'ALL') {
+                    const hasCategory = item.programs.some(p => p.category === autoCategoryFilter);
+                    if (!hasCategory) return false;
+                }
+                if (autoSearchQuery) {
+                    const q = autoSearchQuery.toLowerCase();
+                    const name = (item.student.name || '').toLowerCase();
+                    const chest = String(item.student.chestNo || '').toLowerCase();
+                    if (!name.includes(q) && !chest.includes(q)) return false;
+                }
+                return true;
+            }).sort((a, b) => {
+                // Prioritize stage clashes, then by program count
+                if (a.isStageClash !== b.isStageClash) return a.isStageClash ? -1 : 1;
+                return b.programCount - a.programCount;
+            });
+
+            const totalStageClashes = clashList.filter(c => c.isStageClash).length;
+            const totalCandidatesInClashes = clashList.length;
+
+            return `
+            <div class="space-y-6">
+                <!-- Auto-Scan Banner & Filter Bar -->
+                <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-lg no-print space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <i class="fas fa-radar text-orange-500 animate-spin" style="animation-duration: 10s;"></i>
+                                Automated Festival-Wide Conflict Scanner
+                            </h2>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                Automatically scans all 250+ programs to uncover every student enrolled in multiple competitions.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="exportClashesCSV()" class="px-3.5 py-2 rounded-xl text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 shadow-sm flex items-center gap-1.5 cursor-pointer">
+                                <i class="fas fa-file-csv text-emerald-600"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Controls -->
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
+                        <!-- Team Filter -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Team Filter</label>
+                            <select onchange="setAutoTeam(this.value)" class="w-full px-3 py-2 bg-white/80 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <option value="ALL" ${autoTeamFilter === 'ALL' ? 'selected' : ''}>All Teams</option>
+                                <option value="LIBERA" ${autoTeamFilter === 'LIBERA' ? 'selected' : ''}>LIBERA</option>
+                                <option value="RELETIA" ${autoTeamFilter === 'RELETIA' ? 'selected' : ''}>RELETIA</option>
+                                <option value="OPERA" ${autoTeamFilter === 'OPERA' ? 'selected' : ''}>OPERA</option>
+                                <option value="ALETHEIA" ${autoTeamFilter === 'ALETHEIA' ? 'selected' : ''}>ALETHEIA</option>
+                            </select>
+                        </div>
+
+                        <!-- Severity Filter -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Conflict Severity</label>
+                            <select onchange="setAutoSeverity(this.value)" class="w-full px-3 py-2 bg-white/80 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <option value="ALL" ${autoSeverityFilter === 'ALL' ? 'selected' : ''}>All Overlaps (2+ Programs)</option>
+                                <option value="STAGE_CLASH" ${autoSeverityFilter === 'STAGE_CLASH' ? 'selected' : ''}>🚨 On-Stage Clashes Only</option>
+                                <option value="HEAVY_LOAD" ${autoSeverityFilter === 'HEAVY_LOAD' ? 'selected' : ''}>⚠️ Heavy Load (4+ Programs)</option>
+                            </select>
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Program Category</label>
+                            <select onchange="setAutoCategory(this.value)" class="w-full px-3 py-2 bg-white/80 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <option value="ALL" ${autoCategoryFilter === 'ALL' ? 'selected' : ''}>All Categories</option>
+                                ${CATEGORIES.map(c => `<option value="${c}" ${autoCategoryFilter === c ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <!-- Search Box -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Candidate Search</label>
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                                <input type="text" placeholder="Chest # or Name..." value="${autoSearchQuery}" oninput="setAutoSearch(this.value)"
+                                    class="w-full pl-8 pr-3 py-2 bg-white/80 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats KPIs -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-5 rounded-3xl shadow-sm">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Candidates with Multiple Programs</span>
+                        <div class="text-3xl font-black text-gray-900 mt-1">${totalCandidatesInClashes}</div>
+                        <span class="text-xs text-gray-500 font-medium">Registered in 2 or more competitions</span>
+                    </div>
+
+                    <div class="bg-white/70 backdrop-blur-xl border border-red-200 bg-red-50/40 p-5 rounded-3xl shadow-sm">
+                        <span class="text-xs font-bold text-red-500 uppercase tracking-wider">Critical On-Stage Clashes</span>
+                        <div class="text-3xl font-black text-red-600 mt-1 flex items-center gap-2">
+                            ${totalStageClashes}
+                            <i class="fas fa-theater-masks text-lg"></i>
+                        </div>
+                        <span class="text-xs text-red-600 font-medium">Registered in 2+ On-Stage items (Schedule Risk)</span>
+                    </div>
+
+                    <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-5 rounded-3xl shadow-sm">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Filtered Matches</span>
+                        <div class="text-3xl font-black text-orange-600 mt-1">${filteredClashes.length}</div>
+                        <span class="text-xs text-gray-500 font-medium">Currently displayed in report</span>
+                    </div>
+                </div>
+
+                <!-- Clashes List -->
+                <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-lg space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <i class="fas fa-list-check text-orange-500"></i>
+                            Candidate Clash Inventory (${filteredClashes.length})
+                        </h3>
+                        <span class="text-xs text-gray-400">Sorted by critical clash severity</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        ${filteredClashes.length === 0 ? `
+                            <div class="py-12 text-center text-sm text-gray-400">No candidates match the active filters.</div>
+                        ` : filteredClashes.map(item => `
+                            <div class="p-4 rounded-2xl bg-white/80 border ${item.isStageClash ? 'border-red-300 bg-red-50/30' : 'border-gray-200/80'} shadow-2xs hover:shadow-sm transition-all">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-2xl ${item.isStageClash ? 'bg-red-500 text-white shadow-md shadow-red-500/20' : 'bg-orange-100 text-orange-600'} flex items-center justify-center font-black text-xs flex-shrink-0">
+                                            #${item.student.chestNo || 'N/A'}
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <h4 class="font-black text-gray-900 text-base">${item.student.name || 'Unknown'}</h4>
+                                                ${getTeamBadge(item.teamName)}
+                                            </div>
+                                            <span class="text-xs text-gray-500">Class: ${item.student.className || 'N/A'} &bull; Category: ${item.student.category || 'N/A'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        ${item.isStageClash ? `
+                                            <span class="px-2.5 py-1 rounded-xl text-xs font-black bg-red-100 text-red-700 border border-red-200 flex items-center gap-1.5 animate-pulse">
+                                                <i class="fas fa-exclamation-triangle"></i> Stage Conflict (${item.stageCount} Stage Items)
+                                            </span>
+                                        ` : ''}
+                                        <span class="px-2.5 py-1 rounded-xl text-xs font-black bg-orange-100 text-orange-800 border border-orange-200">
+                                            ${item.programCount} Programs Total
+                                        </span>
+                                        <button onclick="inspectStudent('${item.studentId}')" class="px-3 py-1 rounded-xl text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer" title="Inspect full student record">
+                                            <i class="fas fa-eye mr-1"></i> Inspect
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Program Badges -->
+                                <div class="pt-3">
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Registered In:</span>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${item.programs.map(p => `
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold ${
+                                                String(p.stageType || '').toLowerCase() === 'stage' 
+                                                    ? 'bg-purple-50 text-purple-800 border border-purple-200' 
+                                                    : 'bg-gray-50 text-gray-700 border border-gray-200'
+                                            }">
+                                                <i class="fas ${String(p.stageType || '').toLowerCase() === 'stage' ? 'fa-theater-masks text-purple-500' : 'fa-file-alt text-gray-400'} text-[10px]"></i>
+                                                ${p.name}
+                                                <span class="text-[10px] opacity-70">(${p.category})</span>
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        // ==========================================
+        // TAB 3: PAIRWISE COLLISION MATRIX
+        // ==========================================
+        function renderCollisionMatrixTab() {
+            const studentProgMap = buildStudentProgramMap(activeSource);
+            const allPrograms = appData.programs || {};
+
+            // Calculate overlap between all program pairs
+            const pairMap = new Map(); // "pidA|pidB" -> count
+
+            studentProgMap.forEach((pidsSet) => {
+                const arr = Array.from(pidsSet);
+                for (let i = 0; i < arr.length; i++) {
+                    for (let j = i + 1; j < arr.length; j++) {
+                        const pidA = arr[i] < arr[j] ? arr[i] : arr[j];
+                        const pidB = arr[i] < arr[j] ? arr[j] : arr[i];
+                        const key = `${pidA}|${pidB}`;
+                        pairMap.set(key, (pairMap.get(key) || 0) + 1);
+                    }
+                }
+            });
+
+            // Convert to array and sort descending
+            const collisionPairs = Array.from(pairMap.entries())
+                .map(([key, count]) => {
+                    const [pidA, pidB] = key.split('|');
+                    return {
+                        pidA,
+                        pidB,
+                        progA: allPrograms[pidA] || { name: 'Unknown' },
+                        progB: allPrograms[pidB] || { name: 'Unknown' },
+                        count
+                    };
+                })
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 50); // top 50 pairs
+
+            return `
+            <div class="space-y-6">
+                <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-lg no-print">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <i class="fas fa-table-cells text-orange-500"></i>
+                                Program Collision Ranking (Top Overlapping Pairs)
+                            </h2>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                Identifies the program pairs that share the highest number of common students. Crucial for scheduling committees to avoid timetable clashes!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-lg space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        ${collisionPairs.length === 0 ? `
+                            <div class="col-span-2 py-12 text-center text-sm text-gray-400">No program collisions found.</div>
+                        ` : collisionPairs.map(item => `
+                            <div class="p-4 rounded-2xl bg-white/80 border border-gray-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
+                                <div class="flex items-center justify-between gap-3 mb-3">
+                                    <span class="px-2.5 py-1 rounded-xl text-xs font-black ${
+                                        item.count >= 4 ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-orange-100 text-orange-700 border border-orange-200'
+                                    }">
+                                        ${item.count} Shared Candidate${item.count > 1 ? 's' : ''}
+                                    </span>
+                                    <button onclick="comparePair('${item.pidA}', '${item.pidB}')" class="px-3 py-1 rounded-xl text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 border border-orange-200 transition-colors flex items-center gap-1 cursor-pointer" title="Directly compare these two programs">
+                                        <i class="fas fa-code-compare"></i> Compare Roster
+                                    </button>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3 p-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                    <div>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Program 1</span>
+                                        <h5 class="font-bold text-gray-900 text-xs truncate" title="${item.progA.name}">${item.progA.name}</h5>
+                                        <div class="flex items-center gap-1 mt-1">
+                                            <span class="text-[10px] text-gray-500">${item.progA.category}</span>
+                                            ${getStageBadge(item.progA.stageType)}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Program 2</span>
+                                        <h5 class="font-bold text-gray-900 text-xs truncate" title="${item.progB.name}">${item.progB.name}</h5>
+                                        <div class="flex items-center gap-1 mt-1">
+                                            <span class="text-[10px] text-gray-500">${item.progB.category}</span>
+                                            ${getStageBadge(item.progB.stageType)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        // ==========================================
+        // TAB 4: CANDIDATE INSPECTOR
+        // ==========================================
+        function renderInspectorTab() {
+            const allStudents = Object.entries(appData.students || {}).map(([id, s]) => ({ id, ...s }));
+            const studentProgMap = buildStudentProgramMap(activeSource);
+            const allPrograms = appData.programs || {};
+
+            let matchingStudents = [];
+            if (inspectorSearchQuery) {
+                const q = inspectorSearchQuery.toLowerCase();
+                matchingStudents = allStudents.filter(s => {
+                    const name = (s.name || '').toLowerCase();
+                    const chest = String(s.chestNo || '').toLowerCase();
+                    return name.includes(q) || chest.includes(q);
+                }).slice(0, 10);
+            }
+
+            const targetStudentId = inspectorSelectedStudentId || (matchingStudents[0]?.id);
+            const targetStudent = targetStudentId ? appData.students?.[targetStudentId] : null;
+            const targetTeam = targetStudent ? appData.teams?.[targetStudent.teamId] : null;
+            const enrolledProgIds = targetStudentId ? Array.from(studentProgMap.get(targetStudentId) || []) : [];
+            const enrolledPrograms = enrolledProgIds.map(pid => ({ id: pid, ...(allPrograms[pid] || { name: 'Unknown' }) }));
+            const stageProgramsCount = enrolledPrograms.filter(p => String(p.stageType || '').toLowerCase() === 'stage').length;
+
+            return `
+            <div class="space-y-6">
+                <!-- Search Student Input -->
+                <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-lg no-print">
+                    <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2 mb-2">
+                        <i class="fas fa-id-card text-orange-500"></i>
+                        Candidate Profile & Registration Inspector
+                    </h2>
+                    <p class="text-xs text-gray-500 mb-4">
+                        Look up any student by Chest Number or Name to inspect their full program portfolio and identify if they have duplicate or clashing events.
+                    </p>
+
+                    <div class="relative max-w-xl">
+                        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 text-sm"></i>
+                        <input type="text" placeholder="Type candidate name or chest number (e.g. 169 or ABAN)..." 
+                            value="${inspectorSearchQuery}" oninput="setInspectorSearch(this.value)"
+                            class="w-full pl-10 pr-4 py-3 bg-white/90 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm">
+                    </div>
+
+                    <!-- Autocomplete Matches -->
+                    ${matchingStudents.length > 0 ? `
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            ${matchingStudents.map(s => `
+                                <button onclick="selectInspectorStudent('${s.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                    s.id === targetStudentId 
+                                        ? 'bg-orange-500 text-white shadow-sm' 
+                                        : 'bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-200'
+                                }">
+                                    <span>#${s.chestNo || 'N/A'}</span>
+                                    <span>${s.name}</span>
+                                    <span class="text-[10px] opacity-75">(${appData.teams?.[s.teamId]?.name || 'N/A'})</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Inspector Card -->
+                ${targetStudent ? `
+                    <div class="bg-white/70 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-lg space-y-6">
+                        <!-- Profile Header -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center font-black text-lg shadow-md shadow-orange-500/20">
+                                    #${targetStudent.chestNo || 'N/A'}
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-2xl font-black text-gray-900">${targetStudent.name || 'Unknown'}</h3>
+                                        ${getTeamBadge(targetTeam?.name)}
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-0.5">
+                                        Category: <strong class="text-gray-700">${targetStudent.category || 'N/A'}</strong> &bull; 
+                                        Class: <strong class="text-gray-700">${targetStudent.className || 'N/A'}</strong>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                ${stageProgramsCount >= 2 ? `
+                                    <span class="px-3 py-1.5 rounded-xl text-xs font-black bg-red-100 text-red-700 border border-red-200 flex items-center gap-1.5">
+                                        <i class="fas fa-exclamation-triangle"></i> Stage Conflict Risk
+                                    </span>
+                                ` : ''}
+                                <span class="px-3 py-1.5 rounded-xl text-xs font-black bg-orange-100 text-orange-800 border border-orange-200">
+                                    ${enrolledPrograms.length} Registered Events
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Enrolled Programs List -->
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <i class="fas fa-list-ol text-orange-500"></i>
+                                Registered Programs (${enrolledPrograms.length})
+                            </h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                ${enrolledPrograms.length === 0 ? `
+                                    <div class="col-span-3 py-8 text-center text-xs text-gray-400">Candidate is not registered in any program.</div>
+                                ` : enrolledPrograms.map((p, idx) => `
+                                    <div class="p-3.5 rounded-2xl bg-white/90 border border-gray-200/80 shadow-2xs flex flex-col justify-between">
+                                        <div>
+                                            <div class="flex items-center justify-between gap-2 mb-1.5">
+                                                <span class="text-[10px] font-black text-gray-400">#${idx + 1}</span>
+                                                ${getStageBadge(p.stageType)}
+                                            </div>
+                                            <h5 class="font-black text-gray-900 text-sm truncate" title="${p.name}">${p.name}</h5>
+                                        </div>
+                                        <div class="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                                            <span>Category: <strong class="text-gray-700">${p.category}</strong></span>
+                                            <span class="text-[10px] text-gray-400 font-medium">${p.registrationType || 'individual'}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="bg-white/60 backdrop-blur-xl border border-white/60 p-12 rounded-3xl shadow-lg text-center">
+                        <i class="fas fa-user-search text-3xl text-gray-300 mb-3"></i>
+                        <p class="text-sm font-bold text-gray-500">Search for a candidate above to view their details.</p>
+                    </div>
+                `}
+            </div>
+            `;
+        }
+
+        // --- RENDER APP ---
+        function renderApp() {
+            const appEl = document.getElementById('app');
+            if (!checkAuth()) {
+                appEl.innerHTML = renderLoginGate();
+            } else {
+                appEl.innerHTML = AppShell(renderDashboard());
+            }
+            dismissLoader();
+        }
+
+        // --- GLOBAL EXPOSED ACTIONS ---
+        window.setActiveTab = function(tab) {
+            activeTab = tab;
+            renderApp();
+        };
+
+        window.setDataSource = function(src) {
+            activeSource = src;
+            renderApp();
+        };
+
+        window.toggleProgramSelection = function(progId) {
+            if (selectedProgramIds.includes(progId)) {
+                selectedProgramIds = selectedProgramIds.filter(id => id !== progId);
+            } else {
+                selectedProgramIds.push(progId);
+            }
+            renderApp();
+        };
+
+        window.clearSelectedPrograms = function() {
+            selectedProgramIds = [];
+            renderApp();
+        };
+
+        window.setCompareCategory = function(cat) {
+            compareCategoryFilter = cat;
+            renderApp();
+        };
+
+        window.setCompareStage = function(stage) {
+            compareStageFilter = stage;
+            renderApp();
+        };
+
+        window.setCompareSearch = function(q) {
+            compareSearchQuery = q || '';
+            renderApp();
+        };
+
+        window.setAutoTeam = function(team) {
+            autoTeamFilter = team;
+            renderApp();
+        };
+
+        window.setAutoSeverity = function(sev) {
+            autoSeverityFilter = sev;
+            renderApp();
+        };
+
+        window.setAutoCategory = function(cat) {
+            autoCategoryFilter = cat;
+            renderApp();
+        };
+
+        window.setAutoSearch = function(q) {
+            autoSearchQuery = q || '';
+            renderApp();
+        };
+
+        window.setInspectorSearch = function(q) {
+            inspectorSearchQuery = q || '';
+            renderApp();
+        };
+
+        window.selectInspectorStudent = function(sid) {
+            inspectorSelectedStudentId = sid;
+            renderApp();
+        };
+
+        window.inspectStudent = function(sid) {
+            inspectorSelectedStudentId = sid;
+            activeTab = 'inspector';
+            renderApp();
+        };
+
+        window.comparePair = function(pidA, pidB) {
+            selectedProgramIds = [pidA, pidB];
+            activeTab = 'compare';
+            renderApp();
+        };
+
+        window.exportClashesCSV = function() {
+            const studentProgMap = buildStudentProgramMap(activeSource);
+            const allPrograms = appData.programs || {};
+            let rows = [["Chest No", "Student Name", "Team", "Category", "Total Programs", "Stage Programs", "Programs List"]];
+
+            studentProgMap.forEach((pidsSet, sid) => {
+                if (pidsSet.size >= 2) {
+                    const student = appData.students?.[sid] || { name: 'Unknown', chestNo: 'N/A' };
+                    const team = appData.teams?.[student.teamId];
+                    const progList = Array.from(pidsSet).map(pid => allPrograms[pid]?.name || 'Unknown');
+                    const stageCount = Array.from(pidsSet).filter(pid => String(allPrograms[pid]?.stageType || '').toLowerCase() === 'stage').length;
+                    
+                    rows.push([
+                        `"${student.chestNo || 'N/A'}"`,
+                        `"${student.name || 'Unknown'}"`,
+                        `"${team?.name || 'Unknown'}"`,
+                        `"${student.category || 'N/A'}"`,
+                        pidsSet.size,
+                        stageCount,
+                        `"${progList.join('; ')}"`
+                    ]);
+                }
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Alert2k26_Contradictions_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        // --- EVENT HANDLERS ---
+        document.addEventListener('submit', async (e) => {
+            if (e.target.id === 'admin-login-form') {
+                e.preventDefault();
+                const input = document.getElementById('admin-passcode-input');
+                const errorEl = document.getElementById('admin-login-error');
+                const code = (input.value || '').trim().toUpperCase();
+
+                try {
+                    const codeHash = await SecurityEngine.hashPasscode(code);
+                    const user = ACCESS_CODE_HASHES[codeHash];
+                    if (user && user.type === 'admin') {
+                        currentUser = user;
+                        sessionStorage.setItem('user', JSON.stringify(user));
+                        renderApp();
+                    } else {
+                        errorEl.textContent = "Invalid Admin passcode or PIN.";
+                    }
+                } catch(err) {
+                    errorEl.textContent = "Authentication error: " + err.message;
+                }
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#logout-btn')) {
+                currentUser = null;
+                sessionStorage.removeItem('user');
+                renderApp();
+            }
+        });
+
+        // --- FIREBASE SYNC & INITIALIZATION ---
+        function init() {
+            // Check session
+            const storedUser = sessionStorage.getItem('user');
+            if (storedUser) {
+                try {
+                    currentUser = JSON.parse(storedUser);
+                } catch(e) {}
+            }
+
+            // Realtime DB Sync
+            db.ref().on('value', snapshot => {
+                const data = snapshot.val() || {};
+                appData = {
+                    students: data.students || {},
+                    teams: data.teams || {},
+                    programs: data.programs || {},
+                    participantRegistrations: data.participantRegistrations || {},
+                    registrations: data.registrations || {}
+                };
+
+                // Protect active inputs from clobbering
+                const activeEl = document.activeElement;
+                if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT')) {
+                    return;
+                }
+
+                renderApp();
+            }, err => {
+                console.error("Firebase sync error:", err);
+                dismissLoader();
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>

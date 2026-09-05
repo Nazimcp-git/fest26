@@ -272,9 +272,17 @@
             }
             return `
             <div>
-                <header class="mb-8">
-                    <h1 class="text-4xl font-bold text-gray-900">Admin Panel</h1>
-                    <p class="mt-2 text-lg text-gray-600">Manage programs and monitor registration progress.</p>
+                <header class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-4xl font-bold text-gray-900">Admin Panel</h1>
+                        <p class="mt-2 text-lg text-gray-600">Manage programs and monitor registration progress.</p>
+                    </div>
+                    <div>
+                        <a href="contradiction-checker.html" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-sm shadow-md shadow-orange-500/20 hover:from-orange-600 hover:to-amber-600 transition-all transform hover:-translate-y-0.5">
+                            <i class="fas fa-user-check"></i>
+                            <span>Contradiction Checker</span>
+                        </a>
+                    </div>
                 </header>
                 <div class="border-b border-gray-200 mb-6">
                     <nav id="admin-tabs" class="-mb-px flex space-x-8" aria-label="Tabs">

@@ -40,12 +40,25 @@
 <body class="bg-[#fafafa] text-gray-900 antialiased min-h-screen">
 
   <div id="app">
-    <!-- Initial Loader -->
-    <div class="h-screen flex items-center justify-center">
-      <div class="text-center">
-        <div class="w-12 h-12 border-3 border-orange-500/20 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
-        <p class="text-xs font-bold uppercase tracking-widest text-gray-400">Loading Judge Portal...</p>
+    <!-- Branded Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#fafafa]" style="background-image: radial-gradient(at 50% 40%, hsla(28,100%,74%,0.12) 0px, transparent 60%);">
+      <style>
+        @keyframes loaderSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes loaderPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.85; transform: scale(0.97); } }
+        @keyframes loaderFadeOut { 0% { opacity: 1; } 100% { opacity: 0; pointer-events: none; visibility: hidden; } }
+        .loader-logo { animation: loaderPulse 2.5s ease-in-out infinite; }
+        .loader-ring { animation: loaderSpin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite; }
+        .loader-hide { animation: loaderFadeOut 0.4s ease-out forwards; }
+      </style>
+      <div class="relative mb-6">
+        <img src="../registrations/prelogo.webp" alt="Alert 2k26" class="loader-logo w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-xl border-2 border-white/60" />
+        <svg class="loader-ring absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)]" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="46" fill="none" stroke="#f9731620" stroke-width="3" />
+          <circle cx="50" cy="50" r="46" fill="none" stroke="#f97316" stroke-width="3" stroke-linecap="round" stroke-dasharray="72 220" />
+        </svg>
       </div>
+      <h1 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-1">Alert 2k26</h1>
+      <p class="text-xs sm:text-sm font-medium text-gray-400 tracking-wide">Loading Judge Portal...</p>
     </div>
   </div>
 
@@ -430,7 +443,9 @@
     // MAIN RENDER FUNCTION
     function render() {
       const appEl = document.getElementById('app');
-
+      // Dismiss loading screen
+      const _loader = document.getElementById('loading-screen');
+      if (_loader) { _loader.classList.add('loader-hide'); setTimeout(() => _loader.remove(), 450); }
       // 1. LOGIN SCREEN
       if (!judgeSession) {
         appEl.innerHTML = `

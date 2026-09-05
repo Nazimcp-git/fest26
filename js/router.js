@@ -36,6 +36,10 @@ async function router(softUpdate = false) {
   document.body.className = "bg-[#f5f3ef] font-sans text-gray-800 antialiased selection:bg-orange-200 overflow-y-scroll relative";
   document.body.style.backgroundImage = "radial-gradient(at 0% 0%, hsla(28,100%,74%,0.15) 0px, transparent 50%), radial-gradient(at 100% 0%, hsla(189,100%,56%,0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, hsla(355,100%,93%,0.15) 0px, transparent 50%), radial-gradient(at 0% 100%, hsla(340,100%,76%,0.15) 0px, transparent 50%)";
 
+  // Dismiss loading screen if present
+  const _loader = document.getElementById('loading-screen');
+  if (_loader) { _loader.remove(); }
+
   if (!softUpdate) {
     appEl.innerHTML = `
       <div class="min-h-screen flex flex-col relative z-10 overflow-hidden">

@@ -11,42 +11,33 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,450;0,9..144,600;1,9..144,450&family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        paper: '#F4EFE2',
-                        paper2: '#EBE5D5',
-                        ink: '#1A1813',
-                        inkfade: '#5C564A',
-                        line: '#D8CFB8',
-                        alert: '#B23A2E',
-                        alertd: '#8C2B22',
-                        libera: '#3C6E5C',
-                        alethia: '#33507C',
-                        opera: '#B23A2E',
-                        relatia: '#B0812A',
-                    },
-                    fontFamily: {
-                        serif: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
-                        sans: ['"Space Grotesk"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-                        mono: ['"Space Mono"', 'ui-monospace', 'monospace'],
-                    },
-                },
-            },
-        };
-    </script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-
     <style>
+        /* ═══════════════════════════════════════
+           COLOR SYSTEM — Dark + Warm Cream
+        ═══════════════════════════════════════ */
         :root {
-            color-scheme: light;
+            --bg: #000000;
+            --cream: #E1E0CC;
+            --cream-dim: rgba(225, 224, 204, 0.5);
+            --cream-faint: rgba(225, 224, 204, 0.25);
+            --cream-ghost: rgba(225, 224, 204, 0.08);
+            --rule: rgba(225, 224, 204, 0.1);
+            --red: #c0392b;
+            --red-soft: rgba(192, 57, 43, 0.25);
+            --green: #2d7a5f;
+            --blue: #3a5f8a;
+            --gold: #b8860b;
+        }
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         html {
@@ -54,84 +45,1429 @@
         }
 
         body {
-            background-color: #F4EFE2;
-            color: #1A1813;
+            font-family: 'DM Sans', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--cream);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
         ::selection {
-            background: #B23A2E;
-            color: #F6F3EC;
+            background: var(--red);
+            color: #fff;
         }
 
-        .hairline {
-            border-color: #DBD4C3;
+        a {
+            color: inherit;
+            text-decoration: none;
         }
 
-        /* Pulse line — the recurring "alert" motif, drawn once and animated continuously */
-        .pulse-path {
-            stroke-dasharray: 6 10;
-            animation: dashmove 3.4s linear infinite;
+        a,
+        button {
+            -webkit-tap-highlight-color: transparent;
         }
 
-        @keyframes dashmove {
-            to {
-                stroke-dashoffset: -160;
-            }
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible {
+            outline: 2px solid var(--red);
+            outline-offset: 3px;
         }
 
-        .pulse-dot {
-            animation: dotpulse 1.8s ease-in-out infinite;
+        img {
+            display: block;
+            max-width: 100%;
         }
 
-        @keyframes dotpulse {
+        .serif {
+            font-family: 'Instrument Serif', Georgia, serif;
+        }
 
-            0%,
-            100% {
-                opacity: .35;
-                transform: scale(1);
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ═══════════════════════════════════════
+           GRAIN OVERLAY — Film-like texture
+        ═══════════════════════════════════════ */
+        .grain {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            pointer-events: none;
+            opacity: .04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+            mix-blend-mode: overlay;
+        }
+
+        /* ═══════════════════════════════════════
+           NOISE OVERLAY — Hero-specific
+        ═══════════════════════════════════════ */
+        .noise-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 150px;
+            opacity: 0.5;
+            mix-blend-mode: overlay;
+        }
+
+        /* ═══════════════════════════════════════
+           BACKGROUND ELEMENTS & RADIAL GLOWS
+           (Inspired by Prisma, Vesper & Asme)
+        ═══════════════════════════════════════ */
+        .bg-radial-top {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(225, 224, 204, 0.04) 0%, transparent 70%);
+        }
+
+        .bg-radial-center-red {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(192, 57, 43, 0.14) 0%, transparent 75%);
+        }
+
+        .bg-radial-hero {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 90%, rgba(192, 57, 43, 0.18) 0%, transparent 60%);
+            mix-blend-mode: screen;
+        }
+
+        .bg-radial-side {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 85% 30%, rgba(225, 224, 204, 0.035) 0%, transparent 50%);
+        }
+
+        .bg-radial-bottom-red {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse 80% 50% at 50% 100%, rgba(192, 57, 43, 0.07) 0%, transparent 70%);
+        }
+
+        .bg-grid-lines {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.5;
+            background-image: linear-gradient(rgba(225, 224, 204, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(225, 224, 204, 0.035) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .bg-section-noise {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.14;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+            background-size: 180px;
+            mix-blend-mode: overlay;
+        }
+
+        .bg-ambient-orb {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(192, 57, 43, 0.12) 0%, transparent 70%);
+            filter: blur(50px);
+            pointer-events: none;
+            animation: floatOrb 12s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(-20px, -20px) scale(0.9);
+                opacity: 0.4;
             }
 
             50% {
-                opacity: 1;
-                transform: scale(1.35);
+                transform: translate(30px, 20px) scale(1.1);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: translate(-10px, 40px) scale(1);
+                opacity: 0.5;
             }
         }
 
-        /* Radar sweep — "always scanning" visual in About */
-        .radar-sweep {
-            background: conic-gradient(from 0deg, rgba(178, 58, 46, 0.38), transparent 30%, transparent 100%);
-            animation: radarspin 4.5s linear infinite;
+        /* ═══════════════════════════════════════
+           LIQUID GLASS — Mask-composite border
+        ═══════════════════════════════════════ */
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.02);
+            background-blend-mode: luminosity;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: none;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
         }
 
-        @keyframes radarspin {
+        .liquid-glass::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1.2px;
+            background: linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.35) 0%,
+                    rgba(255, 255, 255, 0.12) 20%,
+                    rgba(255, 255, 255, 0) 40%,
+                    rgba(255, 255, 255, 0) 60%,
+                    rgba(255, 255, 255, 0.08) 80%,
+                    rgba(255, 255, 255, 0.2) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* ═══════════════════════════════════════
+           SCROLL REVEALS
+        ═══════════════════════════════════════ */
+        .rv {
+            opacity: 0;
+            transform: translateY(18px);
+        }
+
+        .rv.on {
+            opacity: 1;
+            transform: none;
+            transition: opacity .65s cubic-bezier(.22, .9, .36, 1), transform .65s cubic-bezier(.22, .9, .36, 1);
+        }
+
+        .rv-d1 {
+            transition-delay: .07s;
+        }
+
+        .rv-d2 {
+            transition-delay: .16s;
+        }
+
+        .rv-d3 {
+            transition-delay: .26s;
+        }
+
+        .rv-left {
+            opacity: 0;
+            transform: translateX(-40px);
+        }
+
+        .rv-left.on {
+            opacity: 1;
+            transform: none;
+            transition: opacity .6s cubic-bezier(.22, .9, .36, 1), transform .6s cubic-bezier(.22, .9, .36, 1);
+        }
+
+        .rv-right {
+            opacity: 0;
+            transform: translateX(40px);
+        }
+
+        .rv-right.on {
+            opacity: 1;
+            transform: none;
+            transition: opacity .6s cubic-bezier(.22, .9, .36, 1), transform .6s cubic-bezier(.22, .9, .36, 1);
+        }
+
+        .rv-scale {
+            opacity: 0;
+            transform: scale(0.85);
+        }
+
+        .rv-scale.on {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity .7s cubic-bezier(.22, .9, .36, 1), transform .7s cubic-bezier(.22, .9, .36, 1);
+        }
+
+        .rv-blur {
+            opacity: 0;
+            filter: blur(8px);
+        }
+
+        .rv-blur.on {
+            opacity: 1;
+            filter: blur(0);
+            transition: opacity .7s ease, filter .7s ease;
+        }
+
+        .line-draw {
+            transform: scaleX(0);
+            transform-origin: center;
+        }
+
+        .line-draw.on {
+            transform: scaleX(1);
+            transition: transform .9s cubic-bezier(.22, .9, .36, 1);
+        }
+
+        /* Typewriter */
+        .typewriter {
+            visibility: hidden;
+        }
+
+        .typewriter.typing {
+            visibility: visible;
+        }
+
+        .typewriter .tw-char {
+            opacity: 0;
+            transition: opacity .04s ease;
+        }
+
+        .typewriter .tw-char.shown {
+            opacity: 1;
+        }
+
+        /* Word-by-word */
+        .words-reveal .wr-word {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity .35s ease, transform .35s ease;
+        }
+
+        .words-reveal .wr-word.shown {
+            opacity: 1;
+            transform: none;
+        }
+
+        /* Split chars */
+        .split-chars .sc-char {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px) rotate(4deg);
+            transition: opacity .4s ease, transform .4s cubic-bezier(.22, .9, .36, 1);
+        }
+
+        .split-chars .sc-char.shown {
+            opacity: 1;
+            transform: none;
+        }
+
+        /* Scroll-linked paragraph */
+        .scroll-char {
+            transition: opacity .08s ease;
+        }
+
+        /* Words pull-up */
+        .word-up {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity .6s cubic-bezier(.16, 1, .3, 1), transform .6s cubic-bezier(.16, 1, .3, 1);
+        }
+
+        .word-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Stagger children */
+        .stagger-children>*:nth-child(1) {
+            transition-delay: 0s;
+        }
+
+        .stagger-children>*:nth-child(2) {
+            transition-delay: .06s;
+        }
+
+        .stagger-children>*:nth-child(3) {
+            transition-delay: .12s;
+        }
+
+        .stagger-children>*:nth-child(4) {
+            transition-delay: .18s;
+        }
+
+        .stagger-children>*:nth-child(5) {
+            transition-delay: .24s;
+        }
+
+        .stagger-children>*:nth-child(6) {
+            transition-delay: .30s;
+        }
+
+        .stagger-children>*:nth-child(7) {
+            transition-delay: .36s;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .rv,
+            .rv-left,
+            .rv-right,
+            .rv-scale,
+            .rv-blur {
+                opacity: 1 !important;
+                transform: none !important;
+                filter: none !important;
+            }
+
+            .line-draw {
+                transform: scaleX(1) !important;
+            }
+
+            .typewriter {
+                visibility: visible !important;
+            }
+
+            .typewriter .tw-char,
+            .words-reveal .wr-word,
+            .split-chars .sc-char,
+            .word-up {
+                opacity: 1 !important;
+                transform: none !important;
+            }
+
+            .ticker-inner,
+            .orbit-ring {
+                animation: none !important;
+            }
+        }
+
+        /* ═══════════════════════════════════════
+           NAV — Floating glass pill inside hero
+        ═══════════════════════════════════════ */
+        .hero-nav {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            border-radius: 0 0 20px 20px;
+            padding: 10px 14px;
+        }
+
+        .hero-nav-inner {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hero-nav-inner a {
+            font-size: 11px;
+            padding: 6px 13px;
+            color: var(--cream-dim);
+            border-radius: 6px;
+            transition: color .2s, background .2s;
+            white-space: nowrap;
+        }
+
+        .hero-nav-inner a:hover {
+            color: var(--cream);
+            background: rgba(255, 255, 255, .06);
+        }
+
+        .hero-nav-inner .live-link {
+            color: var(--red);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--red);
+            animation: blink 2s ease infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .3;
+            }
+        }
+
+        /* Fixed top brand bar */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 90;
+            background: rgba(0, 0, 0, .65);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .top-bar-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .nav-brand-img {
+            width: 28px;
+            height: 28px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .nav-brand-img span {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font: 500 9px/1 'JetBrains Mono', monospace;
+            color: var(--cream-dim);
+        }
+
+        .nav-brand-img img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .nav-brand-name {
+            font-family: 'Instrument Serif', serif;
+            font-size: 19px;
+            letter-spacing: -.01em;
+        }
+
+        .nav-brand-name b {
+            color: var(--red);
+            font-weight: 400;
+        }
+
+        .nav-links {
+            display: none;
+            align-items: center;
+            gap: 4px;
+        }
+
+        @media (min-width:1024px) {
+            .nav-links {
+                display: flex;
+            }
+        }
+
+        .nav-links a {
+            font-size: 12px;
+            padding: 5px 10px;
+            color: var(--cream-dim);
+            border-radius: 6px;
+            transition: color .2s, background .2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--cream);
+            background: rgba(255, 255, 255, .05);
+        }
+
+        .nav-links .live-link {
+            color: var(--red);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .menu-btn {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .menu-btn span {
+            width: 20px;
+            height: 1.5px;
+            background: var(--cream);
+            display: block;
+            transition: transform .25s, opacity .2s;
+        }
+
+        @media (min-width:1024px) {
+            .menu-btn {
+                display: none;
+            }
+        }
+
+        #mob {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .35s ease;
+        }
+
+        #mob.open {
+            max-height: 380px;
+        }
+
+        .mob-links {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 10px 0 18px;
+            border-top: 1px solid var(--rule);
+        }
+
+        .mob-links a {
+            padding: 9px 10px;
+            font-size: 14px;
+            color: var(--cream-dim);
+            border-radius: 6px;
+            transition: background .15s;
+        }
+
+        .mob-links a:hover {
+            background: rgba(255, 255, 255, .04);
+            color: var(--cream);
+        }
+
+        .mob-foot {
+            padding-top: 10px;
+            margin-top: 4px;
+            border-top: 1px solid var(--rule);
+            font-size: 11px;
+            color: var(--cream-faint);
+        }
+
+        /* ═══════════════════════════════════════
+           HERO — Prisma inset cinema screen
+        ═══════════════════════════════════════ */
+        .hero-section {
+            padding: 68px 16px 16px;
+            min-height: 100vh;
+        }
+
+        @media (min-width:768px) {
+            .hero-section {
+                padding: 68px 24px 24px;
+            }
+        }
+
+        .hero-container {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 84px);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        @media (min-width:768px) {
+            .hero-container {
+                height: calc(100vh - 92px);
+                border-radius: 28px;
+            }
+        }
+
+        .hero-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, .35) 0%, transparent 30%, transparent 50%, rgba(0, 0, 0, .7) 100%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            padding: 20px 20px 28px;
+        }
+
+        @media (min-width:768px) {
+            .hero-content {
+                padding: 28px 36px 40px;
+            }
+        }
+
+        @media (min-width:1024px) {
+            .hero-content {
+                padding: 40px 48px 52px;
+            }
+        }
+
+        .hero-top-tag {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 11px;
+            color: var(--cream-dim);
+            margin-bottom: 24px;
+            letter-spacing: .03em;
+        }
+
+        .hero-top-tag .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--red);
+        }
+
+        .hero-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        @media (min-width:1024px) {
+            .hero-layout {
+                flex-direction: row;
+                align-items: flex-end;
+                justify-content: space-between;
+                gap: 0;
+            }
+        }
+
+        .hero-title {
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: clamp(56px, 15vw, 200px);
+            line-height: .86;
+            letter-spacing: -.04em;
+            color: var(--cream);
+        }
+
+        .hero-title em {
+            font-style: italic;
+            color: var(--red);
+        }
+
+        /* Orbit logo */
+        .hero-fig {
+            width: 100%;
+            max-width: 200px;
+            margin: 16px 0;
+        }
+
+        @media (min-width:1024px) {
+            .hero-fig {
+                position: absolute;
+                right: 48px;
+                bottom: 180px;
+                width: 240px;
+                max-width: 240px;
+                margin: 0;
+            }
+        }
+
+        @media (min-width:1280px) {
+            .hero-fig {
+                width: 280px;
+                max-width: 280px;
+                right: 56px;
+            }
+        }
+
+        .hero-fig-inner {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+        }
+
+        .hero-fig-inner .ph {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: var(--cream-faint);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .hero-fig-inner img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .orbit-ring {
+            position: absolute;
+            inset: -14px;
+            border: 1px solid var(--rule);
+            border-radius: 50%;
+            animation: spin 40s linear infinite;
+        }
+
+        .orbit-ring::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--red);
+        }
+
+        @keyframes spin {
             to {
                 transform: rotate(360deg);
             }
         }
 
-        /* Siren glow — pulsing ring around the alert CTA */
-        .siren-glow {
-            animation: sirenglow 2.6s ease-in-out infinite;
+        .hero-right {
+            max-width: 360px;
         }
 
-        @keyframes sirenglow {
-
-            0%,
-            100% {
-                box-shadow: 0 0 0 0 rgba(178, 58, 46, 0.35);
-            }
-
-            50% {
-                box-shadow: 0 0 0 8px rgba(178, 58, 46, 0);
+        @media (min-width:1024px) {
+            .hero-right {
+                padding-bottom: 6px;
             }
         }
 
-        /* Countdown digit flash on each tick */
-        .flash {
-            animation: digitflash .5s ease;
+        .hero-desc {
+            font-size: 15px;
+            line-height: 1.65;
+            color: var(--cream-dim);
+            margin-bottom: 20px;
         }
 
-        @keyframes digitflash {
+        @media (min-width:768px) {
+            .hero-desc {
+                font-size: 16px;
+            }
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-fill {
+            display: inline-block;
+            padding: 12px 26px;
+            background: var(--cream);
+            color: var(--bg);
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background .25s, transform .2s;
+        }
+
+        .btn-fill:hover {
+            background: #fff;
+            transform: translateY(-1px);
+        }
+
+        .btn-line {
+            display: inline-block;
+            padding: 12px 26px;
+            background: none;
+            color: var(--cream);
+            font-size: 13px;
+            font-weight: 500;
+            border: 1.5px solid var(--cream-faint);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background .25s, color .25s, border-color .25s;
+        }
+
+        .btn-line:hover {
+            background: rgba(255, 255, 255, .06);
+            border-color: var(--cream-dim);
+        }
+
+        /* ═══════════════════════════════════════
+           TICKER
+        ═══════════════════════════════════════ */
+        .ticker {
+            border-top: 1px solid var(--rule);
+            border-bottom: 1px solid var(--rule);
+            background: rgba(255, 255, 255, .015);
+            overflow: hidden;
+        }
+
+        .ticker-scroll {
+            white-space: nowrap;
+            padding: 13px 0;
+        }
+
+        .ticker-inner {
+            display: inline-block;
+            animation: slide 30s linear infinite;
+        }
+
+        @keyframes slide {
+            to {
+                transform: translateX(-50%);
+            }
+        }
+
+        .ticker-set {
+            display: inline-flex;
+            align-items: center;
+            gap: 32px;
+            padding: 0 16px;
+            font-size: 11px;
+            color: var(--cream-dim);
+            letter-spacing: .02em;
+        }
+
+        .ticker-set .sep {
+            color: var(--red);
+        }
+
+        /* ═══════════════════════════════════════
+           ABOUT
+        ═══════════════════════════════════════ */
+        .about {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 100px 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (min-width:768px) {
+            .about {
+                padding: 140px 28px;
+            }
+        }
+
+        .about-grid {
+            display: grid;
+            gap: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (min-width:768px) {
+            .about-grid {
+                grid-template-columns: 1.3fr 1fr;
+                gap: 80px;
+                align-items: start;
+            }
+        }
+
+        .about h2 {
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 36px;
+            letter-spacing: -.02em;
+            margin-bottom: 28px;
+        }
+
+        @media (min-width:768px) {
+            .about h2 {
+                font-size: 44px;
+            }
+        }
+
+        .about-p {
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--cream-dim);
+        }
+
+        @media (min-width:768px) {
+            .about-p {
+                font-size: 16px;
+            }
+        }
+
+        .about-p+.about-p {
+            margin-top: 18px;
+        }
+
+        .pull-quote {
+            margin-top: 36px;
+            padding: 22px 0 22px 24px;
+            border-left: 3px solid var(--red);
+        }
+
+        .pull-quote p {
+            font-family: 'Instrument Serif', serif;
+            font-size: 19px;
+            line-height: 1.55;
+            font-style: italic;
+            color: var(--cream);
+        }
+
+        .pull-quote p strong {
+            font-style: normal;
+            font-weight: 400;
+        }
+
+        .pull-quote .attr {
+            margin-top: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--cream-faint);
+            text-transform: uppercase;
+            letter-spacing: .08em;
+        }
+
+        .pull-quote .attr span {
+            color: var(--red);
+        }
+
+        /* Radar */
+        .about-radar {
+            justify-self: center;
+        }
+
+        @media (min-width:768px) {
+            .about-radar {
+                margin-top: 72px;
+            }
+        }
+
+        .radar {
+            position: relative;
+            width: 180px;
+            height: 180px;
+        }
+
+        @media (min-width:768px) {
+            .radar {
+                width: 220px;
+                height: 220px;
+            }
+        }
+
+        .radar-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid var(--rule);
+        }
+
+        .rc1 {
+            inset: 0;
+        }
+
+        .rc2 {
+            inset: 22px;
+        }
+
+        .rc3 {
+            inset: 44px;
+        }
+
+        .radar-sweep-wrap {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        .radar-sweep-fill {
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(from 0deg, var(--red-soft), transparent 28%, transparent);
+            animation: spin 4.5s linear infinite;
+        }
+
+        .radar-blip {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--red);
+        }
+
+        .rb1 {
+            top: 28%;
+            left: 65%;
+        }
+
+        .rb2 {
+            top: 60%;
+            left: 30%;
+        }
+
+        .radar-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--cream-faint);
+        }
+
+        .radar-cap {
+            text-align: center;
+            margin-top: 14px;
+            font-size: 11px;
+            color: var(--cream-faint);
+            letter-spacing: .06em;
+            text-transform: lowercase;
+        }
+
+        /* Stats row */
+        .stats-row {
+            margin-top: 56px;
+            padding-top: 28px;
+            border-top: 1px solid var(--rule);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (min-width:768px) {
+            .stats-row {
+                margin-top: 80px;
+                gap: 56px;
+            }
+        }
+
+        .stat {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .stat-n {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 36px;
+            font-weight: 500;
+            letter-spacing: -.02em;
+        }
+
+        @media (min-width:768px) {
+            .stat-n {
+                font-size: 44px;
+            }
+        }
+
+        .stat-l {
+            font-size: 12px;
+            color: var(--cream-faint);
+            max-width: 90px;
+            line-height: 1.4;
+        }
+
+        /* ═══════════════════════════════════════
+           THEME STATEMENT — dark strip
+        ═══════════════════════════════════════ */
+        .theme-strip {
+            background: #080806;
+            color: var(--cream);
+            padding: 80px 28px;
+            position: relative;
+            overflow: hidden;
+            border-top: 1px solid var(--rule);
+            border-bottom: 1px solid var(--rule);
+        }
+
+        @media (min-width:768px) {
+            .theme-strip {
+                padding: 120px 28px;
+            }
+        }
+
+        .theme-strip-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .theme-tag {
+            font-size: 11px;
+            color: var(--cream-faint);
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-tag .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--red);
+        }
+
+        .theme-text {
+            font-family: 'Instrument Serif', serif;
+            font-size: clamp(20px, 4.5vw, 52px);
+            line-height: 1.25;
+            font-style: italic;
+            font-weight: 400;
+            max-width: 880px;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .theme-line {
+            margin-top: 48px;
+            height: 1px;
+            background: linear-gradient(90deg, var(--red), var(--cream-ghost) 70%);
+        }
+
+        /* ═══════════════════════════════════════
+           TEAMS
+        ═══════════════════════════════════════ */
+        .teams {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 100px 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (min-width:768px) {
+            .teams {
+                padding: 140px 28px;
+            }
+        }
+
+        .teams-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 48px;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (min-width:768px) {
+            .teams-head {
+                margin-bottom: 64px;
+            }
+        }
+
+        .teams h2 {
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 36px;
+            letter-spacing: -.02em;
+        }
+
+        @media (min-width:768px) {
+            .teams h2 {
+                font-size: 44px;
+            }
+        }
+
+        .teams-intro {
+            font-size: 14px;
+            color: var(--cream-dim);
+            max-width: 320px;
+            line-height: 1.6;
+        }
+
+        .team-row {
+            border-top: 1px solid var(--rule);
+            padding: 32px 0;
+            display: grid;
+            gap: 12px;
+            align-items: baseline;
+            transition: background .3s, padding .3s;
+            border-radius: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (min-width:768px) {
+            .team-row {
+                grid-template-columns: 60px 180px 1fr 90px;
+                gap: 24px;
+                padding: 36px 0;
+            }
+        }
+
+        .team-row:last-child {
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .team-row:hover {
+            background: rgba(255, 255, 255, .02);
+            padding-left: 16px;
+            padding-right: 16px;
+            margin-left: -16px;
+            margin-right: -16px;
+        }
+
+        .team-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--cream-faint);
+        }
+
+        .team-name {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+            letter-spacing: -.01em;
+        }
+
+        @media (min-width:768px) {
+            .team-name {
+                font-size: 34px;
+            }
+        }
+
+        .team-desc {
+            font-size: 14px;
+            color: var(--cream-dim);
+            line-height: 1.6;
+        }
+
+        @media (min-width:768px) {
+            .team-desc {
+                font-size: 15px;
+            }
+        }
+
+        .team-desc em {
+            font-style: italic;
+            color: var(--cream);
+        }
+
+        .team-initial {
+            font-family: 'Instrument Serif', serif;
+            font-size: 40px;
+            font-weight: 400;
+            line-height: 1;
+            display: none;
+        }
+
+        @media (min-width:768px) {
+            .team-initial {
+                display: block;
+            }
+        }
+
+        /* ═══════════════════════════════════════
+           COUNTDOWN
+        ═══════════════════════════════════════ */
+        .cd-section {
+            border-top: 1px solid var(--rule);
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 100px 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (min-width:768px) {
+            .cd-section {
+                padding: 120px 28px;
+            }
+        }
+
+        .cd-head {
+            margin-bottom: 48px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cd-head h2 {
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 36px;
+            letter-spacing: -.02em;
+        }
+
+        @media (min-width:768px) {
+            .cd-head h2 {
+                font-size: 44px;
+            }
+        }
+
+        .cd-head p {
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--cream-dim);
+        }
+
+        .cd-line {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            align-items: baseline;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cd-block {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .cd-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(48px, 10vw, 96px);
+            font-weight: 500;
+            letter-spacing: -.04em;
+            line-height: 1;
+        }
+
+        .cd-val-red {
+            color: var(--red);
+        }
+
+        .cd-label {
+            font-size: 11px;
+            color: var(--cream-faint);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-right: 20px;
+        }
+
+        @media (min-width:768px) {
+            .cd-label {
+                margin-right: 32px;
+            }
+        }
+
+        @keyframes dflash {
             0% {
                 opacity: .25;
                 transform: translateY(-2px);
@@ -143,779 +1479,709 @@
             }
         }
 
-        /* Scan-line sweeping through the theme statement section */
-        .scanline {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(217, 119, 108, .9), transparent);
-            animation: scandown 5s ease-in-out infinite;
+        .flash {
+            animation: dflash .4s ease;
         }
 
-        @keyframes scandown {
-            0% {
-                top: 0%;
-                opacity: 0;
-            }
-
-            8% {
-                opacity: 1;
-            }
-
-            50% {
-                top: 96%;
-                opacity: 1;
-            }
-
-            58% {
-                opacity: 0;
-            }
-
-            100% {
-                top: 96%;
-                opacity: 0;
-            }
-        }
-
-        .ticker-track {
-            animation: tickermove 32s linear infinite;
-        }
-
-        @keyframes tickermove {
-            from {
-                transform: translateX(0);
-            }
-
-            to {
-                transform: translateX(-50%);
-            }
-        }
-
-        /* One orchestrated hero entrance */
-        .reveal {
-            opacity: 0;
-            transform: translateY(14px);
-        }
-
-        .reveal.show {
-            opacity: 1;
-            transform: translateY(0);
-            transition: opacity .8s cubic-bezier(.2, .7, .2, 1), transform .8s cubic-bezier(.2, .7, .2, 1);
-        }
-
-        .reveal-d1 {
-            transition-delay: .05s;
-        }
-
-        .reveal-d2 {
-            transition-delay: .18s;
-        }
-
-        .reveal-d3 {
-            transition-delay: .30s;
-        }
-
-        .reveal-d4 {
-            transition-delay: .42s;
-        }
-
-        a,
-        button {
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        a:focus-visible,
-        button:focus-visible,
-        input:focus-visible {
-            outline: 2px solid #B23A2E;
-            outline-offset: 3px;
-            border-radius: 2px;
-        }
-
-        .nav-link {
+        /* ═══════════════════════════════════════
+           EXPLORE
+        ═══════════════════════════════════════ */
+        .explore {
+            background: rgba(255, 255, 255, .015);
+            border-top: 1px solid var(--rule);
+            padding: 100px 28px;
             position: relative;
-        }
-
-        .nav-link::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            right: 100%;
-            bottom: -6px;
-            height: 1px;
-            background: #191712;
-            transition: right .35s cubic-bezier(.2, .7, .2, 1);
-        }
-
-        .nav-link:hover::after,
-        .nav-link.active::after {
-            right: 0;
-        }
-
-        .team-card {
-            transition: border-color .35s ease, background-color .35s ease;
-        }
-
-        #mobileMenu {
-            max-height: 0;
             overflow: hidden;
-            transition: max-height .4s ease;
         }
 
-        #mobileMenu.open {
-            max-height: 340px;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-
-            .pulse-path,
-            .pulse-dot,
-            .ticker-track,
-            .radar-sweep,
-            .siren-glow,
-            .scanline,
-            .flash {
-                animation: none !important;
-            }
-
-            .reveal {
-                opacity: 1 !important;
-                transform: none !important;
+        @media (min-width:768px) {
+            .explore {
+                padding: 130px 28px;
             }
         }
 
-
-
-        .num {
-            font-family: 'Space Mono', monospace;
-            font-feature-settings: "tnum";
+        .explore-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
 
-        /* Vintage Paper Texture Grain Overlay */
-        .vintage-grain {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 9999;
-            opacity: 0.045;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        .explore-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 48px;
         }
 
-        /* Vintage Sepia Film Mode Toggle */
-        body.vintage-sepia {
-            filter: sepia(0.35) contrast(1.08) saturate(0.85);
-            transition: filter 0.5s ease;
+        .explore-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--red);
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            margin-bottom: 6px;
         }
 
-        /* Vintage Postage Stamp Badge */
-        .vintage-stamp-badge {
+        .explore h2 {
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 36px;
+            letter-spacing: -.02em;
+        }
+
+        @media (min-width:768px) {
+            .explore h2 {
+                font-size: 44px;
+            }
+        }
+
+        .explore-intro {
+            max-width: 380px;
+            font-size: 14px;
+            color: var(--cream-dim);
+            line-height: 1.6;
+        }
+
+        .exp-item {
+            display: grid;
+            grid-template-columns: 36px 1fr;
+            gap: 16px;
+            align-items: baseline;
+            border-top: 1px solid var(--rule);
+            padding: 20px 0;
+            transition: padding-left .25s, background .25s;
+            border-radius: 6px;
+        }
+
+        @media (min-width:640px) {
+            .exp-item {
+                grid-template-columns: 36px 200px 1fr;
+            }
+        }
+
+        .exp-item:last-child {
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .exp-item:hover {
+            padding-left: 12px;
+            background: rgba(255, 255, 255, .02);
+        }
+
+        .exp-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--cream-faint);
+        }
+
+        .exp-title {
+            font-family: 'Instrument Serif', serif;
+            font-size: 20px;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @media (min-width:768px) {
+            .exp-title {
+                font-size: 22px;
+            }
+        }
+
+        .exp-desc {
+            font-size: 13px;
+            color: var(--cream-faint);
+            line-height: 1.5;
+        }
+
+        @media (max-width:639px) {
+            .exp-desc {
+                grid-column: 1 / -1;
+            }
+        }
+
+        .exp-live-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--red);
             display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .exp-live-tag .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--red);
+            animation: blink 2s ease infinite;
+        }
+
+        /* ═══════════════════════════════════════
+           FOOTER
+        ═══════════════════════════════════════ */
+        .site-foot {
+            border-top: 1px solid var(--rule);
+            padding: 72px 28px;
+            max-width: 1280px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (min-width:768px) {
+            .site-foot {
+                padding: 90px 28px;
+            }
+        }
+
+        .foot-grid {
+            display: grid;
+            gap: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (min-width:768px) {
+            .foot-grid {
+                grid-template-columns: 1.6fr 1fr 1fr;
+                gap: 32px;
+            }
+        }
+
+        .foot-brand {
+            font-family: 'Instrument Serif', serif;
+            font-size: 22px;
+        }
+
+        .foot-brand b {
+            color: var(--red);
+            font-weight: 400;
+        }
+
+        .foot-about {
+            margin-top: 14px;
+            font-size: 14px;
+            color: var(--cream-dim);
+            max-width: 300px;
+            line-height: 1.6;
+        }
+
+        .foot-dir {
+            display: inline-block;
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--cream);
+            border-bottom: 1px solid var(--cream);
+            padding-bottom: 1px;
+            transition: color .2s, border-color .2s;
+        }
+
+        .foot-dir:hover {
+            color: var(--red);
+            border-color: var(--red);
+        }
+
+        .foot-label {
+            font-size: 11px;
+            color: var(--cream-faint);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-bottom: 14px;
+        }
+
+        .foot-nav {
+            display: flex;
             flex-direction: column;
+            gap: 8px;
+        }
+
+        .foot-nav a {
+            font-size: 14px;
+            color: var(--cream-dim);
+            transition: color .2s;
+        }
+
+        .foot-nav a:hover {
+            color: var(--red);
+        }
+
+        .foot-nav .fl {
+            color: var(--red);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .foot-contact {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--cream-dim);
+        }
+
+        .foot-bottom {
+            margin-top: 56px;
+            padding-top: 20px;
+            border-top: 1px solid var(--rule);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--cream-faint);
+        }
+
+        .foot-coords {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            cursor: pointer;
+            transition: color .2s;
+        }
+
+        .foot-coords:hover {
+            color: var(--red);
+        }
+
+        .foot-back {
+            color: var(--cream-dim);
+            transition: color .2s;
+        }
+
+        .foot-back:hover {
+            color: var(--red);
+        }
+
+        .campus-wrap {
+            margin-top: 56px;
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/7;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+
+        @media (min-width:768px) {
+            .campus-wrap {
+                aspect-ratio: 16/5;
+                margin-top: 72px;
+                border-radius: 24px;
+            }
+        }
+
+        .campus-wrap .ph {
+            position: absolute;
+            inset: 0;
+            display: flex;
             align-items: center;
             justify-content: center;
-            padding: 8px 14px;
-            background: #EFEBE0;
-            border: 2px dashed #B23A2E;
-            position: relative;
-            box-shadow: 3px 3px 0px rgba(25, 23, 18, 0.12);
-            transform: rotate(-2.5deg);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            user-select: none;
+            background: #0a0a08;
+            font-size: 12px;
+            color: var(--cream-faint);
         }
 
-        .vintage-stamp-badge:hover {
-            transform: rotate(0deg) scale(1.04);
-            box-shadow: 4px 6px 14px rgba(178, 58, 46, 0.22);
+        .campus-wrap img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .secret-badge {
-            cursor: pointer;
-            transition: color 0.3s ease, transform 0.2s ease;
+        .campus-wrap .grad {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, .7), transparent 45%);
         }
 
-        .secret-badge:hover {
-            color: #B23A2E;
+        .campus-wrap .cap {
+            position: absolute;
+            bottom: 14px;
+            left: 24px;
+            font-size: 12px;
+            color: rgba(225, 224, 204, .8);
+        }
+
+        @media (min-width:768px) {
+            .campus-wrap .cap {
+                bottom: 22px;
+                left: 36px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
 
-<body class="text-ink font-sans antialiased">
-    <!-- Vintage Paper Grain Overlay -->
-    <div class="vintage-grain"></div>
+<body>
 
-    <!-- ============ NAV ============ -->
-    <header class="fixed top-0 inset-x-0 z-50 bg-paper/90 backdrop-blur-sm border-b hairline">
-        <div class="max-w-6xl mx-auto px-6 md:px-10">
-            <div class="h-16 md:h-20 flex items-center justify-between">
-                <a href="#home" class="flex items-center gap-2.5 shrink-0">
-                    <span class="relative h-8 w-8 md:h-9 md:w-9 shrink-0 flex items-center justify-center">
-                        <span
-                            class="absolute inset-0 flex items-center justify-center text-[10px] num text-inkfade">A26</span>
-                        <img src="fest-logo.png" alt="" class="absolute inset-0 w-full h-full object-contain"
-                            onerror="this.style.opacity='0'">
-                    </span>
-                    <span class="font-serif text-lg md:text-xl tracking-tight">Alert<span
-                            class="text-alert">.</span>2k26</span>
-                </a>
+    <!-- GRAIN OVERLAY -->
+    <div class="grain"></div>
 
-                <nav class="hidden lg:flex items-center gap-4 xl:gap-6 text-[14px] text-inkfade">
-                    <a href="live-results.html"
-                        class="nav-link hover:text-ink flex items-center gap-1.5 font-semibold text-alert">
-                        <span class="w-2 h-2 rounded-full bg-alert pulse-dot"></span> Live Results
-                    </a>
-                    <a href="results.html" class="nav-link hover:text-ink">Arts Results</a>
-                    <a href="sports.html" class="nav-link hover:text-ink">Sports Results</a>
-                    <a href="registrations.html" class="nav-link hover:text-ink">Registrations</a>
-                    <a href="notifications.html" class="nav-link hover:text-ink">Notifications</a>
-                    <a href="gallery.html" class="nav-link hover:text-ink">Gallery</a>
-                    <a href="downloads.html" class="nav-link hover:text-ink">Downloads</a>
-                </nav>
+    <!-- FIXED TOP BAR -->
+    <header class="top-bar">
+        <div class="top-bar-inner">
+            <a href="#home" class="nav-brand">
+                <span class="nav-brand-img">
+                    <span>A26</span>
+                    <img src="fest-logo.png" alt="" onerror="this.style.opacity='0'">
+                </span>
+                <span class="nav-brand-name">Alert<b>.</b>2k26</span>
+            </a>
 
-                <div class="flex items-center gap-2.5 text-right leading-tight">
+            <nav class="nav-links">
+                <a href="live-results.html" class="live-link"><span class="live-dot"></span> Live Results</a>
+                <a href="results.html">Arts Results</a>
+                <a href="sports.html">Sports Results</a>
+                <a href="registrations.html">Registrations</a>
+                <a href="notifications.html">Notifications</a>
+                <a href="gallery.html">Gallery</a>
+                <a href="downloads.html">Downloads</a>
+            </nav>
 
+            <button id="menuBtn" aria-label="Open menu" aria-expanded="false" class="menu-btn">
+                <span></span><span></span>
+            </button>
+        </div>
 
-
-                    <button id="menuBtn" aria-label="Open menu" aria-expanded="false"
-                        class="lg:hidden flex flex-col gap-1.5 p-2">
-                        <span class="w-6 h-px bg-ink"></span>
-                        <span class="w-6 h-px bg-ink"></span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Vintage Masthead Sub-Bar -->
-            <div
-                class="border-t hairline py-1 px-1 font-mono text-[9px] sm:text-[11px] text-inkfade flex flex-wrap items-center justify-between gap-1 text-center">
-                <span>VOL. XXVI · ISSUE 01</span>
-                <span class="tracking-widest font-semibold text-alert">★ DNIC VALLAPUZHA ★</span>
-                <span>EST. MCMXCIV (2026)</span>
-            </div>
-
-            <div id="mobileMenu" class="lg:hidden">
-                <nav class="flex flex-col gap-3 pb-5 text-[14px] text-inkfade border-t hairline pt-4">
-
-                    <a href="results.html" class="mnav">Arts Results</a>
-                    <a href="sports.html" class="mnav">Sports Results</a>
-                    <a href="registrations.html" class="mnav">Registrations</a>
-                    <a href="notifications.html" class="mnav">Notifications</a>
-                    <a href="gallery.html" class="mnav">Gallery</a>
-                    <a href="downloads.html" class="mnav">Downloads</a>
-                    <button id="mobileSearchTrigger"
-                        class="text-left font-mono text-[13px] text-ink flex items-center gap-2 pt-2 border-t hairline">
-
-                    </button>
-                    <p class="text-[12px] pt-1 text-inkfade/80 font-mono">Darunnajath Islamic Complex, Vallapuzha</p>
-                </nav>
-            </div>
+        <div id="mob">
+            <nav class="mob-links" style="padding-left:28px;padding-right:28px;">
+                <a href="live-results.html" class="mnav" style="color:var(--red);font-weight:600">Live Results</a>
+                <a href="results.html" class="mnav">Arts Results</a>
+                <a href="sports.html" class="mnav">Sports Results</a>
+                <a href="registrations.html" class="mnav">Registrations</a>
+                <a href="notifications.html" class="mnav">Notifications</a>
+                <a href="gallery.html" class="mnav">Gallery</a>
+                <a href="downloads.html" class="mnav">Downloads</a>
+                <p class="mob-foot">Darunnajath Islamic Complex, Vallapuzha</p>
+            </nav>
         </div>
     </header>
 
+    <!-- ═══════════════════════════════════════
+         HERO — Inset cinema screen
+    ═══════════════════════════════════════ -->
+    <section id="home" class="hero-section">
+        <div class="hero-container">
+            <!-- Video -->
+            <video class="hero-video" autoplay loop muted playsinline
+                src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_170732_8a9ccda6-5cff-4628-b164-059c500a2b41.mp4"></video>
 
+            <!-- Noise -->
+            <div class="noise-overlay"></div>
 
-    <!-- ============ HERO ============ -->
-    <section id="home" class="relative pt-32 md:pt-44 pb-16 md:pb-20 px-6 md:px-10">
-        <div class="max-w-6xl mx-auto">
+            <!-- Gradient -->
+            <div class="hero-gradient"></div>
 
-            <div class="grid lg:grid-cols-[1fr_auto] gap-10 lg:gap-16 items-center">
-                <div>
-                    <p class="reveal show flex items-center gap-2 text-[14px] text-inkfade mb-6 md:mb-8">
-                        <span class="w-1.5 h-1.5 rounded-full bg-alert pulse-dot"></span>
-                        Arts programme · Darunnajath Islamic Complex, Vallapuzha
-                    </p>
+            <!-- Warm Red/Cream Ambient Glow (Prisma/Vesper) -->
+            <div class="bg-radial-hero"></div>
 
-                    <h1
-                        class="reveal show reveal-d1 font-serif leading-[0.95] tracking-tight text-[16vw] md:text-[8.2rem] lg:text-[9.5rem]">
-                        Alert
-                        <span class="block text-alert">2k26</span>
-                    </h1>
-                </div>
-
-                <div
-                    class="reveal show reveal-d1 relative w-72 h-72 md:w-[26rem] md:h-[26rem] lg:w-[34rem] lg:h-[34rem] xl:w-[40rem] xl:h-[40rem] justify-self-center lg:justify-self-end shrink-0">
-                    <span
-                        class="absolute inset-0 flex items-center justify-center text-inkfade/60 text-[13px] num text-center px-4">fest-logo.png</span>
-                    <img src="fest-logo.png" alt="Alert 2k26 fest logo"
-                        class="absolute inset-0 w-full h-full object-contain" onerror="this.style.display='none'">
-                </div>
-            </div>
-
-            <div class="reveal show reveal-d2 mt-8 md:mt-10 grid md:grid-cols-[1fr_auto] gap-8 md:gap-16 items-end">
-                <p class="max-w-md text-[17px] md:text-[19px] leading-relaxed text-inkfade">
-                    Four teams. One signal. A season of art built on staying awake — to craft, to each other, and to the
-                    moment in
-                    front of us.
+            <!-- Content overlay at bottom -->
+            <div class="hero-content">
+                <p class="rv on hero-top-tag">
+                    <span class="dot"></span>
+                    Arts programme · Darunnajath Islamic Complex, Vallapuzha
                 </p>
 
-                <div class="flex flex-wrap gap-3 sm:gap-4 items-center">
-                    <a href="#teams"
-                        class="px-5 sm:px-6 py-2.5 sm:py-3 bg-ink text-paper text-[14px] tracking-wide hover:bg-alertd transition-colors">
-                        Meet the teams
-                    </a>
-                    <button id="confettiBtn"
-                        class="siren-glow px-5 sm:px-6 py-2.5 sm:py-3 border border-ink text-[14px] tracking-wide hover:bg-ink hover:text-paper transition-colors">
-                        Sound the alert
-                    </button>
+                <div class="hero-layout">
+                    <div>
+                        <h1 class="rv on rv-d1 hero-title split-chars" data-split>Alert<br><em>2k26</em></h1>
+                    </div>
 
-                    <!-- Vintage Postage Stamp Badge (Visible & Mobile Ready) -->
 
+                    <div class="rv on rv-d2 hero-right">
+                        <p class="hero-desc words-reveal" data-words>
+                            Four teams. One signal. A season of art built on staying awake — to craft, to each other,
+                            and to the
+                            moment in front of us.
+                        </p>
+                        <div class="hero-btns">
+                            <a href="#teams" class="btn-fill">Meet the teams</a>
+                            <a href="#about" class="btn-line">About the fest</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- pulse divider -->
-        <div class="max-w-6xl mx-auto mt-16 md:mt-20 reveal show reveal-d3">
-            <svg viewBox="0 0 1200 60" class="w-full h-10 md:h-12" preserveAspectRatio="none">
-                <line x1="0" y1="30" x2="1200" y2="30" stroke="#DBD4C3" stroke-width="1" />
-                <path class="pulse-path" d="M0,30 L280,30 L310,6 L340,54 L368,30 L1200,30" fill="none" stroke="#B23A2E"
-                    stroke-width="2" />
-            </svg>
-        </div>
     </section>
 
-    <!-- ============ TICKER ============ -->
-    <section aria-label="Fest highlights" class="border-y hairline bg-paper2 overflow-hidden">
-        <div class="whitespace-nowrap py-3">
-            <div class="ticker-track inline-block">
-                <span class="inline-flex items-center gap-10 text-[13px] text-inkfade px-5">
-                    <span>4 teams competing</span><span class="text-alert">·</span>
-                    <span>Stage · Fine Arts · Literary · Off-stage</span><span class="text-alert">·</span>
-                    <span>Theme: Alert</span><span class="text-alert">·</span>
-                    <span>Darunnajath Islamic Complex, Vallapuzha</span><span class="text-alert">·</span>
+    <!-- TICKER -->
+    <section aria-label="Fest highlights" class="ticker">
+        <div class="ticker-scroll">
+            <div class="ticker-inner">
+                <span class="ticker-set">
+                    <span>4 teams competing</span><span class="sep">·</span>
+                    <span>Stage · Fine Arts · Literary · Off-stage</span><span class="sep">·</span>
+                    <span>Theme: Alert</span><span class="sep">·</span>
+                    <span>Darunnajath Islamic Complex, Vallapuzha</span><span class="sep">·</span>
                 </span>
-                <span class="inline-flex items-center gap-10 text-[13px] text-inkfade px-5">
-                    <span>4 teams competing</span><span class="text-alert">·</span>
-                    <span>Stage · Fine Arts · Literary · Off-stage</span><span class="text-alert">·</span>
-                    <span>Theme: Alert</span><span class="text-alert">·</span>
-                    <span>Darunnajath Islamic Complex, Vallapuzha</span><span class="text-alert">·</span>
+                <span class="ticker-set">
+                    <span>4 teams competing</span><span class="sep">·</span>
+                    <span>Stage · Fine Arts · Literary · Off-stage</span><span class="sep">·</span>
+                    <span>Theme: Alert</span><span class="sep">·</span>
+                    <span>Darunnajath Islamic Complex, Vallapuzha</span><span class="sep">·</span>
                 </span>
             </div>
         </div>
     </section>
 
-    <!-- ============ ABOUT ============ -->
-    <section id="about" class="px-6 md:px-10 py-24 md:py-36">
-        <div class="max-w-6xl mx-auto grid md:grid-cols-[1.1fr_auto] gap-14 md:gap-20 items-center">
+    <!-- ABOUT -->
+    <section id="about" class="about">
+        <!-- Background Elements (Asme / Vesper) -->
+        <div class="bg-radial-top"></div>
+        <div class="bg-grid-lines"></div>
 
+        <div class="about-grid">
             <div>
-                <h2 class="font-serif text-3xl md:text-4xl mb-6">About Alert</h2>
-                <p class="text-inkfade leading-relaxed text-[16px] md:text-[17px]">
-                    An alert is not an alarm that ends things — it's a signal that something is beginning and worth your
+                <h2 class="rv serif split-chars" data-split>About Alert</h2>
+                <p class="rv rv-d1 about-p" id="scrollParagraph" data-scroll-chars>An alert is not an alarm that ends
+                    things — it's a signal that something is beginning and worth your
                     attention. That's the brief this year: work that notices. Paintings that catch what a hurried glance
-                    would
-                    miss. Verses written the moment a thought lands, not after it cools.
-                </p>
-                <p class="text-inkfade leading-relaxed text-[16px] md:text-[17px] mt-4">
+                    would miss. Verses written the moment a thought lands, not after it cools.</p>
+                <p class="rv rv-d2 about-p words-reveal" data-words>
                     Every event on the schedule, on stage or off it, is asked to answer the same question — what does it
-                    mean to
-                    stay switched on? Alert 2k26 is this year's edition of that work: a fest run by students, for
-                    students, judged
-                    by craft and carried by four teams built from every batch on campus.
+                    mean to stay switched on? Alert 2k26 is this year's edition of that work: a fest run by students,
+                    for
+                    students, judged by craft and carried by four teams built from every batch on campus.
                 </p>
 
-                <!-- Vintage Typewriter Archival Memorandum Card -->
-                <div
-                    class="mt-8 p-5 bg-[#EFEBE0] border hairline relative font-mono text-[13px] text-inkfade shadow-sm">
-                    <div
-                        class="absolute -top-3 left-6 px-2.5 py-0.5 bg-alert text-paper font-mono text-[10px] font-bold uppercase tracking-widest">
-                        ARCHIVAL MEMORANDUM #26
-                    </div>
-                    <p class="leading-relaxed pt-1">
-                        <span class="text-ink font-bold">"TO STAY ALERT —</span> IS TO REFUSE THE SLEEPWALK. ART IS OUR
-                        FIRST
-                        RESPONSE TO THE PRESENT MOMENT."
-                    </p>
-                    <div class="mt-3 pt-2 border-t hairline flex justify-between items-center text-[10px] text-inkfade">
-                        <span>CLASSIFICATION: OFFICIAL ARTS FEST BRIEF</span>
-                        <span class="text-alert font-bold">DNIC VALLAPUZHA</span>
-                    </div>
+                <div class="rv-left rv-d3 pull-quote">
+                    <p><strong>"To stay alert</strong> — is to refuse the sleepwalk. Art is our first response to the
+                        present moment."</p>
+                    <div class="attr">Official Arts Fest Brief · <span>DNIC Vallapuzha</span></div>
                 </div>
             </div>
 
-            <div class="justify-self-center">
-                <div class="relative w-52 h-52 md:w-60 md:h-60">
-                    <div class="absolute inset-0 rounded-full border hairline"></div>
-                    <div class="absolute inset-6 rounded-full border hairline"></div>
-                    <div class="absolute inset-12 rounded-full border hairline"></div>
-                    <div class="absolute inset-0 rounded-full overflow-hidden">
-                        <div class="radar-sweep w-full h-full"></div>
+            <div class="rv-scale about-radar" data-parallax>
+                <div class="radar">
+                    <div class="radar-circle rc1"></div>
+                    <div class="radar-circle rc2"></div>
+                    <div class="radar-circle rc3"></div>
+                    <div class="radar-sweep-wrap">
+                        <div class="radar-sweep-fill"></div>
                     </div>
-                    <span class="absolute w-1.5 h-1.5 rounded-full bg-alert pulse-dot"
-                        style="top:28%; left:64%;"></span>
-                    <span class="absolute w-1.5 h-1.5 rounded-full bg-alert pulse-dot"
-                        style="top:62%; left:32%; animation-delay:.6s;"></span>
-                    <span class="absolute w-1 h-1 rounded-full bg-ink/50"
-                        style="top:50%; left:50%; transform:translate(-50%,-50%);"></span>
+                    <span class="radar-blip rb1"></span>
+                    <span class="radar-blip rb2"></span>
+                    <span class="radar-center"></span>
                 </div>
-                <p class="text-center text-[13px] text-inkfade mt-4 tracking-tight">always scanning</p>
+                <p class="radar-cap">always scanning</p>
             </div>
-
         </div>
 
-        <div class="max-w-6xl mx-auto mt-16 md:mt-20 grid grid-cols-2 md:grid-cols-4 border-t hairline">
-            <div class="border-r hairline py-8 pr-4">
-                <p class="num text-4xl md:text-5xl"><span class="counter" data-target="4">0</span></p>
-                <p class="text-[13px] text-inkfade mt-2">Teams on campus</p>
+        <div class="rv stats-row stagger-children">
+            <div class="stat">
+                <span class="stat-n"><span class="counter" data-target="4">0</span></span>
+                <span class="stat-l">Teams on campus</span>
             </div>
-            <div class="md:border-r hairline py-8 pr-4">
-                <p class="num text-4xl md:text-5xl"><span class="counter" data-target="6">0</span></p>
-                <p class="text-[13px] text-inkfade mt-2">Days of events</p>
+            <div class="stat">
+                <span class="stat-n"><span class="counter" data-target="6">0</span></span>
+                <span class="stat-l">Days of events</span>
             </div>
-            <div class="border-r hairline py-8 pr-4 border-t md:border-t-0">
-                <p class="num text-4xl md:text-5xl"><span class="counter" data-target="200+">0</span>+</p>
-                <p class="text-[13px] text-inkfade mt-2">Stage & off-stage items</p>
+            <div class="stat">
+                <span class="stat-n"><span class="counter" data-target="200">0</span>+</span>
+                <span class="stat-l">Stage & off-stage items</span>
             </div>
-            <div class="py-8 pr-4 border-t md:border-t-0">
-                <p class="num text-4xl md:text-5xl"><span class="counter" data-target="1">0</span></p>
-                <p class="text-[13px] text-inkfade mt-2">Theme — Alert</p>
+            <div class="stat">
+                <span class="stat-n"><span class="counter" data-target="1">0</span></span>
+                <span class="stat-l">Theme — Alert</span>
             </div>
         </div>
     </section>
 
-    <!-- ============ THEME STATEMENT ============ -->
-    <section id="theme" class="relative px-6 md:px-10 py-24 md:py-32 bg-ink text-paper overflow-hidden">
-        <div class="scanline"></div>
-        <div class="max-w-6xl mx-auto">
-            <p class="flex items-center gap-2 text-[13px] text-paper/60 mb-8">
-                <span class="w-1.5 h-1.5 rounded-full bg-alert pulse-dot"></span>
-                the brief
-            </p>
-            <p class="font-serif text-[7vw] md:text-5xl lg:text-6xl leading-[1.15] max-w-4xl">
+    <!-- THEME STATEMENT -->
+    <section id="theme" class="theme-strip">
+        <!-- Background Elements (Prisma / Asme) -->
+        <div class="bg-radial-center-red"></div>
+        <div class="bg-section-noise"></div>
+
+        <div class="theme-strip-inner">
+            <p class="rv-blur theme-tag"><span class="dot"></span> the brief</p>
+            <p class="theme-text typewriter" data-typewriter>
                 Stay alert — to the brush before it dries, the line before it's spoken, the room before it goes quiet.
             </p>
-
-            <!-- Vintage Telegram Announcement Card -->
-            <div
-                class="my-8 p-5 md:p-6 bg-[#F4EFE2] text-ink border-2 border-paper/40 font-mono text-[12px] shadow-lg relative">
-                <div class="flex justify-between items-center border-b border-ink/40 pb-2 mb-3 text-[10px]">
-                    <span class="font-bold text-alert uppercase tracking-widest">★ INDIAN POSTS & TELEGRAPHS ★</span>
-                    <span class="text-inkfade">DISPATCH NO. 04291</span>
-                </div>
-                <p class="leading-relaxed uppercase font-bold text-ink tracking-wide">
-                    RECEIVED AT VALLAPUZHA P.O. = TO ALL ARTISTS WRITERS AND PERFORMERS = STOP = FOUR TEAMS READY FOR
-                    COMPETITION
-                    = STOP = PREPARE YOUR PIECES = STOP = STAY ALERT =
-                </p>
-                <div
-                    class="mt-3 flex justify-between items-center text-[10px] text-inkfade border-t border-ink/30 pt-2">
-                    <span>THEME DISPATCH 2K26</span>
-                    <span>TIME: 09:00 HRS</span>
-                </div>
-            </div>
-
-            <svg viewBox="0 0 1200 40" class="w-full h-8 md:h-10 mt-10" preserveAspectRatio="none">
-                <line x1="0" y1="20" x2="1200" y2="20" stroke="#3A362D" stroke-width="1" />
-                <path class="pulse-path" d="M0,20 L520,20 L545,2 L570,38 L595,20 L1200,20" fill="none" stroke="#D9776C"
-                    stroke-width="2" />
-            </svg>
+            <div class="theme-line line-draw"></div>
         </div>
     </section>
 
-    <!-- ============ TEAMS ============ -->
-    <section id="teams" class="px-6 md:px-10 py-24 md:py-36">
-        <div class="max-w-6xl mx-auto">
-            <div class="flex items-end justify-between flex-wrap gap-4 mb-14 md:mb-16">
-                <h2 class="font-serif text-3xl md:text-4xl">Four teams, four names</h2>
-                <p class="text-inkfade text-[15px] max-w-xs">Every team was named for what it means to answer an alert —
-                    freedom, truth, effort, or connection.</p>
+    <!-- TEAMS -->
+    <section id="teams" class="teams">
+        <!-- Background Elements (Asme / Prisma) -->
+        <div class="bg-radial-side"></div>
+        <div class="bg-ambient-orb" style="top:15%;right:-120px;"></div>
+
+        <div class="teams-head">
+            <h2 class="rv serif split-chars" data-split>Four teams, four names</h2>
+            <p class="teams-intro">Every team was named for what it means to answer an alert — freedom, truth, effort,
+                or connection.</p>
+        </div>
+
+        <article class="rv-left team-row" style="transition-delay:0s">
+            <span class="team-num">01</span>
+            <span class="team-name serif" style="color:var(--green)">Libera</span>
+            <span class="team-desc">Latin for <em>free</em>. The team that answers an alert with unguarded, unfiltered
+                expression.</span>
+            <span class="team-initial serif" style="color:var(--green)">L</span>
+        </article>
+
+        <article class="rv-left team-row" style="transition-delay:.1s">
+            <span class="team-num">02</span>
+            <span class="team-name serif" style="color:var(--blue)">Alethia</span>
+            <span class="team-desc">Greek for <em>truth</em>. The team that treats every piece as something uncovered,
+                not invented.</span>
+            <span class="team-initial serif" style="color:var(--blue)">A</span>
+        </article>
+
+        <article class="rv-left team-row" style="transition-delay:.2s">
+            <span class="team-num">03</span>
+            <span class="team-name serif" style="color:var(--red)">Opera</span>
+            <span class="team-desc">Latin for <em>work</em>. The team built on rehearsal — on effort nobody sees before
+                the curtain lifts.</span>
+            <span class="team-initial serif" style="color:var(--red)">O</span>
+        </article>
+
+        <article class="rv-left team-row" style="transition-delay:.3s">
+            <span class="team-num">04</span>
+            <span class="team-name serif" style="color:var(--gold)">Relatia</span>
+            <span class="team-desc">From <em>relation</em>. The team that makes art in the space between one person and
+                another.</span>
+            <span class="team-initial serif" style="color:var(--gold)">R</span>
+        </article>
+    </section>
+
+    <!-- COUNTDOWN -->
+    <section id="countdown" class="cd-section">
+        <!-- Background Elements (Vesper / Asme) -->
+        <div class="bg-grid-lines"></div>
+        <div class="bg-radial-center-red" style="opacity:0.65"></div>
+
+        <div class="cd-head">
+            <h2 class="rv serif split-chars" data-split>Until the curtain lifts</h2>
+            <p class="rv rv-d1">19 September 2026 · 9:00 AM · Main campus, Vallapuzha</p>
+        </div>
+
+        <div class="rv-scale rv-d2 cd-line">
+            <div class="cd-block">
+                <span id="cd-days" class="cd-val">00</span>
+                <span class="cd-label">Days</span>
             </div>
-
-            <div class="grid md:grid-cols-2 gap-px bg-line border border-line">
-
-                <article class="team-card bg-paper p-8 md:p-10 hover:border-libera hover:bg-[#F1F5F2]"
-                    style="border:1px solid transparent">
-                    <div class="flex items-start justify-between">
-                        <span class="font-serif text-5xl text-libera">L</span>
-                        <span class="text-[13px] num text-inkfade">Team 01</span>
-                    </div>
-                    <h3 class="font-serif text-2xl md:text-3xl mt-6">Libera</h3>
-                    <p class="text-inkfade text-[15px] mt-2">Latin for <em>free</em>. The team that answers an alert
-                        with
-                        unguarded, unfiltered expression.</p>
-                </article>
-
-                <article class="team-card bg-paper p-8 md:p-10 hover:border-alethia hover:bg-[#F0F2F6]"
-                    style="border:1px solid transparent">
-                    <div class="flex items-start justify-between">
-                        <span class="font-serif text-5xl text-alethia">A</span>
-                        <span class="text-[13px] num text-inkfade">Team 02</span>
-                    </div>
-                    <h3 class="font-serif text-2xl md:text-3xl mt-6">Alethia</h3>
-                    <p class="text-inkfade text-[15px] mt-2">Greek for <em>truth</em>. The team that treats every piece
-                        as
-                        something uncovered, not invented.</p>
-                </article>
-
-                <article class="team-card bg-paper p-8 md:p-10 hover:border-opera hover:bg-[#F6F0EF]"
-                    style="border:1px solid transparent">
-                    <div class="flex items-start justify-between">
-                        <span class="font-serif text-5xl text-opera">O</span>
-                        <span class="text-[13px] num text-inkfade">Team 03</span>
-                    </div>
-                    <h3 class="font-serif text-2xl md:text-3xl mt-6">Opera</h3>
-                    <p class="text-inkfade text-[15px] mt-2">Latin for <em>work</em>. The team built on rehearsal — on
-                        effort
-                        nobody sees before the curtain lifts.</p>
-                </article>
-
-                <article class="team-card bg-paper p-8 md:p-10 hover:border-relatia hover:bg-[#F6F3EA]"
-                    style="border:1px solid transparent">
-                    <div class="flex items-start justify-between">
-                        <span class="font-serif text-5xl text-relatia">R</span>
-                        <span class="text-[13px] num text-inkfade">Team 04</span>
-                    </div>
-                    <h3 class="font-serif text-2xl md:text-3xl mt-6">Relatia</h3>
-                    <p class="text-inkfade text-[15px] mt-2">From <em>relation</em>. The team that makes art in the
-                        space between
-                        one person and another.</p>
-                </article>
-
+            <div class="cd-block">
+                <span id="cd-hours" class="cd-val">00</span>
+                <span class="cd-label">Hrs</span>
+            </div>
+            <div class="cd-block">
+                <span id="cd-mins" class="cd-val">00</span>
+                <span class="cd-label">Min</span>
+            </div>
+            <div class="cd-block">
+                <span id="cd-secs" class="cd-val cd-val-red">00</span>
+                <span class="cd-label">Sec</span>
             </div>
         </div>
     </section>
 
+    <!-- EXPLORE -->
+    <section id="explore" class="explore">
+        <!-- Background Elements (Prisma / Asme) -->
+        <div class="bg-radial-top"></div>
+        <div class="bg-section-noise"></div>
 
-
-    <!-- ============ COUNTDOWN ============ -->
-    <section id="countdown" class="px-6 md:px-10 py-24 md:py-32 border-t hairline">
-        <div class="max-w-6xl mx-auto">
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
+        <div class="explore-inner">
+            <div class="explore-head">
                 <div>
-                    <h2 class="font-serif text-3xl md:text-4xl">Until the curtain lifts</h2>
-                    <p class="text-inkfade text-[15px] mt-2">19 September 2026 · 9:00 AM · Main campus, Vallapuzha</p>
+                    <p class="explore-tag">Central Fest Hub</p>
+                    <h2 class="rv serif split-chars" data-split>Everything else, in one place</h2>
                 </div>
-            </div>
-
-            <div class="grid grid-cols-4 border-t border-l hairline">
-                <div class="border-r border-b hairline py-8 md:py-12 text-center">
-                    <p id="cd-days" class="num text-5xl md:text-7xl">00</p>
-                    <p class="text-[12px] md:text-[13px] text-inkfade mt-3">Days</p>
-                </div>
-                <div class="border-r border-b hairline py-8 md:py-12 text-center">
-                    <p id="cd-hours" class="num text-5xl md:text-7xl">00</p>
-                    <p class="text-[12px] md:text-[13px] text-inkfade mt-3">Hours</p>
-                </div>
-                <div class="border-r border-b hairline py-8 md:py-12 text-center">
-                    <p id="cd-mins" class="num text-5xl md:text-7xl">00</p>
-                    <p class="text-[12px] md:text-[13px] text-inkfade mt-3">Minutes</p>
-                </div>
-                <div class="border-r border-b hairline py-8 md:py-12 text-center">
-                    <p id="cd-secs" class="num text-5xl md:text-7xl text-alert">00</p>
-                    <p class="text-[12px] md:text-[13px] text-inkfade mt-3">Seconds</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============ EXPLORE ============ -->
-    <!-- ============ EVERYTHING ELSE, IN ONE PLACE ============ -->
-    <section id="explore" class="px-6 md:px-10 py-24 md:py-32 border-t hairline bg-paper2">
-        <div class="max-w-6xl mx-auto">
-            <div class="flex items-end justify-between flex-wrap gap-4 mb-12 md:mb-16">
-                <div>
-                    <span class="font-mono text-[11px] text-alert font-bold uppercase tracking-widest block mb-2">★
-                        CENTRAL FEST
-                        HUB ★</span>
-                    <h2 class="font-serif text-3xl md:text-5xl">Everything else, in one place</h2>
-                </div>
-                <p class="text-inkfade text-[15px] max-w-sm leading-relaxed">
+                <p class="explore-intro">
                     Access all live points, category results, registrations, downloads, announcements, and media from a
-                    single
-                    central portal.
+                    single central portal.
                 </p>
             </div>
 
-            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line shadow-sm">
+            <a href="/live/" class="rv-left exp-item" style="transition-delay:0s">
+                <span class="exp-num">01</span>
+                <span class="exp-title">
+                    <span class="exp-live-tag"><span class="dot"></span> LIVE</span>
+                    Live Results
+                </span>
+                <span class="exp-desc">Realtime team standings and live stage points tally.</span>
+            </a>
 
-                <!-- 01: Live Results -->
-                <a href="/live/"
-                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors relative">
-                    <div class="flex items-center justify-between">
-                        <span
-                            class="flex items-center gap-1.5 text-xs font-mono text-alert group-hover:text-paper font-bold">
-                            <span class="w-2 h-2 rounded-full bg-alert pulse-dot"></span> LIVE
-                        </span>
-                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">01</span>
-                    </div>
-                    <div>
-                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">Live
-                            Results</h3>
-                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Realtime
-                            team standings
-                            and live stage points tally.</p>
-                    </div>
-                </a>
+            <a href="/results/" class="rv-left exp-item" style="transition-delay:.05s">
+                <span class="exp-num">02</span>
+                <span class="exp-title">Arts Results</span>
+                <span class="exp-desc">Off-stage, literary, and main stage winners and grade lists.</span>
+            </a>
 
-                <!-- 02: Arts Results -->
-                <a href="/results/"
-                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
-                    <div class="flex items-center justify-between">
-                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
-                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
-                            stroke-width="1.6">
-                            <path d="M6 20V11M13 20V4M20 20v-7" stroke-linecap="round" />
-                        </svg>
-                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">02</span>
-                    </div>
-                    <div>
-                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">Arts
-                            Results</h3>
-                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Off-stage,
-                            literary,
-                            and main stage winners and grade lists.</p>
-                    </div>
-                </a>
+            <a href="/sports/" class="rv-left exp-item" style="transition-delay:.1s">
+                <span class="exp-num">03</span>
+                <span class="exp-title">Sports Meet</span>
+                <span class="exp-desc">Track, field events, team points, and individual champions.</span>
+            </a>
 
-                <!-- 03: Sports Meet -->
-                <a href="/sports/"
-                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
-                    <div class="flex items-center justify-between">
-                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
-                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
-                            stroke-width="1.6">
-                            <circle cx="13" cy="13" r="9" />
-                            <path
-                                d="M4 13h18M13 4c2.4 2.6 3.6 5.8 3.6 9s-1.2 6.4-3.6 9c-2.4-2.6-3.6-5.8-3.6-9s1.2-6.4 3.6-9Z" />
-                        </svg>
-                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">03</span>
-                    </div>
-                    <div>
-                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">Sports
-                            Meet</h3>
-                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Track,
-                            field events,
-                            team points, and individual champions.</p>
-                    </div>
-                </a>
+            <a href="/registrations/" class="rv-left exp-item" style="transition-delay:.15s">
+                <span class="exp-num">04</span>
+                <span class="exp-title">Registrations</span>
+                <span class="exp-desc">Online entry forms for single & group competition items.</span>
+            </a>
 
-                <!-- 04: Registrations -->
-                <a href="/registrations/"
-                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
-                    <div class="flex items-center justify-between">
-                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
-                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
-                            stroke-width="1.6">
-                            <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">04</span>
-                    </div>
-                    <div>
-                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">
-                            Registrations</h3>
-                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Online
-                            entry forms for
-                            single & group competition items.</p>
-                    </div>
-                </a>
+            <a href="/notifications/" class="rv-left exp-item" style="transition-delay:.2s">
+                <span class="exp-num">05</span>
+                <span class="exp-title">Notifications</span>
+                <span class="exp-desc">Official schedule updates, alerts, and jury announcements.</span>
+            </a>
 
-                <!-- 05: Notifications -->
-                <a href="/notifications/"
-                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
-                    <div class="flex items-center justify-between">
-                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
-                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
-                            stroke-width="1.6">
-                            <path d="M8 20a2 2 0 0 0 4 0M6 10a4.5 4.5 0 0 1 9 0c0 3 1.5 4 1.5 6H4.5c0-2 1.5-3 1.5-6Z"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">05</span>
-                    </div>
-                    <div>
-                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">
-                            Notifications</h3>
-                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Official
-                            schedule
-                            updates, alerts, and jury announcements.</p>
-                    </div>
-                </a>
+            <a href="gallery.html" class="rv-left exp-item" style="transition-delay:.25s">
+                <span class="exp-num">06</span>
+                <span class="exp-title">Gallery</span>
+                <span class="exp-desc">Photo highlights from rehearsals and stage ground.</span>
+            </a>
 
-                <!-- 06: Gallery -->
-                <a href="gallery.html"
-                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
-                    <div class="flex items-center justify-between">
-                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
-                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
-                            stroke-width="1.6">
-                            <rect x="3.5" y="5" width="19" height="16" rx="1" />
-                            <circle cx="9" cy="10.5" r="1.6" />
-                            <path d="M3.5 17l5-4.5 4 3 3.5-3.5 6.5 5.5" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                        </svg>
-                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">06</span>
-                    </div>
-                    <div>
-                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">Gallery
-                        </h3>
-                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Photo
-                            highlights from
-                            rehearsals and stage ground.</p>
-                    </div>
-                </a>
-
-                <!-- 07: Downloads -->
-                <a href="/downloads/"
-                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
-                    <div class="flex items-center justify-between">
-                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
-                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
-                            stroke-width="1.6">
-                            <path d="M13 3v13m0 0l-5-5m5 5l5-5M4 21h18" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                        </svg>
-                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">07</span>
-                    </div>
-                    <div>
-                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">Downloads
-                        </h3>
-                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Official
-                            rulebook PDF,
-                            schedule brochure, & forms.</p>
-                    </div>
-                </a>
-
-
-
-            </div>
+            <a href="/downloads/" class="rv-left exp-item" style="transition-delay:.3s">
+                <span class="exp-num">07</span>
+                <span class="exp-title">Downloads</span>
+                <span class="exp-desc">Official rulebook PDF, schedule brochure, & forms.</span>
+            </a>
         </div>
     </section>
 
-    <!-- ============ FIND US / CONTACT ============ -->
-    <footer id="find-us" class="px-6 md:px-10 py-20 md:py-28 bg-paper2 border-t hairline">
-        <div class="max-w-6xl mx-auto grid md:grid-cols-[1.2fr_1fr_1fr] gap-12 md:gap-10">
+    <!-- FOOTER -->
+    <footer id="find-us" class="site-foot">
+        <!-- Background Element (Asme) -->
+        <div class="bg-radial-bottom-red"></div>
 
+        <div class="foot-grid">
             <div>
-                <p class="font-serif text-2xl">Alert<span class="text-alert">.</span>2k26</p>
-                <p class="text-inkfade text-[14px] mt-4 max-w-xs leading-relaxed">
+                <p class="foot-brand serif">Alert<b>.</b>2k26</p>
+                <p class="foot-about">
                     Arts programme of Darunnajath Islamic Complex, Vallapuzha, Palakkad, Kerala.
                 </p>
                 <a href="https://maps.google.com/?q=Darunnajath+Islamic+Complex+Vallapuzha" target="_blank"
-                    rel="noopener"
-                    class="inline-block mt-6 text-[14px] border-b border-ink pb-0.5 hover:text-alert hover:border-alert transition-colors">
-                    Get directions →
-                </a>
+                    rel="noopener" class="foot-dir">Get directions →</a>
             </div>
 
             <div>
-                <p class="text-[13px] text-inkfade mb-4">Navigation</p>
-                <nav class="flex flex-col gap-2.5 text-[14px]">
-                    <a href="live-results.html"
-                        class="hover:text-alert text-alert font-semibold flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-alert pulse-dot"></span> Live Results
-                    </a>
-                    <a href="/results/" class="hover:text-alert">Arts Results</a>
-                    <a href="/sports/" class="hover:text-alert">Sports Results</a>
-                    <a href="/registrations/" class="hover:text-alert">Registrations</a>
-                    <a href="/notifications/" class="hover:text-alert">Notifications</a>
-                    <a href="/gallery/" class="hover:text-alert">Gallery</a>
-                    <a href="/downloads/" class="hover:text-alert">Downloads</a>
+                <p class="foot-label">Navigation</p>
+                <nav class="foot-nav">
+                    <a href="live-results.html" class="fl"><span class="live-dot"></span> Live Results</a>
+                    <a href="/results/">Arts Results</a>
+                    <a href="/sports/">Sports Results</a>
+                    <a href="/registrations/">Registrations</a>
+                    <a href="/notifications/">Notifications</a>
+                    <a href="/gallery/">Gallery</a>
+                    <a href="/downloads/">Downloads</a>
                 </nav>
             </div>
 
             <div>
-                <p class="text-[13px] text-inkfade mb-4">Contact</p>
-                <div class="flex flex-col gap-3 text-[15px] text-inkfade">
+                <p class="foot-label">Contact</p>
+                <div class="foot-contact">
                     <p>danunnajathislamiccomplex@gmail.com</p>
                     <p>+91 7511192085</p>
                     <p>Vallapuzha, Palakkad, Kerala</p>
@@ -923,98 +2189,224 @@
             </div>
         </div>
 
-        <div
-            class="max-w-6xl mx-auto mt-16 pt-6 border-t hairline flex flex-col md:flex-row justify-between items-start md:items-center gap-3 text-[13px] text-inkfade">
+        <div class="foot-bottom">
             <div>
                 <p>Arts programme · Darunnajath Islamic Complex, Vallapuzha</p>
-                <p class="font-mono text-[11px] mt-1 text-inkfade/70">
-                    <span id="morseSecretTrigger" class="secret-badge" title="Click to decode signal">LAT: 10.8358° N ·
-                        LOG:
-                        76.2231° E · MORSE: .- .-.. . .-. -</span>
+                <p id="morseSecretTrigger" class="foot-coords" title="Click to decode signal">
+                    LAT: 10.8358° N · LOG: 76.2231° E · MORSE: .- .-.. . .-. -
                 </p>
             </div>
-            <a href="#home" class="hover:text-alert">Back to top ↑</a>
+            <a href="#home" class="foot-back">Back to top ↑</a>
         </div>
 
-        <div
-            class="reveal mt-16 md:mt-20 relative w-full aspect-[16/7] md:aspect-[16/5] overflow-hidden border-t hairline">
-            <div
-                class="absolute inset-0 flex items-center justify-center bg-paper2 text-inkfade text-[13px] tracking-tight">
-                college.png
-            </div>
+        <div class="rv-scale campus-wrap">
+            <div class="ph">college.png</div>
             <img src="college.png" alt="Darunnajath Islamic Complex, Vallapuzha — campus"
-                class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'">
-            <div class="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/0 to-transparent"></div>
-            <p
-                class="absolute bottom-4 md:bottom-6 left-6 md:left-10 text-paper text-[13px] md:text-[14px] tracking-tight">
-                Darunnajath Islamic Complex, Vallapuzha
-            </p>
+                onerror="this.style.display='none'">
+            <div class="grad"></div>
+            <p class="cap">Darunnajath Islamic Complex, Vallapuzha</p>
         </div>
     </footer>
 
     <script>
-        // Mobile menu
+        // ═══════════════════════════════════════
+        // MOBILE MENU
+        // ═══════════════════════════════════════
         const menuBtn = document.getElementById('menuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
+        const mob = document.getElementById('mob');
         menuBtn.addEventListener('click', () => {
-            const isOpen = mobileMenu.classList.toggle('open');
+            const isOpen = mob.classList.toggle('open');
             menuBtn.setAttribute('aria-expanded', isOpen);
         });
         document.querySelectorAll('.mnav').forEach(l => l.addEventListener('click', () => {
-            mobileMenu.classList.remove('open');
+            mob.classList.remove('open');
             menuBtn.setAttribute('aria-expanded', 'false');
         }));
 
-        // Scrollspy
-        const sections = ['about', 'theme', 'teams', 'countdown', 'explore', 'find-us'].map(id => document.getElementById(id));
-        const navLinks = document.querySelectorAll('.nav-link');
-        const spy = () => {
-            let current = null;
-            sections.forEach(sec => {
-                const r = sec.getBoundingClientRect();
-                if (r.top <= 120 && r.bottom > 120) current = sec.id;
-            });
-            navLinks.forEach(l => {
-                l.classList.toggle('active', l.getAttribute('href') === '#' + current);
-            });
-        };
-        document.addEventListener('scroll', spy, { passive: true });
+        // ═══════════════════════════════════════
+        // SCROLL EFFECTS ENGINE
+        // ═══════════════════════════════════════
 
-        // Scroll-triggered reveal for sections
-        const revealTargets = document.querySelectorAll('.reveal:not(.show)');
-        const revealObserver = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('show');
-                    revealObserver.unobserve(entry.target);
+        // 1) Basic reveal
+        const allRevealEls = document.querySelectorAll('.rv:not(.on), .rv-left:not(.on), .rv-right:not(.on), .rv-scale:not(.on), .rv-blur:not(.on)');
+        const rvObs = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) { e.target.classList.add('on'); rvObs.unobserve(e.target); }
+            });
+        }, { threshold: 0.12 });
+        allRevealEls.forEach(el => rvObs.observe(el));
+
+        // 2) Line draw
+        const lineEls = document.querySelectorAll('.line-draw:not(.on)');
+        const lineObs = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) { e.target.classList.add('on'); lineObs.unobserve(e.target); }
+            });
+        }, { threshold: 0.3 });
+        lineEls.forEach(el => lineObs.observe(el));
+
+        // 3) Typewriter
+        document.querySelectorAll('[data-typewriter]').forEach(el => {
+            const raw = el.textContent.trim();
+            el.innerHTML = '';
+            const chars = [];
+            for (const ch of raw) {
+                const span = document.createElement('span');
+                span.className = 'tw-char';
+                span.textContent = ch === ' ' ? '\u00A0' : ch;
+                el.appendChild(span);
+                chars.push(span);
+            }
+            const twObs = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        el.classList.add('typing');
+                        chars.forEach((c, i) => {
+                            setTimeout(() => c.classList.add('shown'), i * 22);
+                        });
+                        twObs.unobserve(el);
+                    }
+                });
+            }, { threshold: 0.2 });
+            twObs.observe(el);
+        });
+
+        // 4) Word-by-word
+        document.querySelectorAll('[data-words]').forEach(el => {
+            const text = el.textContent.trim();
+            const words = text.split(/\s+/);
+            el.innerHTML = '';
+            const spans = [];
+            words.forEach((word, i) => {
+                if (i > 0) el.appendChild(document.createTextNode(' '));
+                const sp = document.createElement('span');
+                sp.className = 'wr-word';
+                sp.textContent = word;
+                el.appendChild(sp);
+                spans.push(sp);
+            });
+            const wObs = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        spans.forEach((s, i) => {
+                            setTimeout(() => s.classList.add('shown'), i * 35);
+                        });
+                        wObs.unobserve(el);
+                    }
+                });
+            }, { threshold: 0.15 });
+            wObs.observe(el);
+        });
+
+        // 5) Split characters
+        document.querySelectorAll('[data-split]').forEach(el => {
+            const nodes = Array.from(el.childNodes);
+            el.innerHTML = '';
+            const allChars = [];
+            nodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    for (const ch of node.textContent) {
+                        const sp = document.createElement('span');
+                        sp.className = 'sc-char';
+                        sp.textContent = ch === ' ' ? '\u00A0' : ch;
+                        el.appendChild(sp);
+                        allChars.push(sp);
+                    }
+                } else if (node.nodeName === 'BR') {
+                    el.appendChild(document.createElement('br'));
+                } else {
+                    const wrapper = document.createElement(node.nodeName.toLowerCase());
+                    if (node.style) wrapper.style.cssText = node.style.cssText;
+                    if (node.className) wrapper.className = node.className;
+                    for (const ch of (node.textContent || '')) {
+                        const sp = document.createElement('span');
+                        sp.className = 'sc-char';
+                        sp.textContent = ch === ' ' ? '\u00A0' : ch;
+                        wrapper.appendChild(sp);
+                        allChars.push(sp);
+                    }
+                    el.appendChild(wrapper);
                 }
             });
-        }, { threshold: 0.15 });
-        revealTargets.forEach(t => revealObserver.observe(t));
+            const scObs = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        allChars.forEach((c, i) => {
+                            setTimeout(() => c.classList.add('shown'), i * 30);
+                        });
+                        scObs.unobserve(el);
+                    }
+                });
+            }, { threshold: 0.2 });
+            scObs.observe(el);
+        });
 
-        // Count-up stats
+        // 6) Scroll-linked character opacity (from Prisma)
+        const scrollPara = document.getElementById('scrollParagraph');
+        if (scrollPara) {
+            const text = scrollPara.textContent;
+            scrollPara.innerHTML = '';
+            const charSpans = [];
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                const sp = document.createElement('span');
+                sp.className = 'scroll-char';
+                sp.textContent = ch;
+                sp.style.opacity = '0.15';
+                scrollPara.appendChild(sp);
+                charSpans.push(sp);
+            }
+            const totalChars = charSpans.length;
+            function updateCharOpacity() {
+                const rect = scrollPara.getBoundingClientRect();
+                const viewH = window.innerHeight;
+                const startTrigger = viewH * 0.8;
+                const endTrigger = viewH * 0.2;
+                const rawProgress = (startTrigger - rect.top) / (startTrigger - endTrigger);
+                const scrollProgress = Math.max(0, Math.min(1, rawProgress));
+                charSpans.forEach((sp, idx) => {
+                    const charProgress = idx / totalChars;
+                    const rangeStart = charProgress - 0.1;
+                    const rangeEnd = charProgress + 0.05;
+                    const charOpacity = Math.max(0.15, Math.min(1,
+                        (scrollProgress - rangeStart) / (rangeEnd - rangeStart)
+                    ));
+                    sp.style.opacity = charOpacity;
+                });
+            }
+            window.addEventListener('scroll', updateCharOpacity, { passive: true });
+            updateCharOpacity();
+        }
+
+        // 7) Parallax
+        const parallaxEls = document.querySelectorAll('[data-parallax]');
+        if (parallaxEls.length) {
+            window.addEventListener('scroll', () => {
+                parallaxEls.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    const center = rect.top + rect.height / 2;
+                    const viewCenter = window.innerHeight / 2;
+                    const offset = (center - viewCenter) * 0.06;
+                    el.style.transform = `translateY(${offset}px)`;
+                });
+            }, { passive: true });
+        }
+
+        // Counter
         const counters = document.querySelectorAll('.counter');
         const countUp = el => {
-            const target = parseInt(el.dataset.target, 10);
-            const duration = 900;
-            const start = performance.now();
+            const t = parseInt(el.dataset.target, 10), dur = 900, s = performance.now();
             const step = now => {
-                const p = Math.min(1, (now - start) / duration);
-                const eased = 1 - Math.pow(1 - p, 3);
-                el.textContent = Math.round(eased * target);
+                const p = Math.min(1, (now - s) / dur);
+                el.textContent = Math.round((1 - Math.pow(1 - p, 3)) * t);
                 if (p < 1) requestAnimationFrame(step);
             };
             requestAnimationFrame(step);
         };
-        const counterObserver = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    countUp(entry.target);
-                    counterObserver.unobserve(entry.target);
-                }
-            });
+        const cObs = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) { countUp(e.target); cObs.unobserve(e.target); } });
         }, { threshold: 0.5 });
-        counters.forEach(c => counterObserver.observe(c));
+        counters.forEach(c => cObs.observe(c));
 
         // Countdown
         const target = new Date('2026-09-19T09:00:00+05:30').getTime();
@@ -1028,279 +2420,15 @@
             const h = Math.floor(diff / 3600000); diff -= h * 3600000;
             const m = Math.floor(diff / 60000); diff -= m * 60000;
             const s = Math.floor(diff / 1000);
-            const cdDays = document.getElementById('cd-days');
-            if (cdDays) cdDays.textContent = pad(d);
-            const cdHours = document.getElementById('cd-hours');
-            if (cdHours) cdHours.textContent = pad(h);
-            const cdMins = document.getElementById('cd-mins');
-            if (cdMins) cdMins.textContent = pad(m);
+            document.getElementById('cd-days').textContent = pad(d);
+            document.getElementById('cd-hours').textContent = pad(h);
+            document.getElementById('cd-mins').textContent = pad(m);
             if (secEl) {
                 secEl.textContent = pad(s);
-                if (s !== lastSec) {
-                    secEl.classList.remove('flash');
-                    void secEl.offsetWidth;
-                    secEl.classList.add('flash');
-                    lastSec = s;
-                }
+                if (s !== lastSec) { secEl.classList.remove('flash'); void secEl.offsetWidth; secEl.classList.add('flash'); lastSec = s; }
             }
         }
-        tick();
-        setInterval(tick, 1000);
-
-        // ============ TOP-TO-BOTTOM DENSE SMALL CONFETTI CASCADE ENGINE ============
-        function popCanvasConfetti(options = {}) {
-            const particleCount = options.particleCount || 350;
-            const spread = options.spread || 180;
-            const colors = options.colors || ['#B23A2E', '#191712', '#3C6E5C', '#33507C', '#B0812A', '#E68A00', '#D94E36', '#4A8C76'];
-
-            let canvas = document.getElementById('festConfettiCanvas');
-            if (!canvas) {
-                canvas = document.createElement('canvas');
-                canvas.id = 'festConfettiCanvas';
-                canvas.style.position = 'fixed';
-                canvas.style.top = '0';
-                canvas.style.left = '0';
-                canvas.style.width = '100vw';
-                canvas.style.height = '100vh';
-                canvas.style.pointerEvents = 'none';
-                canvas.style.zIndex = '999999';
-                document.body.appendChild(canvas);
-            }
-
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width = window.innerWidth;
-            const height = canvas.height = window.innerHeight;
-
-            const particles = [];
-            for (let i = 0; i < particleCount; i++) {
-                const speed = (options.startVelocity || 12) * (0.5 + Math.random() * 0.7);
-                const angle = Math.PI / 2 + (Math.random() - 0.5) * 0.8; // pointing straight down
-                particles.push({
-                    x: Math.random() * width, // spread uniformly across top of screen
-                    y: -15 - Math.random() * 40, // start above top of screen
-                    vx: Math.cos(angle) * speed,
-                    vy: Math.sin(angle) * speed,
-                    wobble: Math.random() * Math.PI * 2,
-                    wobbleSpeed: 0.03 + Math.random() * 0.04,
-                    width: Math.random() * 5 + 3.5,  // Small confetti size
-                    height: Math.random() * 6 + 4.5, // Small confetti size
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    rotation: Math.random() * Math.PI * 2,
-                    rotationSpeed: (Math.random() - 0.5) * 0.08,
-                    opacity: 1,
-                    shape: Math.random() > 0.4 ? 'rect' : 'circle',
-                    gravity: 0.18 + Math.random() * 0.10, // gravity tuned so particles complete full fall to bottom
-                    drag: 0.99
-                });
-            }
-
-            function update() {
-                ctx.clearRect(0, 0, width, height);
-                let active = false;
-
-                particles.forEach(p => {
-                    if (p.opacity <= 0 || p.y > height + 40) return;
-                    active = true;
-
-                    p.wobble += p.wobbleSpeed;
-                    p.x += p.vx + Math.sin(p.wobble) * 0.9;
-                    p.y += p.vy;
-                    p.vy += p.gravity;
-                    p.vx *= p.drag;
-                    p.vy *= p.drag;
-                    p.rotation += p.rotationSpeed;
-
-                    // Maintain full visibility until reaching bottom section of screen
-                    if (p.y > height * 0.82) {
-                        p.opacity -= 0.015;
-                    }
-
-                    ctx.save();
-                    ctx.globalAlpha = Math.max(0, p.opacity);
-                    ctx.translate(p.x, p.y);
-                    ctx.rotate(p.rotation);
-                    ctx.fillStyle = p.color;
-
-                    if (p.shape === 'rect') {
-                        ctx.fillRect(-p.width / 2, -p.height / 2, p.width, p.height);
-                    } else {
-                        ctx.beginPath();
-                        ctx.arc(0, 0, p.width / 2, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    ctx.restore();
-                });
-
-                if (active) {
-                    requestAnimationFrame(update);
-                } else {
-                    ctx.clearRect(0, 0, width, height);
-                }
-            }
-
-            update();
-        }
-
-        function triggerFestiveConfetti() {
-            if (typeof confetti === 'function') {
-                try {
-                    // Full curtain confetti shower from top down to bottom
-                    confetti({
-                        particleCount: 320,
-                        spread: 180,
-                        startVelocity: 16,
-                        scalar: 0.65,
-                        ticks: 650,
-                        gravity: 0.05,
-                        origin: { x: 0.5, y: -0.08 },
-                        colors: ['#B23A2E', '#191712', '#3C6E5C', '#33507C', '#B0812A', '#E68A00', '#4A8C76']
-                    });
-                } catch (e) {
-                    popCanvasConfetti({ particleCount: 350 });
-                }
-            } else {
-                popCanvasConfetti({ particleCount: 350 });
-            }
-        }
-
-        // Auto-fire single opening festive confetti once on page load
-        let hasFiredOpeningConfetti = false;
-        function fireOnceOnLoad() {
-            if (hasFiredOpeningConfetti) return;
-            hasFiredOpeningConfetti = true;
-            triggerFestiveConfetti();
-        }
-
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            setTimeout(fireOnceOnLoad, 250);
-        } else {
-            document.addEventListener('DOMContentLoaded', () => setTimeout(fireOnceOnLoad, 250));
-        }
-
-        // Button Triggers for Confetti
-        const confettiBtn = document.getElementById('confettiBtn');
-        if (confettiBtn) confettiBtn.addEventListener('click', triggerFestiveConfetti);
-
-        const stampConfettiTrigger = document.getElementById('stampConfettiTrigger');
-        if (stampConfettiTrigger) stampConfettiTrigger.addEventListener('click', triggerFestiveConfetti);
-
-        // Toggle Sepia Vintage Mode
-        const headerVintageToggle = document.getElementById('headerVintageToggle');
-        if (headerVintageToggle) {
-            headerVintageToggle.addEventListener('click', () => {
-                document.body.classList.toggle('vintage-sepia');
-                triggerFestiveConfetti();
-            });
-        }
-
-        // ============ INTERACTIVE VINTAGE SEARCH MODAL ============
-        const searchModal = document.createElement('div');
-        searchModal.id = 'searchModal';
-        searchModal.className = 'fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-ink/75 backdrop-blur-sm transition-all duration-300';
-        searchModal.innerHTML = `
-      <div class="relative w-full max-w-xl bg-[#F4EFE2] border-2 border-ink p-5 md:p-7 shadow-2xl font-sans text-ink">
-        <div class="flex items-center justify-between border-b border-ink pb-3 mb-4">
-          <div class="flex items-center gap-2 font-mono text-xs text-alert font-bold uppercase tracking-wider">
-            <span>🔍</span> FEST SEARCH ARCHIVE
-          </div>
-          <button id="searchCloseBtn" aria-label="Close search" class="w-7 h-7 flex items-center justify-center border border-ink rounded-full font-mono text-sm hover:bg-alert hover:text-paper transition-colors">
-            ✕
-          </button>
-        </div>
-        <div class="relative mb-4">
-          <input type="text" id="searchInput" placeholder="Search events, teams, results, downloads..." class="w-full px-4 py-3 bg-[#EBE5D5] border border-ink text-[14px] font-sans text-ink placeholder:text-inkfade/70 focus:outline-none focus:ring-1 focus:ring-alert" />
-        </div>
-        <div class="flex flex-wrap gap-2 text-xs font-mono text-inkfade mb-4">
-          <span class="text-ink font-bold">Quick:</span>
-          <button class="quick-tag px-2.5 py-1 bg-[#EBE5D5] border border-line hover:border-ink hover:text-ink">Live Results</button>
-          <button class="quick-tag px-2.5 py-1 bg-[#EBE5D5] border border-line hover:border-ink hover:text-ink">Arts Results</button>
-          <button class="quick-tag px-2.5 py-1 bg-[#EBE5D5] border border-line hover:border-ink hover:text-ink">Sports Results</button>
-          <button class="quick-tag px-2.5 py-1 bg-[#EBE5D5] border border-line hover:border-ink hover:text-ink">Libera</button>
-          <button class="quick-tag px-2.5 py-1 bg-[#EBE5D5] border border-line hover:border-ink hover:text-ink">Alethia</button>
-        </div>
-        <div id="searchResults" class="max-h-60 overflow-y-auto space-y-2 text-sm font-mono pt-2 border-t hairline text-inkfade">
-          <p class="text-xs italic text-inkfade/80">Type a keyword to search across items, points, and schedules...</p>
-        </div>
-      </div>
-    `;
-        document.body.appendChild(searchModal);
-
-        const searchOpenBtn = document.getElementById('searchOpenBtn');
-        const mobileSearchTrigger = document.getElementById('mobileSearchTrigger');
-        const searchCloseBtn = document.getElementById('searchCloseBtn');
-        const searchInput = document.getElementById('searchInput');
-        const searchResults = document.getElementById('searchResults');
-
-        function openSearchModal() {
-            searchModal.classList.remove('hidden');
-            searchModal.classList.add('flex');
-            setTimeout(() => searchInput && searchInput.focus(), 100);
-        }
-        function closeSearchModal() {
-            searchModal.classList.add('hidden');
-            searchModal.classList.remove('flex');
-        }
-
-        const exploreSearchCard = document.getElementById('exploreSearchCard');
-        if (searchOpenBtn) searchOpenBtn.addEventListener('click', openSearchModal);
-        if (mobileSearchTrigger) mobileSearchTrigger.addEventListener('click', openSearchModal);
-        if (exploreSearchCard) exploreSearchCard.addEventListener('click', openSearchModal);
-        if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearchModal);
-
-        searchModal.addEventListener('click', (e) => {
-            if (e.target === searchModal) closeSearchModal();
-        });
-
-        const searchableData = [
-            { title: 'Live Results — Realtime Points Table', category: 'Live', link: 'live-results.html', desc: 'Check current team standings & item scores.' },
-            { title: 'Arts Results — Off-Stage & Stage', category: 'Arts', link: 'results.html', desc: 'Browse arts category winners & certificates.' },
-            { title: 'Sports Results — Annual Track & Field', category: 'Sports', link: 'sports.html', desc: 'Track event winners and sports meet scores.' },
-            { title: 'Participant Registrations', category: 'Register', link: 'registrations.html', desc: 'Register for stage, literary, and fine arts items.' },
-            { title: 'Fest Notifications & Announcements', category: 'Alerts', link: 'notifications.html', desc: 'Official schedule changes and notices.' },
-            { title: 'Gallery & Photo Rehearsals', category: 'Media', link: 'gallery.html', desc: 'Rehearsal captures and stage highlights.' },
-            { title: 'Downloads — Rulebook & Schedule PDF', category: 'Files', link: 'downloads.html', desc: 'Download fest brochure, guidelines & forms.' },
-            { title: 'Team Libera', category: 'Team 01', link: '#teams', desc: 'Just start — no plan, no permission.' },
-            { title: 'Team Alethia', category: 'Team 02', link: '#teams', desc: 'Truth, depth, and documentary craft.' },
-            { title: 'Team Opera', category: 'Team 03', link: '#teams', desc: 'Full production, discipline, and effort.' },
-            { title: 'Team Relatia', category: 'Team 04', link: '#teams', desc: 'Art created in human connection.' }
-        ];
-
-        if (searchInput && searchResults) {
-            searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase().trim();
-                if (!query) {
-                    searchResults.innerHTML = '<p class="text-xs italic text-inkfade/80">Type a keyword to search across items, points, and schedules...</p>';
-                    return;
-                }
-                const matches = searchableData.filter(item =>
-                    item.title.toLowerCase().includes(query) ||
-                    item.desc.toLowerCase().includes(query) ||
-                    item.category.toLowerCase().includes(query)
-                );
-                if (matches.length === 0) {
-                    searchResults.innerHTML = `<p class="text-xs text-alert font-bold">No results found for "${query}". Try "Arts", "Sports", or "Live".</p>`;
-                } else {
-                    searchResults.innerHTML = matches.map(m => `
-            <a href="${m.link}" class="block p-2 bg-[#EBE5D5] hover:bg-ink hover:text-paper transition-colors rounded-sm border border-line">
-              <div class="flex justify-between items-center text-xs">
-                <span class="font-bold">${m.title}</span>
-                <span class="text-[10px] px-1.5 py-0.5 border border-current rounded">${m.category}</span>
-              </div>
-              <p class="text-[11px] opacity-80 mt-0.5">${m.desc}</p>
-            </a>
-          `).join('');
-                }
-            });
-
-            document.querySelectorAll('.quick-tag').forEach(tag => {
-                tag.addEventListener('click', () => {
-                    if (searchInput) {
-                        searchInput.value = tag.textContent.trim();
-                        searchInput.dispatchEvent(new Event('input'));
-                    }
-                });
-            });
-        }
+        tick(); setInterval(tick, 1000);
     </script>
 
 </body>

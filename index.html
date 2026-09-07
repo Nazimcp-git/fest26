@@ -1,201 +1,1308 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>We're Building Something Cool</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alert 2k26 — Arts Fest, Darunnajath Islamic Complex, Vallapuzha</title>
+    <meta name="description"
+        content="Alert 2k26 — the annual arts fest of Darunnajath Islamic Complex, Vallapuzha. Four teams, one theme: stay alert." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,450;0,9..144,600;1,9..144,450&family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        paper: '#F4EFE2',
+                        paper2: '#EBE5D5',
+                        ink: '#1A1813',
+                        inkfade: '#5C564A',
+                        line: '#D8CFB8',
+                        alert: '#B23A2E',
+                        alertd: '#8C2B22',
+                        libera: '#3C6E5C',
+                        alethia: '#33507C',
+                        opera: '#B23A2E',
+                        relatia: '#B0812A',
+                    },
+                    fontFamily: {
+                        serif: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
+                        sans: ['"Space Grotesk"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                        mono: ['"Space Mono"', 'ui-monospace', 'monospace'],
+                    },
+                },
+            },
+        };
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
+
     <style>
         :root {
-            --primary: #ff6b6b;
-            --secondary: #4ecdc4;
-            --bg-color: #f7f9fc;
-            --text-main: #2d3436;
-            --text-muted: #636e72;
+            color-scheme: light;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            position: relative;
+            background-color: #F4EFE2;
+            color: #1A1813;
         }
 
-        /* Soft, organic background blobs for light mode */
-        .blob {
+        ::selection {
+            background: #B23A2E;
+            color: #F6F3EC;
+        }
+
+        .hairline {
+            border-color: #DBD4C3;
+        }
+
+        /* Pulse line — the recurring "alert" motif, drawn once and animated continuously */
+        .pulse-path {
+            stroke-dasharray: 6 10;
+            animation: dashmove 3.4s linear infinite;
+        }
+
+        @keyframes dashmove {
+            to {
+                stroke-dashoffset: -160;
+            }
+        }
+
+        .pulse-dot {
+            animation: dotpulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes dotpulse {
+
+            0%,
+            100% {
+                opacity: .35;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.35);
+            }
+        }
+
+        /* Radar sweep — "always scanning" visual in About */
+        .radar-sweep {
+            background: conic-gradient(from 0deg, rgba(178, 58, 46, 0.38), transparent 30%, transparent 100%);
+            animation: radarspin 4.5s linear infinite;
+        }
+
+        @keyframes radarspin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Siren glow — pulsing ring around the alert CTA */
+        .siren-glow {
+            animation: sirenglow 2.6s ease-in-out infinite;
+        }
+
+        @keyframes sirenglow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(178, 58, 46, 0.35);
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(178, 58, 46, 0);
+            }
+        }
+
+        /* Countdown digit flash on each tick */
+        .flash {
+            animation: digitflash .5s ease;
+        }
+
+        @keyframes digitflash {
+            0% {
+                opacity: .25;
+                transform: translateY(-2px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Scan-line sweeping through the theme statement section */
+        .scanline {
             position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: 0;
-            opacity: 0.6;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(217, 119, 108, .9), transparent);
+            animation: scandown 5s ease-in-out infinite;
         }
 
-        .blob-1 {
-            top: -10%;
-            right: -5%;
-            width: 45vw;
-            height: 45vw;
-            background: radial-gradient(circle, #ff6b6b40 0%, transparent 70%);
-            animation: drift 12s infinite alternate ease-in-out;
+        @keyframes scandown {
+            0% {
+                top: 0%;
+                opacity: 0;
+            }
+
+            8% {
+                opacity: 1;
+            }
+
+            50% {
+                top: 96%;
+                opacity: 1;
+            }
+
+            58% {
+                opacity: 0;
+            }
+
+            100% {
+                top: 96%;
+                opacity: 0;
+            }
         }
 
-        .blob-2 {
-            bottom: -15%;
-            left: -10%;
-            width: 55vw;
-            height: 55vw;
-            background: radial-gradient(circle, #4ecdc440 0%, transparent 70%);
-            animation: drift 15s infinite alternate-reverse ease-in-out;
+        .ticker-track {
+            animation: tickermove 32s linear infinite;
         }
 
-        @keyframes drift {
-            0% { transform: scale(1) translate(0, 0); }
-            100% { transform: scale(1.1) translate(-30px, 30px); }
+        @keyframes tickermove {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(-50%);
+            }
         }
 
-        /* Light Glassmorphism Card */
-        .glass-card {
+        /* One orchestrated hero entrance */
+        .reveal {
+            opacity: 0;
+            transform: translateY(14px);
+        }
+
+        .reveal.show {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity .8s cubic-bezier(.2, .7, .2, 1), transform .8s cubic-bezier(.2, .7, .2, 1);
+        }
+
+        .reveal-d1 {
+            transition-delay: .05s;
+        }
+
+        .reveal-d2 {
+            transition-delay: .18s;
+        }
+
+        .reveal-d3 {
+            transition-delay: .30s;
+        }
+
+        .reveal-d4 {
+            transition-delay: .42s;
+        }
+
+        a,
+        button {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible {
+            outline: 2px solid #B23A2E;
+            outline-offset: 3px;
+            border-radius: 2px;
+        }
+
+        .nav-link {
             position: relative;
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 1);
-            border-radius: 30px;
-            padding: 4rem 3rem;
-            max-width: 650px;
-            width: 90%;
-            text-align: center;
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
         }
 
-        /* Floating Organic Vector */
-        .vector-art {
-            margin-bottom: 1.5rem;
-            width: 130px;
-            height: auto;
-            display: inline-block;
+        .nav-link::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 100%;
+            bottom: -6px;
+            height: 1px;
+            background: #191712;
+            transition: right .35s cubic-bezier(.2, .7, .2, 1);
         }
 
-        .vector-art svg {
-            width: 100%;
-            height: 100%;
-            fill: url(#gradient);
-            animation: float 5s ease-in-out infinite;
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            right: 0;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-12px) rotate(3deg); }
+        .team-card {
+            transition: border-color .35s ease, background-color .35s ease;
         }
 
-        h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            color: var(--text-main);
-            line-height: 1.2;
-            letter-spacing: -1px;
+        #mobileMenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .4s ease;
         }
 
-        p.chatty-text {
-            font-size: 1.15rem;
-            color: var(--text-muted);
-            margin-bottom: 2.5rem;
-            font-weight: 400;
-            line-height: 1.6;
+        #mobileMenu.open {
+            max-height: 340px;
         }
 
-        /* Registration Area */
-        .reg-container {
-            background: rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 20px;
-            padding: 1.8rem;
-            display: flex;
+        @media (prefers-reduced-motion: reduce) {
+
+            .pulse-path,
+            .pulse-dot,
+            .ticker-track,
+            .radar-sweep,
+            .siren-glow,
+            .scanline,
+            .flash {
+                animation: none !important;
+            }
+
+            .reveal {
+                opacity: 1 !important;
+                transform: none !important;
+            }
+        }
+
+
+
+        .num {
+            font-family: 'Space Mono', monospace;
+            font-feature-settings: "tnum";
+        }
+
+        /* Vintage Paper Texture Grain Overlay */
+        .vintage-grain {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.045;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Vintage Sepia Film Mode Toggle */
+        body.vintage-sepia {
+            filter: sepia(0.35) contrast(1.08) saturate(0.85);
+            transition: filter 0.5s ease;
+        }
+
+        /* Vintage Postage Stamp Badge */
+        .vintage-stamp-badge {
+            display: inline-flex;
             flex-direction: column;
             align-items: center;
-            gap: 1rem;
-            transition: transform 0.3s ease;
-        }
-
-        .reg-container:hover {
-            transform: translateY(-4px);
-        }
-
-        .reg-text {
-            font-size: 1.05rem;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .btn {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--primary) 0%, #ff8e8e 100%);
-            color: white;
-            text-decoration: none;
-            padding: 1rem 2.5rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 15px -5px rgba(255, 107, 107, 0.4);
-            border: none;
+            justify-content: center;
+            padding: 8px 14px;
+            background: #EFEBE0;
+            border: 2px dashed #B23A2E;
+            position: relative;
+            box-shadow: 3px 3px 0px rgba(25, 23, 18, 0.12);
+            transform: rotate(-2.5deg);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
+            user-select: none;
         }
 
-        .btn:hover {
-            box-shadow: 0 12px 20px -5px rgba(255, 107, 107, 0.6);
-            transform: scale(1.03);
+        .vintage-stamp-badge:hover {
+            transform: rotate(0deg) scale(1.04);
+            box-shadow: 4px 6px 14px rgba(178, 58, 46, 0.22);
         }
 
-        /* Mobile Adjustments */
-        @media (max-width: 600px) {
-            h1 { font-size: 2.2rem; }
-            .glass-card { padding: 2.5rem 1.5rem; }
-            .btn { padding: 0.8rem 2rem; width: 100%; }
+        .secret-badge {
+            cursor: pointer;
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+
+        .secret-badge:hover {
+            color: #B23A2E;
         }
     </style>
 </head>
-<body>
 
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
+<body class="text-ink font-sans antialiased">
+    <!-- Vintage Paper Grain Overlay -->
+    <div class="vintage-grain"></div>
 
-    <div class="glass-card">
-        
-        <div class="vector-art">
-            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#ff6b6b" />
-                        <stop offset="100%" stop-color="#4ecdc4" />
-                    </linearGradient>
-                </defs>
-                <path d="M42.7,-73.4C55.9,-65.2,67.8,-53.1,76.3,-38.3C84.8,-23.5,89.8,-6,87.5,10.1C85.2,26.2,75.6,40.9,63.2,52.2C50.8,63.5,35.6,71.4,19.3,76.6C3,81.8,-14.4,84.3,-30.5,79.1C-46.6,73.9,-61.4,61,-71.7,45.3C-82,29.6,-87.8,11.1,-84.9,-5.2C-82,-21.5,-70.4,-35.6,-57.8,-43.9C-45.2,-52.2,-31.6,-54.7,-19.8,-59.9C-8,-65.1,2,-73,15.1,-75.4C28.2,-77.8,29.5,-81.6,42.7,-73.4Z" transform="translate(100 100)" />
+    <!-- ============ NAV ============ -->
+    <header class="fixed top-0 inset-x-0 z-50 bg-paper/90 backdrop-blur-sm border-b hairline">
+        <div class="max-w-6xl mx-auto px-6 md:px-10">
+            <div class="h-16 md:h-20 flex items-center justify-between">
+                <a href="#home" class="flex items-center gap-2.5 shrink-0">
+                    <span class="relative h-8 w-8 md:h-9 md:w-9 shrink-0 flex items-center justify-center">
+                        <span
+                            class="absolute inset-0 flex items-center justify-center text-[10px] num text-inkfade">A26</span>
+                        <img src="fest-logo.png" alt="" class="absolute inset-0 w-full h-full object-contain"
+                            onerror="this.style.opacity='0'">
+                    </span>
+                    <span class="font-serif text-lg md:text-xl tracking-tight">Alert<span
+                            class="text-alert">.</span>2k26</span>
+                </a>
+
+                <nav class="hidden lg:flex items-center gap-4 xl:gap-6 text-[14px] text-inkfade">
+                    <a href="live-results.html"
+                        class="nav-link hover:text-ink flex items-center gap-1.5 font-semibold text-alert">
+                        <span class="w-2 h-2 rounded-full bg-alert pulse-dot"></span> Live Results
+                    </a>
+                    <a href="results.html" class="nav-link hover:text-ink">Arts Results</a>
+                    <a href="sports.html" class="nav-link hover:text-ink">Sports Results</a>
+                    <a href="registrations.html" class="nav-link hover:text-ink">Registrations</a>
+                    <a href="notifications.html" class="nav-link hover:text-ink">Notifications</a>
+                    <a href="gallery.html" class="nav-link hover:text-ink">Gallery</a>
+                    <a href="downloads.html" class="nav-link hover:text-ink">Downloads</a>
+                </nav>
+
+                <div class="flex items-center gap-2.5 text-right leading-tight">
+
+
+
+                    <button id="menuBtn" aria-label="Open menu" aria-expanded="false"
+                        class="lg:hidden flex flex-col gap-1.5 p-2">
+                        <span class="w-6 h-px bg-ink"></span>
+                        <span class="w-6 h-px bg-ink"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Vintage Masthead Sub-Bar -->
+            <div
+                class="border-t hairline py-1 px-1 font-mono text-[9px] sm:text-[11px] text-inkfade flex flex-wrap items-center justify-between gap-1 text-center">
+                <span>VOL. XXVI · ISSUE 01</span>
+                <span class="tracking-widest font-semibold text-alert">★ DNIC VALLAPUZHA ★</span>
+                <span>EST. MCMXCIV (2026)</span>
+            </div>
+
+            <div id="mobileMenu" class="lg:hidden">
+                <nav class="flex flex-col gap-3 pb-5 text-[14px] text-inkfade border-t hairline pt-4">
+
+                    <a href="results.html" class="mnav">Arts Results</a>
+                    <a href="sports.html" class="mnav">Sports Results</a>
+                    <a href="registrations.html" class="mnav">Registrations</a>
+                    <a href="notifications.html" class="mnav">Notifications</a>
+                    <a href="gallery.html" class="mnav">Gallery</a>
+                    <a href="downloads.html" class="mnav">Downloads</a>
+                    <button id="mobileSearchTrigger"
+                        class="text-left font-mono text-[13px] text-ink flex items-center gap-2 pt-2 border-t hairline">
+
+                    </button>
+                    <p class="text-[12px] pt-1 text-inkfade/80 font-mono">Darunnajath Islamic Complex, Vallapuzha</p>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+
+
+    <!-- ============ HERO ============ -->
+    <section id="home" class="relative pt-32 md:pt-44 pb-16 md:pb-20 px-6 md:px-10">
+        <div class="max-w-6xl mx-auto">
+
+            <div class="grid lg:grid-cols-[1fr_auto] gap-10 lg:gap-16 items-center">
+                <div>
+                    <p class="reveal show flex items-center gap-2 text-[14px] text-inkfade mb-6 md:mb-8">
+                        <span class="w-1.5 h-1.5 rounded-full bg-alert pulse-dot"></span>
+                        Arts programme · Darunnajath Islamic Complex, Vallapuzha
+                    </p>
+
+                    <h1
+                        class="reveal show reveal-d1 font-serif leading-[0.95] tracking-tight text-[16vw] md:text-[8.2rem] lg:text-[9.5rem]">
+                        Alert
+                        <span class="block text-alert">2k26</span>
+                    </h1>
+                </div>
+
+                <div
+                    class="reveal show reveal-d1 relative w-72 h-72 md:w-[26rem] md:h-[26rem] lg:w-[34rem] lg:h-[34rem] xl:w-[40rem] xl:h-[40rem] justify-self-center lg:justify-self-end shrink-0">
+                    <span
+                        class="absolute inset-0 flex items-center justify-center text-inkfade/60 text-[13px] num text-center px-4">fest-logo.png</span>
+                    <img src="fest-logo.png" alt="Alert 2k26 fest logo"
+                        class="absolute inset-0 w-full h-full object-contain" onerror="this.style.display='none'">
+                </div>
+            </div>
+
+            <div class="reveal show reveal-d2 mt-8 md:mt-10 grid md:grid-cols-[1fr_auto] gap-8 md:gap-16 items-end">
+                <p class="max-w-md text-[17px] md:text-[19px] leading-relaxed text-inkfade">
+                    Four teams. One signal. A season of art built on staying awake — to craft, to each other, and to the
+                    moment in
+                    front of us.
+                </p>
+
+                <div class="flex flex-wrap gap-3 sm:gap-4 items-center">
+                    <a href="#teams"
+                        class="px-5 sm:px-6 py-2.5 sm:py-3 bg-ink text-paper text-[14px] tracking-wide hover:bg-alertd transition-colors">
+                        Meet the teams
+                    </a>
+                    <button id="confettiBtn"
+                        class="siren-glow px-5 sm:px-6 py-2.5 sm:py-3 border border-ink text-[14px] tracking-wide hover:bg-ink hover:text-paper transition-colors">
+                        Sound the alert
+                    </button>
+
+                    <!-- Vintage Postage Stamp Badge (Visible & Mobile Ready) -->
+
+                </div>
+            </div>
+        </div>
+
+        <!-- pulse divider -->
+        <div class="max-w-6xl mx-auto mt-16 md:mt-20 reveal show reveal-d3">
+            <svg viewBox="0 0 1200 60" class="w-full h-10 md:h-12" preserveAspectRatio="none">
+                <line x1="0" y1="30" x2="1200" y2="30" stroke="#DBD4C3" stroke-width="1" />
+                <path class="pulse-path" d="M0,30 L280,30 L310,6 L340,54 L368,30 L1200,30" fill="none" stroke="#B23A2E"
+                    stroke-width="2" />
             </svg>
         </div>
+    </section>
 
-        <h1>Hey there! 👋<br>We're doing some remodeling.</h1>
-        <p class="chatty-text">Things are a little messy right now while we build out the site, but we promise it'll be worth the wait. Grab a coffee, hang tight, and check back with us soon!</p>
-
-        <div class="reg-container">
-            <span class="reg-text">Oh, and if you are looking for registration, click here:</span>
-            <a href="/registrations/index.html" class="btn">Get Registered</a>
+    <!-- ============ TICKER ============ -->
+    <section aria-label="Fest highlights" class="border-y hairline bg-paper2 overflow-hidden">
+        <div class="whitespace-nowrap py-3">
+            <div class="ticker-track inline-block">
+                <span class="inline-flex items-center gap-10 text-[13px] text-inkfade px-5">
+                    <span>4 teams competing</span><span class="text-alert">·</span>
+                    <span>Stage · Fine Arts · Literary · Off-stage</span><span class="text-alert">·</span>
+                    <span>Theme: Alert</span><span class="text-alert">·</span>
+                    <span>Darunnajath Islamic Complex, Vallapuzha</span><span class="text-alert">·</span>
+                </span>
+                <span class="inline-flex items-center gap-10 text-[13px] text-inkfade px-5">
+                    <span>4 teams competing</span><span class="text-alert">·</span>
+                    <span>Stage · Fine Arts · Literary · Off-stage</span><span class="text-alert">·</span>
+                    <span>Theme: Alert</span><span class="text-alert">·</span>
+                    <span>Darunnajath Islamic Complex, Vallapuzha</span><span class="text-alert">·</span>
+                </span>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section id="about" class="px-6 md:px-10 py-24 md:py-36">
+        <div class="max-w-6xl mx-auto grid md:grid-cols-[1.1fr_auto] gap-14 md:gap-20 items-center">
+
+            <div>
+                <h2 class="font-serif text-3xl md:text-4xl mb-6">About Alert</h2>
+                <p class="text-inkfade leading-relaxed text-[16px] md:text-[17px]">
+                    An alert is not an alarm that ends things — it's a signal that something is beginning and worth your
+                    attention. That's the brief this year: work that notices. Paintings that catch what a hurried glance
+                    would
+                    miss. Verses written the moment a thought lands, not after it cools.
+                </p>
+                <p class="text-inkfade leading-relaxed text-[16px] md:text-[17px] mt-4">
+                    Every event on the schedule, on stage or off it, is asked to answer the same question — what does it
+                    mean to
+                    stay switched on? Alert 2k26 is this year's edition of that work: a fest run by students, for
+                    students, judged
+                    by craft and carried by four teams built from every batch on campus.
+                </p>
+
+                <!-- Vintage Typewriter Archival Memorandum Card -->
+                <div
+                    class="mt-8 p-5 bg-[#EFEBE0] border hairline relative font-mono text-[13px] text-inkfade shadow-sm">
+                    <div
+                        class="absolute -top-3 left-6 px-2.5 py-0.5 bg-alert text-paper font-mono text-[10px] font-bold uppercase tracking-widest">
+                        ARCHIVAL MEMORANDUM #26
+                    </div>
+                    <p class="leading-relaxed pt-1">
+                        <span class="text-ink font-bold">"TO STAY ALERT —</span> IS TO REFUSE THE SLEEPWALK. ART IS OUR
+                        FIRST
+                        RESPONSE TO THE PRESENT MOMENT."
+                    </p>
+                    <div class="mt-3 pt-2 border-t hairline flex justify-between items-center text-[10px] text-inkfade">
+                        <span>CLASSIFICATION: OFFICIAL ARTS FEST BRIEF</span>
+                        <span class="text-alert font-bold">DNIC VALLAPUZHA</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="justify-self-center">
+                <div class="relative w-52 h-52 md:w-60 md:h-60">
+                    <div class="absolute inset-0 rounded-full border hairline"></div>
+                    <div class="absolute inset-6 rounded-full border hairline"></div>
+                    <div class="absolute inset-12 rounded-full border hairline"></div>
+                    <div class="absolute inset-0 rounded-full overflow-hidden">
+                        <div class="radar-sweep w-full h-full"></div>
+                    </div>
+                    <span class="absolute w-1.5 h-1.5 rounded-full bg-alert pulse-dot"
+                        style="top:28%; left:64%;"></span>
+                    <span class="absolute w-1.5 h-1.5 rounded-full bg-alert pulse-dot"
+                        style="top:62%; left:32%; animation-delay:.6s;"></span>
+                    <span class="absolute w-1 h-1 rounded-full bg-ink/50"
+                        style="top:50%; left:50%; transform:translate(-50%,-50%);"></span>
+                </div>
+                <p class="text-center text-[13px] text-inkfade mt-4 tracking-tight">always scanning</p>
+            </div>
+
+        </div>
+
+        <div class="max-w-6xl mx-auto mt-16 md:mt-20 grid grid-cols-2 md:grid-cols-4 border-t hairline">
+            <div class="border-r hairline py-8 pr-4">
+                <p class="num text-4xl md:text-5xl"><span class="counter" data-target="4">0</span></p>
+                <p class="text-[13px] text-inkfade mt-2">Teams on campus</p>
+            </div>
+            <div class="md:border-r hairline py-8 pr-4">
+                <p class="num text-4xl md:text-5xl"><span class="counter" data-target="6">0</span></p>
+                <p class="text-[13px] text-inkfade mt-2">Days of events</p>
+            </div>
+            <div class="border-r hairline py-8 pr-4 border-t md:border-t-0">
+                <p class="num text-4xl md:text-5xl"><span class="counter" data-target="200+">0</span>+</p>
+                <p class="text-[13px] text-inkfade mt-2">Stage & off-stage items</p>
+            </div>
+            <div class="py-8 pr-4 border-t md:border-t-0">
+                <p class="num text-4xl md:text-5xl"><span class="counter" data-target="1">0</span></p>
+                <p class="text-[13px] text-inkfade mt-2">Theme — Alert</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ THEME STATEMENT ============ -->
+    <section id="theme" class="relative px-6 md:px-10 py-24 md:py-32 bg-ink text-paper overflow-hidden">
+        <div class="scanline"></div>
+        <div class="max-w-6xl mx-auto">
+            <p class="flex items-center gap-2 text-[13px] text-paper/60 mb-8">
+                <span class="w-1.5 h-1.5 rounded-full bg-alert pulse-dot"></span>
+                the brief
+            </p>
+            <p class="font-serif text-[7vw] md:text-5xl lg:text-6xl leading-[1.15] max-w-4xl">
+                Stay alert — to the brush before it dries, the line before it's spoken, the room before it goes quiet.
+            </p>
+
+            <!-- Vintage Telegram Announcement Card -->
+            <div
+                class="my-8 p-5 md:p-6 bg-[#F4EFE2] text-ink border-2 border-paper/40 font-mono text-[12px] shadow-lg relative">
+                <div class="flex justify-between items-center border-b border-ink/40 pb-2 mb-3 text-[10px]">
+                    <span class="font-bold text-alert uppercase tracking-widest">★ INDIAN POSTS & TELEGRAPHS ★</span>
+                    <span class="text-inkfade">DISPATCH NO. 04291</span>
+                </div>
+                <p class="leading-relaxed uppercase font-bold text-ink tracking-wide">
+                    RECEIVED AT VALLAPUZHA P.O. = TO ALL ARTISTS WRITERS AND PERFORMERS = STOP = FOUR TEAMS READY FOR
+                    COMPETITION
+                    = STOP = PREPARE YOUR PIECES = STOP = STAY ALERT =
+                </p>
+                <div
+                    class="mt-3 flex justify-between items-center text-[10px] text-inkfade border-t border-ink/30 pt-2">
+                    <span>THEME DISPATCH 2K26</span>
+                    <span>TIME: 09:00 HRS</span>
+                </div>
+            </div>
+
+            <svg viewBox="0 0 1200 40" class="w-full h-8 md:h-10 mt-10" preserveAspectRatio="none">
+                <line x1="0" y1="20" x2="1200" y2="20" stroke="#3A362D" stroke-width="1" />
+                <path class="pulse-path" d="M0,20 L520,20 L545,2 L570,38 L595,20 L1200,20" fill="none" stroke="#D9776C"
+                    stroke-width="2" />
+            </svg>
+        </div>
+    </section>
+
+    <!-- ============ TEAMS ============ -->
+    <section id="teams" class="px-6 md:px-10 py-24 md:py-36">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-end justify-between flex-wrap gap-4 mb-14 md:mb-16">
+                <h2 class="font-serif text-3xl md:text-4xl">Four teams, four names</h2>
+                <p class="text-inkfade text-[15px] max-w-xs">Every team was named for what it means to answer an alert —
+                    freedom, truth, effort, or connection.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-px bg-line border border-line">
+
+                <article class="team-card bg-paper p-8 md:p-10 hover:border-libera hover:bg-[#F1F5F2]"
+                    style="border:1px solid transparent">
+                    <div class="flex items-start justify-between">
+                        <span class="font-serif text-5xl text-libera">L</span>
+                        <span class="text-[13px] num text-inkfade">Team 01</span>
+                    </div>
+                    <h3 class="font-serif text-2xl md:text-3xl mt-6">Libera</h3>
+                    <p class="text-inkfade text-[15px] mt-2">Latin for <em>free</em>. The team that answers an alert
+                        with
+                        unguarded, unfiltered expression.</p>
+                </article>
+
+                <article class="team-card bg-paper p-8 md:p-10 hover:border-alethia hover:bg-[#F0F2F6]"
+                    style="border:1px solid transparent">
+                    <div class="flex items-start justify-between">
+                        <span class="font-serif text-5xl text-alethia">A</span>
+                        <span class="text-[13px] num text-inkfade">Team 02</span>
+                    </div>
+                    <h3 class="font-serif text-2xl md:text-3xl mt-6">Alethia</h3>
+                    <p class="text-inkfade text-[15px] mt-2">Greek for <em>truth</em>. The team that treats every piece
+                        as
+                        something uncovered, not invented.</p>
+                </article>
+
+                <article class="team-card bg-paper p-8 md:p-10 hover:border-opera hover:bg-[#F6F0EF]"
+                    style="border:1px solid transparent">
+                    <div class="flex items-start justify-between">
+                        <span class="font-serif text-5xl text-opera">O</span>
+                        <span class="text-[13px] num text-inkfade">Team 03</span>
+                    </div>
+                    <h3 class="font-serif text-2xl md:text-3xl mt-6">Opera</h3>
+                    <p class="text-inkfade text-[15px] mt-2">Latin for <em>work</em>. The team built on rehearsal — on
+                        effort
+                        nobody sees before the curtain lifts.</p>
+                </article>
+
+                <article class="team-card bg-paper p-8 md:p-10 hover:border-relatia hover:bg-[#F6F3EA]"
+                    style="border:1px solid transparent">
+                    <div class="flex items-start justify-between">
+                        <span class="font-serif text-5xl text-relatia">R</span>
+                        <span class="text-[13px] num text-inkfade">Team 04</span>
+                    </div>
+                    <h3 class="font-serif text-2xl md:text-3xl mt-6">Relatia</h3>
+                    <p class="text-inkfade text-[15px] mt-2">From <em>relation</em>. The team that makes art in the
+                        space between
+                        one person and another.</p>
+                </article>
+
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- ============ COUNTDOWN ============ -->
+    <section id="countdown" class="px-6 md:px-10 py-24 md:py-32 border-t hairline">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
+                <div>
+                    <h2 class="font-serif text-3xl md:text-4xl">Until the curtain lifts</h2>
+                    <p class="text-inkfade text-[15px] mt-2">19 September 2026 · 9:00 AM · Main campus, Vallapuzha</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-4 border-t border-l hairline">
+                <div class="border-r border-b hairline py-8 md:py-12 text-center">
+                    <p id="cd-days" class="num text-5xl md:text-7xl">00</p>
+                    <p class="text-[12px] md:text-[13px] text-inkfade mt-3">Days</p>
+                </div>
+                <div class="border-r border-b hairline py-8 md:py-12 text-center">
+                    <p id="cd-hours" class="num text-5xl md:text-7xl">00</p>
+                    <p class="text-[12px] md:text-[13px] text-inkfade mt-3">Hours</p>
+                </div>
+                <div class="border-r border-b hairline py-8 md:py-12 text-center">
+                    <p id="cd-mins" class="num text-5xl md:text-7xl">00</p>
+                    <p class="text-[12px] md:text-[13px] text-inkfade mt-3">Minutes</p>
+                </div>
+                <div class="border-r border-b hairline py-8 md:py-12 text-center">
+                    <p id="cd-secs" class="num text-5xl md:text-7xl text-alert">00</p>
+                    <p class="text-[12px] md:text-[13px] text-inkfade mt-3">Seconds</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ EXPLORE ============ -->
+    <!-- ============ EVERYTHING ELSE, IN ONE PLACE ============ -->
+    <section id="explore" class="px-6 md:px-10 py-24 md:py-32 border-t hairline bg-paper2">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-end justify-between flex-wrap gap-4 mb-12 md:mb-16">
+                <div>
+                    <span class="font-mono text-[11px] text-alert font-bold uppercase tracking-widest block mb-2">★
+                        CENTRAL FEST
+                        HUB ★</span>
+                    <h2 class="font-serif text-3xl md:text-5xl">Everything else, in one place</h2>
+                </div>
+                <p class="text-inkfade text-[15px] max-w-sm leading-relaxed">
+                    Access all live points, category results, registrations, downloads, announcements, and media from a
+                    single
+                    central portal.
+                </p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line shadow-sm">
+
+                <!-- 01: Live Results -->
+                <a href="/live/"
+                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors relative">
+                    <div class="flex items-center justify-between">
+                        <span
+                            class="flex items-center gap-1.5 text-xs font-mono text-alert group-hover:text-paper font-bold">
+                            <span class="w-2 h-2 rounded-full bg-alert pulse-dot"></span> LIVE
+                        </span>
+                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">01</span>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">Live
+                            Results</h3>
+                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Realtime
+                            team standings
+                            and live stage points tally.</p>
+                    </div>
+                </a>
+
+                <!-- 02: Arts Results -->
+                <a href="/results/"
+                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
+                    <div class="flex items-center justify-between">
+                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
+                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
+                            stroke-width="1.6">
+                            <path d="M6 20V11M13 20V4M20 20v-7" stroke-linecap="round" />
+                        </svg>
+                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">02</span>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">Arts
+                            Results</h3>
+                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Off-stage,
+                            literary,
+                            and main stage winners and grade lists.</p>
+                    </div>
+                </a>
+
+                <!-- 03: Sports Meet -->
+                <a href="/sports/"
+                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
+                    <div class="flex items-center justify-between">
+                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
+                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
+                            stroke-width="1.6">
+                            <circle cx="13" cy="13" r="9" />
+                            <path
+                                d="M4 13h18M13 4c2.4 2.6 3.6 5.8 3.6 9s-1.2 6.4-3.6 9c-2.4-2.6-3.6-5.8-3.6-9s1.2-6.4 3.6-9Z" />
+                        </svg>
+                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">03</span>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">Sports
+                            Meet</h3>
+                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Track,
+                            field events,
+                            team points, and individual champions.</p>
+                    </div>
+                </a>
+
+                <!-- 04: Registrations -->
+                <a href="/registrations/"
+                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
+                    <div class="flex items-center justify-between">
+                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
+                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
+                            stroke-width="1.6">
+                            <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">04</span>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">
+                            Registrations</h3>
+                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Online
+                            entry forms for
+                            single & group competition items.</p>
+                    </div>
+                </a>
+
+                <!-- 05: Notifications -->
+                <a href="/notifications/"
+                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
+                    <div class="flex items-center justify-between">
+                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
+                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
+                            stroke-width="1.6">
+                            <path d="M8 20a2 2 0 0 0 4 0M6 10a4.5 4.5 0 0 1 9 0c0 3 1.5 4 1.5 6H4.5c0-2 1.5-3 1.5-6Z"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">05</span>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">
+                            Notifications</h3>
+                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Official
+                            schedule
+                            updates, alerts, and jury announcements.</p>
+                    </div>
+                </a>
+
+                <!-- 06: Gallery -->
+                <a href="gallery.html"
+                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
+                    <div class="flex items-center justify-between">
+                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
+                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
+                            stroke-width="1.6">
+                            <rect x="3.5" y="5" width="19" height="16" rx="1" />
+                            <circle cx="9" cy="10.5" r="1.6" />
+                            <path d="M3.5 17l5-4.5 4 3 3.5-3.5 6.5 5.5" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">06</span>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">Gallery
+                        </h3>
+                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Photo
+                            highlights from
+                            rehearsals and stage ground.</p>
+                    </div>
+                </a>
+
+                <!-- 07: Downloads -->
+                <a href="/downloads/"
+                    class="group bg-paper p-7 flex flex-col justify-between min-h-[230px] hover:bg-ink transition-colors">
+                    <div class="flex items-center justify-between">
+                        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"
+                            class="text-ink group-hover:text-paper transition-colors" stroke="currentColor"
+                            stroke-width="1.6">
+                            <path d="M13 3v13m0 0l-5-5m5 5l5-5M4 21h18" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                        <span class="text-[12px] num text-inkfade group-hover:text-paper/50 transition-colors">07</span>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-2xl mt-6 text-ink group-hover:text-paper transition-colors">Downloads
+                        </h3>
+                        <p class="text-[14px] text-inkfade group-hover:text-paper/70 mt-2 transition-colors">Official
+                            rulebook PDF,
+                            schedule brochure, & forms.</p>
+                    </div>
+                </a>
+
+
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ FIND US / CONTACT ============ -->
+    <footer id="find-us" class="px-6 md:px-10 py-20 md:py-28 bg-paper2 border-t hairline">
+        <div class="max-w-6xl mx-auto grid md:grid-cols-[1.2fr_1fr_1fr] gap-12 md:gap-10">
+
+            <div>
+                <p class="font-serif text-2xl">Alert<span class="text-alert">.</span>2k26</p>
+                <p class="text-inkfade text-[14px] mt-4 max-w-xs leading-relaxed">
+                    Arts programme of Darunnajath Islamic Complex, Vallapuzha, Palakkad, Kerala.
+                </p>
+                <a href="https://maps.google.com/?q=Darunnajath+Islamic+Complex+Vallapuzha" target="_blank"
+                    rel="noopener"
+                    class="inline-block mt-6 text-[14px] border-b border-ink pb-0.5 hover:text-alert hover:border-alert transition-colors">
+                    Get directions →
+                </a>
+            </div>
+
+            <div>
+                <p class="text-[13px] text-inkfade mb-4">Navigation</p>
+                <nav class="flex flex-col gap-2.5 text-[14px]">
+                    <a href="live-results.html"
+                        class="hover:text-alert text-alert font-semibold flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-alert pulse-dot"></span> Live Results
+                    </a>
+                    <a href="/results/" class="hover:text-alert">Arts Results</a>
+                    <a href="/sports/" class="hover:text-alert">Sports Results</a>
+                    <a href="/registrations/" class="hover:text-alert">Registrations</a>
+                    <a href="/notifications/" class="hover:text-alert">Notifications</a>
+                    <a href="/gallery/" class="hover:text-alert">Gallery</a>
+                    <a href="/downloads/" class="hover:text-alert">Downloads</a>
+                </nav>
+            </div>
+
+            <div>
+                <p class="text-[13px] text-inkfade mb-4">Contact</p>
+                <div class="flex flex-col gap-3 text-[15px] text-inkfade">
+                    <p>danunnajathislamiccomplex@gmail.com</p>
+                    <p>+91 7511192085</p>
+                    <p>Vallapuzha, Palakkad, Kerala</p>
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="max-w-6xl mx-auto mt-16 pt-6 border-t hairline flex flex-col md:flex-row justify-between items-start md:items-center gap-3 text-[13px] text-inkfade">
+            <div>
+                <p>Arts programme · Darunnajath Islamic Complex, Vallapuzha</p>
+                <p class="font-mono text-[11px] mt-1 text-inkfade/70">
+                    <span id="morseSecretTrigger" class="secret-badge" title="Click to decode signal">LAT: 10.8358° N ·
+                        LOG:
+                        76.2231° E · MORSE: .- .-.. . .-. -</span>
+                </p>
+            </div>
+            <a href="#home" class="hover:text-alert">Back to top ↑</a>
+        </div>
+
+        <div
+            class="reveal mt-16 md:mt-20 relative w-full aspect-[16/7] md:aspect-[16/5] overflow-hidden border-t hairline">
+            <div
+                class="absolute inset-0 flex items-center justify-center bg-paper2 text-inkfade text-[13px] tracking-tight">
+                college.png
+            </div>
+            <img src="college.png" alt="Darunnajath Islamic Complex, Vallapuzha — campus"
+                class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'">
+            <div class="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/0 to-transparent"></div>
+            <p
+                class="absolute bottom-4 md:bottom-6 left-6 md:left-10 text-paper text-[13px] md:text-[14px] tracking-tight">
+                Darunnajath Islamic Complex, Vallapuzha
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu
+        const menuBtn = document.getElementById('menuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        menuBtn.addEventListener('click', () => {
+            const isOpen = mobileMenu.classList.toggle('open');
+            menuBtn.setAttribute('aria-expanded', isOpen);
+        });
+        document.querySelectorAll('.mnav').forEach(l => l.addEventListener('click', () => {
+            mobileMenu.classList.remove('open');
+            menuBtn.setAttribute('aria-expanded', 'false');
+        }));
+
+        // Scrollspy
+        const sections = ['about', 'theme', 'teams', 'countdown', 'explore', 'find-us'].map(id => document.getElementById(id));
+        const navLinks = document.querySelectorAll('.nav-link');
+        const spy = () => {
+            let current = null;
+            sections.forEach(sec => {
+                const r = sec.getBoundingClientRect();
+                if (r.top <= 120 && r.bottom > 120) current = sec.id;
+            });
+            navLinks.forEach(l => {
+                l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+            });
+        };
+        document.addEventListener('scroll', spy, { passive: true });
+
+        // Scroll-triggered reveal for sections
+        const revealTargets = document.querySelectorAll('.reveal:not(.show)');
+        const revealObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('show');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+        revealTargets.forEach(t => revealObserver.observe(t));
+
+        // Count-up stats
+        const counters = document.querySelectorAll('.counter');
+        const countUp = el => {
+            const target = parseInt(el.dataset.target, 10);
+            const duration = 900;
+            const start = performance.now();
+            const step = now => {
+                const p = Math.min(1, (now - start) / duration);
+                const eased = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.round(eased * target);
+                if (p < 1) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+        };
+        const counterObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    countUp(entry.target);
+                    counterObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+        counters.forEach(c => counterObserver.observe(c));
+
+        // Countdown
+        const target = new Date('2026-09-19T09:00:00+05:30').getTime();
+        const pad = n => String(n).padStart(2, '0');
+        const secEl = document.getElementById('cd-secs');
+        let lastSec = null;
+        function tick() {
+            const now = Date.now();
+            let diff = Math.max(0, target - now);
+            const d = Math.floor(diff / 86400000); diff -= d * 86400000;
+            const h = Math.floor(diff / 3600000); diff -= h * 3600000;
+            const m = Math.floor(diff / 60000); diff -= m * 60000;
+            const s = Math.floor(diff / 1000);
+            const cdDays = document.getElementById('cd-days');
+            if (cdDays) cdDays.textContent = pad(d);
+            const cdHours = document.getElementById('cd-hours');
+            if (cdHours) cdHours.textContent = pad(h);
+            const cdMins = document.getElementById('cd-mins');
+            if (cdMins) cdMins.textContent = pad(m);
+            if (secEl) {
+                secEl.textContent = pad(s);
+                if (s !== lastSec) {
+                    secEl.classList.remove('flash');
+                    void secEl.offsetWidth;
+                    secEl.classList.add('flash');
+                    lastSec = s;
+                }
+            }
+        }
+        tick();
+        setInterval(tick, 1000);
+
+        // ============ TOP-TO-BOTTOM DENSE SMALL CONFETTI CASCADE ENGINE ============
+        function popCanvasConfetti(options = {}) {
+            const particleCount = options.particleCount || 350;
+            const spread = options.spread || 180;
+            const colors = options.colors || ['#B23A2E', '#191712', '#3C6E5C', '#33507C', '#B0812A', '#E68A00', '#D94E36', '#4A8C76'];
+
+            let canvas = document.getElementById('festConfettiCanvas');
+            if (!canvas) {
+                canvas = document.createElement('canvas');
+                canvas.id = 'festConfettiCanvas';
+                canvas.style.position = 'fixed';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.width = '100vw';
+                canvas.style.height = '100vh';
+                canvas.style.pointerEvents = 'none';
+                canvas.style.zIndex = '999999';
+                document.body.appendChild(canvas);
+            }
+
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width = window.innerWidth;
+            const height = canvas.height = window.innerHeight;
+
+            const particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                const speed = (options.startVelocity || 12) * (0.5 + Math.random() * 0.7);
+                const angle = Math.PI / 2 + (Math.random() - 0.5) * 0.8; // pointing straight down
+                particles.push({
+                    x: Math.random() * width, // spread uniformly across top of screen
+                    y: -15 - Math.random() * 40, // start above top of screen
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    wobble: Math.random() * Math.PI * 2,
+                    wobbleSpeed: 0.03 + Math.random() * 0.04,
+                    width: Math.random() * 5 + 3.5,  // Small confetti size
+                    height: Math.random() * 6 + 4.5, // Small confetti size
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * Math.PI * 2,
+                    rotationSpeed: (Math.random() - 0.5) * 0.08,
+                    opacity: 1,
+                    shape: Math.random() > 0.4 ? 'rect' : 'circle',
+                    gravity: 0.18 + Math.random() * 0.10, // gravity tuned so particles complete full fall to bottom
+                    drag: 0.99
+                });
+            }
+
+            function update() {
+                ctx.clearRect(0, 0, width, height);
+                let active = false;
+
+                particles.forEach(p => {
+                    if (p.opacity <= 0 || p.y > height + 40) return;
+                    active = true;
+
+                    p.wobble += p.wobbleSpeed;
+                    p.x += p.vx + Math.sin(p.wobble) * 0.9;
+                    p.y += p.vy;
+                    p.vy += p.gravity;
+                    p.vx *= p.drag;
+                    p.vy *= p.drag;
+                    p.rotation += p.rotationSpeed;
+
+                    // Maintain full visibility until reaching bottom section of screen
+                    if (p.y > height * 0.82) {
+                        p.opacity -= 0.015;
+                    }
+
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, p.opacity);
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation);
+                    ctx.fillStyle = p.color;
+
+                    if (p.shape === 'rect') {
+                        ctx.fillRect(-p.width / 2, -p.height / 2, p.width, p.height);
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(0, 0, p.width / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.restore();
+                });
+
+                if (active) {
+                    requestAnimationFrame(update);
+                } else {
+                    ctx.clearRect(0, 0, width, height);
+                }
+            }
+
+            update();
+        }
+
+        function triggerFestiveConfetti() {
+            if (typeof confetti === 'function') {
+                try {
+                    // Full curtain confetti shower from top down to bottom
+                    confetti({
+                        particleCount: 320,
+                        spread: 180,
+                        startVelocity: 16,
+                        scalar: 0.65,
+                        ticks: 650,
+                        gravity: 0.05,
+                        origin: { x: 0.5, y: -0.08 },
+                        colors: ['#B23A2E', '#191712', '#3C6E5C', '#33507C', '#B0812A', '#E68A00', '#4A8C76']
+                    });
+                } catch (e) {
+                    popCanvasConfetti({ particleCount: 350 });
+                }
+            } else {
+                popCanvasConfetti({ particleCount: 350 });
+            }
+        }
+
+        // Auto-fire single opening festive confetti once on page load
+        let hasFiredOpeningConfetti = false;
+        function fireOnceOnLoad() {
+            if (hasFiredOpeningConfetti) return;
+            hasFiredOpeningConfetti = true;
+            triggerFestiveConfetti();
+        }
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(fireOnceOnLoad, 250);
+        } else {
+            document.addEventListener('DOMContentLoaded', () => setTimeout(fireOnceOnLoad, 250));
+        }
+
+        // Button Triggers for Confetti
+        const confettiBtn = document.getElementById('confettiBtn');
+        if (confettiBtn) confettiBtn.addEventListener('click', triggerFestiveConfetti);
+
+        const stampConfettiTrigger = document.getElementById('stampConfettiTrigger');
+        if (stampConfettiTrigger) stampConfettiTrigger.addEventListener('click', triggerFestiveConfetti);
+
+        // Toggle Sepia Vintage Mode
+        const headerVintageToggle = document.getElementById('headerVintageToggle');
+        if (headerVintageToggle) {
+            headerVintageToggle.addEventListener('click', () => {
+                document.body.classList.toggle('vintage-sepia');
+                triggerFestiveConfetti();
+            });
+        }
+
+        // ============ INTERACTIVE VINTAGE SEARCH MODAL ============
+        const searchModal = document.createElement('div');
+        searchModal.id = 'searchModal';
+        searchModal.className = 'fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-ink/75 backdrop-blur-sm transition-all duration-300';
+        searchModal.innerHTML = `
+      <div class="relative w-full max-w-xl bg-[#F4EFE2] border-2 border-ink p-5 md:p-7 shadow-2xl font-sans text-ink">
+        <div class="flex items-center justify-between border-b border-ink pb-3 mb-4">
+          <div class="flex items-center gap-2 font-mono text-xs text-alert font-bold uppercase tracking-wider">
+            <span>🔍</span> FEST SEARCH ARCHIVE
+          </div>
+          <button id="searchCloseBtn" aria-label="Close search" class="w-7 h-7 flex items-center justify-center border border-ink rounded-full font-mono text-sm hover:bg-alert hover:text-paper transition-colors">
+            ✕
+          </button>
+        </div>
+        <div class="relative mb-4">
+          <input type="text" id="searchInput" placeholder="Search events, teams, results, downloads..." class="w-full px-4 py-3 bg-[#EBE5D5] border border-ink text-[14px] font-sans text-ink placeholder:text-inkfade/70 focus:outline-none focus:ring-1 focus:ring-alert" />
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs font-mono text-inkfade mb-4">
+          <span class="text-ink font-bold">Quick:</span>
+          <button class="quick-tag px-2.5 py-1 bg-[#EBE5D5] border border-line hover:border-ink hover:text-ink">Live Results</button>
+          <button class="quick-tag px-2.5 py-1 bg-[#EBE5D5] border border-line hover:border-ink hover:text-ink">Arts Results</button>
+          <button class="quick-tag px-2.5 py-1 bg-[#EBE5D5] border border-line hover:border-ink hover:text-ink">Sports Results</button>
+          <button class="quick-tag px-2.5 py-1 bg-[#EBE5D5] border border-line hover:border-ink hover:text-ink">Libera</button>
+          <button class="quick-tag px-2.5 py-1 bg-[#EBE5D5] border border-line hover:border-ink hover:text-ink">Alethia</button>
+        </div>
+        <div id="searchResults" class="max-h-60 overflow-y-auto space-y-2 text-sm font-mono pt-2 border-t hairline text-inkfade">
+          <p class="text-xs italic text-inkfade/80">Type a keyword to search across items, points, and schedules...</p>
+        </div>
+      </div>
+    `;
+        document.body.appendChild(searchModal);
+
+        const searchOpenBtn = document.getElementById('searchOpenBtn');
+        const mobileSearchTrigger = document.getElementById('mobileSearchTrigger');
+        const searchCloseBtn = document.getElementById('searchCloseBtn');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+
+        function openSearchModal() {
+            searchModal.classList.remove('hidden');
+            searchModal.classList.add('flex');
+            setTimeout(() => searchInput && searchInput.focus(), 100);
+        }
+        function closeSearchModal() {
+            searchModal.classList.add('hidden');
+            searchModal.classList.remove('flex');
+        }
+
+        const exploreSearchCard = document.getElementById('exploreSearchCard');
+        if (searchOpenBtn) searchOpenBtn.addEventListener('click', openSearchModal);
+        if (mobileSearchTrigger) mobileSearchTrigger.addEventListener('click', openSearchModal);
+        if (exploreSearchCard) exploreSearchCard.addEventListener('click', openSearchModal);
+        if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearchModal);
+
+        searchModal.addEventListener('click', (e) => {
+            if (e.target === searchModal) closeSearchModal();
+        });
+
+        const searchableData = [
+            { title: 'Live Results — Realtime Points Table', category: 'Live', link: 'live-results.html', desc: 'Check current team standings & item scores.' },
+            { title: 'Arts Results — Off-Stage & Stage', category: 'Arts', link: 'results.html', desc: 'Browse arts category winners & certificates.' },
+            { title: 'Sports Results — Annual Track & Field', category: 'Sports', link: 'sports.html', desc: 'Track event winners and sports meet scores.' },
+            { title: 'Participant Registrations', category: 'Register', link: 'registrations.html', desc: 'Register for stage, literary, and fine arts items.' },
+            { title: 'Fest Notifications & Announcements', category: 'Alerts', link: 'notifications.html', desc: 'Official schedule changes and notices.' },
+            { title: 'Gallery & Photo Rehearsals', category: 'Media', link: 'gallery.html', desc: 'Rehearsal captures and stage highlights.' },
+            { title: 'Downloads — Rulebook & Schedule PDF', category: 'Files', link: 'downloads.html', desc: 'Download fest brochure, guidelines & forms.' },
+            { title: 'Team Libera', category: 'Team 01', link: '#teams', desc: 'Just start — no plan, no permission.' },
+            { title: 'Team Alethia', category: 'Team 02', link: '#teams', desc: 'Truth, depth, and documentary craft.' },
+            { title: 'Team Opera', category: 'Team 03', link: '#teams', desc: 'Full production, discipline, and effort.' },
+            { title: 'Team Relatia', category: 'Team 04', link: '#teams', desc: 'Art created in human connection.' }
+        ];
+
+        if (searchInput && searchResults) {
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                if (!query) {
+                    searchResults.innerHTML = '<p class="text-xs italic text-inkfade/80">Type a keyword to search across items, points, and schedules...</p>';
+                    return;
+                }
+                const matches = searchableData.filter(item =>
+                    item.title.toLowerCase().includes(query) ||
+                    item.desc.toLowerCase().includes(query) ||
+                    item.category.toLowerCase().includes(query)
+                );
+                if (matches.length === 0) {
+                    searchResults.innerHTML = `<p class="text-xs text-alert font-bold">No results found for "${query}". Try "Arts", "Sports", or "Live".</p>`;
+                } else {
+                    searchResults.innerHTML = matches.map(m => `
+            <a href="${m.link}" class="block p-2 bg-[#EBE5D5] hover:bg-ink hover:text-paper transition-colors rounded-sm border border-line">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold">${m.title}</span>
+                <span class="text-[10px] px-1.5 py-0.5 border border-current rounded">${m.category}</span>
+              </div>
+              <p class="text-[11px] opacity-80 mt-0.5">${m.desc}</p>
+            </a>
+          `).join('');
+                }
+            });
+
+            document.querySelectorAll('.quick-tag').forEach(tag => {
+                tag.addEventListener('click', () => {
+                    if (searchInput) {
+                        searchInput.value = tag.textContent.trim();
+                        searchInput.dispatchEvent(new Event('input'));
+                    }
+                });
+            });
+        }
+    </script>
 
 </body>
+
 </html>

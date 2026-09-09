@@ -18,6 +18,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="../js/firebase-config.js"></script>
   <script src="../js/security.js"></script>
+  <script src="../js/auth-config.js"></script>
 
   <style>
     body {
@@ -151,11 +152,8 @@
       const errEl = document.getElementById('login-error');
 
       const codeHash = await SecurityEngine.hashPasscode(codeInput);
-      const validCodeHashes = [
-        '5dfc92691f7fa0a4f9f8dd9b05b69b1720baad084182c7c4d492cbbab1f23333'
-      ];
 
-      if (validCodeHashes.includes(codeHash)) {
+      if (AuthConfig.isAdminHash(codeHash)) {
         session = { code: codeInput, loggedInAt: Date.now() };
         sessionStorage.setItem('artfest_penalty_session', JSON.stringify(session));
         Toast.show('Authenticated to Student Penalty Portal', 'success');

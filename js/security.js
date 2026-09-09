@@ -5,17 +5,20 @@
  */
 
 const SecurityEngine = {
+  SALT: 'ALERT2K26_SALT_v1_',
+
   /**
-   * Hashes a string using Web Crypto SHA-256 with resilient pure-JS fallback
+   * Hashes a string using Web Crypto SHA-256 with resilient pure-JS fallback and application domain salting.
    * @param {string} str - Plaintext passcode
-   * @returns {Promise<string>} Hex-encoded SHA-256 hash
+   * @returns {Promise<string>} Hex-encoded salted SHA-256 hash
    */
   async hashPasscode(str) {
     if (!str || typeof str !== 'string') return '';
     const cleanStr = str.trim().toUpperCase();
+    const saltedStr = this.SALT + cleanStr;
     try {
       if (typeof crypto !== 'undefined' && crypto.subtle && typeof TextEncoder !== 'undefined') {
-        const msgUint8 = new TextEncoder().encode(cleanStr);
+        const msgUint8 = new TextEncoder().encode(saltedStr);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
@@ -25,7 +28,7 @@ const SecurityEngine = {
     }
 
     // Pure JS SHA-256 fallback (works offline, in file://, HTTP, non-secure contexts)
-    return this.sha256Pure(cleanStr);
+    return this.sha256Pure(saltedStr);
   },
 
   sha256Pure(ascii) {

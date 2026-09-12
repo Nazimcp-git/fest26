@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roster Photo Station</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
+
+<style>
+  :root{
+    --paper:#f6f3ec;
+    --ink:#1f2a30;
+    --ink-soft:#5b6870;
+    --line:#ddd5c4;
+    --card:#ffffff;
+    --amber:#b8842a;
+    --amber-dark:#8f6420;
+    --teal:#3a6b63;
+    --danger:#a4402f;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Top bar ---------- */
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 22px 32px 18px;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+
+  header .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  header h1 {
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.2px;
+  }
+
+  header .brand span.tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+
+  header .progress-line {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  header .progress-line strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- Upload gate (shown before a roster exists) ---------- */
+  .gate {
+    max-width: 640px;
+    margin: 64px auto;
+    padding: 0 24px;
+  }
+
+  .gate h2 {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 28px;
+    margin: 0 0 10px;
+  }
+
+  .gate p.lead {
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 0 0 28px;
+  }
+
+  .dropzone {
+    border: 1px dashed var(--ink-soft);
+    border-radius: 4px;
+    padding: 36px 24px;
+    text-align: center;
+    background: var(--card);
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .dropzone:hover, .dropzone.drag { border-color: var(--amber); background: #fffdf8; }
+  .dropzone input { display:none; }
+  .dropzone .icon { font-size: 26px; margin-bottom: 8px; }
+  .dropzone .main-text { font-size: 15px; font-weight: 600; }
+  .dropzone .sub-text { font-size: 12.5px; color: var(--ink-soft); margin-top: 4px; }
+
+  .template-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  .link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--teal);
+    font-weight: 600;
+    font-size: 12.5px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .link-btn:hover { color: var(--amber-dark); }
+
+  .mapping {
+    margin-top: 26px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px 22px;
+  }
+  .mapping h3 {
+    font-size: 13px;
+    text-transform: none;
+    margin: 0 0 14px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .field-row { display:flex; gap: 18px; margin-bottom: 14px; }
+  .field-row label { flex:1; font-size: 12.5px; color: var(--ink-soft); }
+  .field-row label span { display:block; margin-bottom: 5px; font-weight: 600; color: var(--ink); }
+  select, button, input[type="text"] {
+    font-family: inherit;
+    font-size: 13.5px;
+  }
+  select {
+    width: 100%;
+    padding: 8px 9px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: #fff;
+    color: var(--ink);
+  }
+
+  table.preview {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+    font-size: 12.5px;
+  }
+  table.preview th, table.preview td {
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    padding: 6px 8px;
+    color: var(--ink-soft);
+  }
+  table.preview th { color: var(--ink); font-weight: 600; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: #fff;
+    padding: 9px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btn:hover { background: #0f171c; }
+  .btn.secondary {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--line);
+  }
+  .btn.secondary:hover { border-color: var(--ink); }
+  .btn.amber { background: var(--amber); border-color: var(--amber); }
+  .btn.amber:hover { background: var(--amber-dark); border-color: var(--amber-dark); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.wide { width: 100%; justify-content: center; margin-top: 16px; }
+
+  /* ---------- Main workspace ---------- */
+  .workspace {
+    flex: 1;
+    display: none;
+    min-height: 0;
+  }
+  .workspace.active { display: flex; }
+
+  /* Sidebar roster */
+  aside.roster {
+    width: 280px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    background: #f2efe6;
+  }
+  aside.roster .roster-head {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--ink-soft);
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+  }
+  aside.roster .roster-head button {
+    background:none; border:none; color: var(--teal); font-size: 12px;
+    cursor:pointer; font-weight:600; padding: 0;
+  }
+  ul.roster-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    flex: 1;
+  }
+  ul.roster-list li {
+    padding: 10px 16px;
+    border-left: 3px solid transparent;
+    border-bottom: 1px solid #e7e1d1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  ul.roster-list li:hover { background: #ece7d9; }
+  ul.roster-list li.current {
+    border-left-color: var(--amber);
+    background: #fffdf8;
+  }
+  ul.roster-list li .name {
+    font-size: 13.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  ul.roster-list li .chest {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+    flex-shrink: 0;
+  }
+  ul.roster-list li.done .name { color: var(--ink-soft); }
+  ul.roster-list li .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--line);
+    flex-shrink: 0;
+  }
+  ul.roster-list li.done .status-dot { background: var(--teal); }
+
+  /* Stage */
+  .stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 26px 36px 22px;
+    overflow-y: auto;
+  }
+
+  .stage-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .stage-head .student-name {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 30px;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  .chest-pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--ink);
+    color: #fff;
+    padding: 4px 11px;
+    border-radius: 3px;
+    margin-top: 6px;
+    letter-spacing: 0.3px;
+  }
+
+  .nav-buttons { display: flex; gap: 8px; }
+  .nav-buttons button {
+    border: 1px solid var(--line);
+    background: #fff;
+    padding: 7px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .nav-buttons button:hover:not(:disabled) { border-color: var(--ink); }
+  .nav-buttons button:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* Crop workspace */
+  .crop-shell {
+    flex: 1;
+    display: flex;
+    gap: 22px;
+    min-height: 0;
+  }
+
+  .crop-area {
+    flex: 1;
+    background: #16181a;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 360px;
+    max-height: 60vh;
+    overflow: hidden;
+    position: relative;
+  }
+  .crop-area img { display: block; max-width: 100%; }
+
+  .crop-empty {
+    color: #8a9096;
+    font-size: 13.5px;
+    text-align: center;
+    padding: 20px;
+  }
+  .crop-empty .icon { font-size: 24px; display:block; margin-bottom: 8px; }
+
+  .side-panel {
+    width: 230px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .panel-block {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+  .panel-block h4 {
+    margin: 0 0 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+
+  .aspect-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .aspect-grid button {
+    font-size: 12px;
+    padding: 7px 4px;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .aspect-grid button.active {
+    border-color: var(--amber);
+    background: #fff8ec;
+    color: var(--amber-dark);
+    font-weight: 600;
+  }
+
+  .file-input-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 9px 0;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    background: #fff;
+  }
+  .file-input-btn:hover { border-color: var(--ink); }
+  .file-input-btn input { display: none; }
+
+  .status-msg {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+    min-height: 15px;
+  }
+  .status-msg.error { color: var(--danger); }
+  .status-msg.ok { color: var(--teal); }
+
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .save-target-note {
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  footer.credits {
+    padding: 6px 32px;
+    font-size: 11px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 880px) {
+    .workspace.active { flex-direction: column; }
+    aside.roster { width: 100%; max-height: 180px; border-right:none; border-bottom:1px solid var(--line); }
+    .crop-shell { flex-direction: column; }
+    .side-panel { width: 100%; flex-direction: row; flex-wrap: wrap; }
+    .panel-block { flex: 1; min-width: 160px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>Roster Photo Station</h1>
+    <span class="tag">chest no. → jpg</span>
+  </div>
+  <div class="progress-line" id="progressLine"></div>
+</header>
+
+<!-- ============ UPLOAD GATE ============ -->
+<div class="gate" id="gate">
+  <h2>Load the roster</h2>
+  <p class="lead">Upload the spreadsheet with each student's name and chest number. Then work through the list one photo at a time — crop, save, next.</p>
+
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="excelInput" accept=".xlsx,.xls,.csv">
+    <div class="icon">📄</div>
+    <div class="main-text">Click to choose a spreadsheet</div>
+    <div class="sub-text">.xlsx, .xls, or .csv — first sheet is used</div>
+  </div>
+
+  <div class="template-row">
+    <span>Not sure of the format?</span>
+    <button class="link-btn" id="downloadTemplateBtn" type="button">Download a sample template (.xlsx)</button>
+  </div>
+
+  <div class="mapping" id="mappingBlock" style="display:none;">
+    <h3>Confirm which columns to use</h3>
+    <div class="field-row">
+      <label><span>Name column</span>
+        <select id="nameCol"></select>
+      </label>
+      <label><span>Chest no. column</span>
+        <select id="chestCol"></select>
+      </label>
+    </div>
+    <div id="previewTableWrap"></div>
+    <button class="btn amber wide" id="buildRosterBtn">Build roster →</button>
+  </div>
+</div>
+
+<!-- ============ MAIN WORKSPACE ============ -->
+<div class="workspace" id="workspace">
+  <aside class="roster">
+    <div class="roster-head">
+      <span id="rosterCount">0 students</span>
+      <button id="loadNewBtn">Load a different file</button>
+    </div>
+    <ul class="roster-list" id="rosterList"></ul>
+  </aside>
+
+  <div class="stage">
+    <div class="stage-head">
+      <div>
+        <p class="student-name" id="studentName">—</p>
+        <span class="chest-pill" id="chestPill">—</span>
+      </div>
+      <div class="nav-buttons">
+        <button id="prevBtn">← Previous</button>
+        <button id="skipBtn">Skip</button>
+        <button id="nextBtn">Next →</button>
+      </div>
+    </div>
+
+    <div class="crop-shell">
+      <div class="crop-area" id="cropArea">
+        <div class="crop-empty" id="cropEmpty">
+          <span class="icon">🖼️</span>
+          Choose a photo for this student to begin cropping
+        </div>
+        <img id="cropImage" style="display:none;">
+      </div>
+
+      <div class="side-panel">
+        <div class="panel-block">
+          <h4>Photo</h4>
+          <label class="file-input-btn">
+            Choose photo…
+            <input type="file" id="photoInput" accept="image/*,.heic,.heif">
+          </label>
+          <div class="status-msg" id="photoStatus"></div>
+        </div>
+
+        <div class="panel-block">
+          <h4>Crop shape</h4>
+          <div class="aspect-grid" id="aspectGrid">
+            <button data-ratio="0" >Free</button>
+            <button data-ratio="1" class="active">Square 1:1</button>
+            <button data-ratio="0.75">Portrait 3:4</button>
+            <button data-ratio="0.7778">Passport</button>
+          </div>
+        </div>
+
+        <div class="panel-block">
+          <h4>Save location</h4>
+          <button class="btn secondary" id="chooseFolderBtn" style="width:100%; justify-content:center;">Choose save folder</button>
+          <div class="save-target-note" id="folderNote">Not chosen — files will download individually.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn amber" id="saveBtn" disabled>Save cropped photo</button>
+      <span class="status-msg" id="saveStatus"></span>
+    </div>
+  </div>
+</div>
+
+<footer class="credits">Runs entirely in your browser — photos and the spreadsheet are never uploaded anywhere.</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- State ----------
+  let students = [];        // {name, chestNo, status}
+  let currentIndex = -1;
+  let cropper = null;
+  let currentAspect = 1;
+  let currentImageObjectUrl = null;
+  let dirHandle = null;     // File System Access API directory handle
+  let rawRows = [];         // parsed sheet rows for mapping step
+
+  // ---------- Elements ----------
+  const gate = document.getElementById('gate');
+  const dropzone = document.getElementById('dropzone');
+  const excelInput = document.getElementById('excelInput');
+  const mappingBlock = document.getElementById('mappingBlock');
+  const nameColSel = document.getElementById('nameCol');
+  const chestColSel = document.getElementById('chestCol');
+  const previewTableWrap = document.getElementById('previewTableWrap');
+  const buildRosterBtn = document.getElementById('buildRosterBtn');
+
+  const workspace = document.getElementById('workspace');
+  const rosterList = document.getElementById('rosterList');
+  const rosterCount = document.getElementById('rosterCount');
+  const loadNewBtn = document.getElementById('loadNewBtn');
+  const progressLine = document.getElementById('progressLine');
+
+  const studentName = document.getElementById('studentName');
+  const chestPill = document.getElementById('chestPill');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const skipBtn = document.getElementById('skipBtn');
+
+  const cropArea = document.getElementById('cropArea');
+  const cropEmpty = document.getElementById('cropEmpty');
+  const cropImage = document.getElementById('cropImage');
+  const photoInput = document.getElementById('photoInput');
+  const photoStatus = document.getElementById('photoStatus');
+
+  const aspectGrid = document.getElementById('aspectGrid');
+  const chooseFolderBtn = document.getElementById('chooseFolderBtn');
+  const folderNote = document.getElementById('folderNote');
+  const saveBtn = document.getElementById('saveBtn');
+  const saveStatus = document.getElementById('saveStatus');
+
+  // ---------- Helpers ----------
+  function sanitizeFileName(str){
+    return String(str).trim().replace(/[\\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_');
+  }
+
+  function guessColumn(headerRow, keywords){
+    for (let i = 0; i < headerRow.length; i++){
+      const cell = String(headerRow[i] || '').toLowerCase();
+      if (keywords.some(k => cell.includes(k))) return i;
+    }
+    return -1;
+  }
+
+  function columnLetter(i){
+    let s = '';
+    i = i + 1;
+    while (i > 0){
+      const rem = (i - 1) % 26;
+      s = String.fromCharCode(65 + rem) + s;
+      i = Math.floor((i - 1) / 26);
+    }
+    return s;
+  }
+
+  // ---------- Template download ----------
+  document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
+    const sampleRows = [
+      ['Name', 'Chest No'],
+      ['Aarav Menon', '101'],
+      ['Diya Nair', '102'],
+      ['Rohan Pillai', '103'],
+      ['Ananya Kurup', '104'],
+      ['Vivaan Das', '105'],
+    ];
+    const worksheet = XLSX.utils.aoa_to_sheet(sampleRows);
+    worksheet['!cols'] = [{ wch: 24 }, { wch: 12 }];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
+    XLSX.writeFile(workbook, 'student-roster-template.xlsx');
+  });
+
+  // ---------- Step 1: Excel upload ----------
+  dropzone.addEventListener('click', () => excelInput.click());
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    if (e.dataTransfer.files.length) handleExcelFile(e.dataTransfer.files[0]);
+  });
+  excelInput.addEventListener('change', e => {
+    if (e.target.files.length) handleExcelFile(e.target.files[0]);
+  });
+
+  function handleExcelFile(file){
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[firstSheetName];
+        rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' })
+          .filter(row => row.some(cell => String(cell).trim() !== ''));
+
+        if (!rawRows.length){
+          alert('That file appears to be empty.');
+          return;
+        }
+        setupMapping();
+      } catch (err){
+        console.error(err);
+        alert('Could not read that spreadsheet. Please check the file and try again.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function setupMapping(){
+    const headerRow = rawRows[0];
+    const guessedName = guessColumn(headerRow, ['name', 'student']);
+    const guessedChest = guessColumn(headerRow, ['chest', 'no', 'number', 'bib', 'id']);
+
+    nameColSel.innerHTML = '';
+    chestColSel.innerHTML = '';
+    headerRow.forEach((cell, i) => {
+      const label = `${columnLetter(i)} — ${String(cell || '(blank)').slice(0, 30)}`;
+      const opt1 = new Option(label, i);
+      const opt2 = new Option(label, i);
+      nameColSel.add(opt1);
+      chestColSel.add(opt2);
+    });
+    nameColSel.value = guessedName >= 0 ? guessedName : 0;
+    chestColSel.value = guessedChest >= 0 && guessedChest !== Number(nameColSel.value) ? guessedChest : Math.min(1, headerRow.length - 1);
+
+    renderPreviewTable();
+    mappingBlock.style.display = 'block';
+    nameColSel.onchange = renderPreviewTable;
+    chestColSel.onchange = renderPreviewTable;
+  }
+
+  function renderPreviewTable(){
+    const nIdx = Number(nameColSel.value);
+    const cIdx = Number(chestColSel.value);
+    const rowsToShow = rawRows.slice(0, 6);
+    let html = '<table class="preview"><thead><tr><th>Name (preview)</th><th>Chest no. (preview)</th></tr></thead><tbody>';
+    rowsToShow.forEach(row => {
+      html += `<tr><td>${row[nIdx] ?? ''}</td><td>${row[cIdx] ?? ''}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    previewTableWrap.innerHTML = html;
+  }
+
+  buildRosterBtn.addEventListener('click', () => {
+    const nIdx = Number(nameColSel.value);
+    const cIdx = Number(chestColSel.value);
+
+    // Detect whether row 0 is a header (matches selected column names) or actual data.
+    const headerRow = rawRows[0];
+    const looksLikeHeader = String(headerRow[nIdx]).toLowerCase().includes('name') ||
+                             /chest|no|number|bib|id/i.test(String(headerRow[cIdx]));
+    const dataRows = looksLikeHeader ? rawRows.slice(1) : rawRows;
+
+    students = dataRows
+      .map(row => ({
+        name: String(row[nIdx] ?? '').trim(),
+        chestNo: String(row[cIdx] ?? '').trim(),
+        status: 'pending'
+      }))
+      .filter(s => s.name || s.chestNo);
+
+    if (!students.length){
+      alert('No usable rows found with those column choices.');
+      return;
+    }
+
+    gate.style.display = 'none';
+    workspace.classList.add('active');
+    renderRosterList();
+    goToIndex(0);
+  });
+
+  loadNewBtn.addEventListener('click', () => {
+    if (!confirm('Load a different spreadsheet? Current progress in this session will be lost.')) return;
+    students = [];
+    currentIndex = -1;
+    workspace.classList.remove('active');
+    gate.style.display = 'block';
+    mappingBlock.style.display = 'none';
+    excelInput.value = '';
+  });
+
+  // ---------- Roster list / navigation ----------
+  function renderRosterList(){
+    rosterCount.textContent = `${students.length} student${students.length === 1 ? '' : 's'}`;
+    rosterList.innerHTML = '';
+    students.forEach((s, i) => {
+      const li = document.createElement('li');
+      li.className = (i === currentIndex ? 'current ' : '') + (s.status === 'done' ? 'done' : '');
+      li.innerHTML = `<span class="status-dot"></span><span class="name">${s.name || '(no name)'}</span><span class="chest">${s.chestNo || '—'}</span>`;
+      li.addEventListener('click', () => goToIndex(i));
+      rosterList.appendChild(li);
+    });
+    updateProgressLine();
+  }
+
+  function updateProgressLine(){
+    const done = students.filter(s => s.status === 'done').length;
+    progressLine.innerHTML = students.length
+      ? `<strong>${done}</strong> / ${students.length} saved`
+      : '';
+  }
+
+  function goToIndex(i){
+    if (i < 0 || i >= students.length) return;
+    currentIndex = i;
+    const s = students[i];
+    studentName.textContent = s.name || '(no name)';
+    chestPill.textContent = s.chestNo || 'no chest no.';
+    prevBtn.disabled = i === 0;
+    nextBtn.disabled = i === students.length - 1;
+    resetCropWorkspace();
+    renderRosterList();
+  }
+
+  prevBtn.addEventListener('click', () => goToIndex(currentIndex - 1));
+  nextBtn.addEventListener('click', () => goToIndex(currentIndex + 1));
+  skipBtn.addEventListener('click', () => {
+    if (currentIndex < students.length - 1) goToIndex(currentIndex + 1);
+  });
+
+  // ---------- Photo loading + HEIC conversion ----------
+  photoInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    await loadPhotoFile(file);
+  });
+
+  async function loadPhotoFile(file){
+    photoStatus.textContent = 'Loading photo…';
+    photoStatus.className = 'status-msg';
+    saveBtn.disabled = true;
+
+    try {
+      let workingBlob = file;
+      const isHeic = /heic|heif/i.test(file.type) || /\.hea?ic$/i.test(file.name);
+
+      if (isHeic){
+        photoStatus.textContent = 'Converting HEIC to JPEG…';
+        workingBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+        if (Array.isArray(workingBlob)) workingBlob = workingBlob[0];
+      }
+
+      if (currentImageObjectUrl){
+        URL.revokeObjectURL(currentImageObjectUrl);
+      }
+      currentImageObjectUrl = URL.createObjectURL(workingBlob);
+
+      cropEmpty.style.display = 'none';
+      cropImage.style.display = 'block';
+      cropImage.src = currentImageObjectUrl;
+
+      cropImage.onload = () => {
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(cropImage, {
+          viewMode: 1,
+          dragMode: 'move',
+          background: false,
+          autoCropArea: 0.9,
+          aspectRatio: currentAspect,
+          responsive: true,
+        });
+        saveBtn.disabled = false;
+        photoStatus.textContent = 'Ready — adjust the crop, then save.';
+        photoStatus.className = 'status-msg ok';
+      };
+    } catch (err){
+      console.error(err);
+      photoStatus.textContent = 'Could not read that image. Try a different file.';
+      photoStatus.className = 'status-msg error';
+    }
+  }
+
+  // ---------- Aspect ratio buttons ----------
+  aspectGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-ratio]');
+    if (!btn) return;
+    [...aspectGrid.children].forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const val = Number(btn.dataset.ratio);
+    currentAspect = val === 0 ? NaN : val;
+    if (cropper) cropper.setAspectRatio(currentAspect || NaN);
+  });
+
+  function resetCropWorkspace(){
+    if (cropper){ cropper.destroy(); cropper = null; }
+    cropImage.src = '';
+    cropImage.style.display = 'none';
+    cropEmpty.style.display = 'block';
+    photoInput.value = '';
+    photoStatus.textContent = '';
+    saveBtn.disabled = true;
+    saveStatus.textContent = '';
+  }
+
+  // ---------- Save folder (File System Access API, optional) ----------
+  const supportsFsAccess = 'showDirectoryPicker' in window;
+  if (!supportsFsAccess){
+    chooseFolderBtn.disabled = true;
+    chooseFolderBtn.textContent = 'Not supported in this browser';
+    folderNote.textContent = 'Files will download individually to your Downloads folder.';
+  }
+
+  chooseFolderBtn.addEventListener('click', async () => {
+    try {
+      dirHandle = await window.showDirectoryPicker();
+      folderNote.textContent = `Saving into: ${dirHandle.name}`;
+    } catch (err){
+      // user cancelled — no-op
+    }
+  });
+
+  // ---------- Save cropped photo ----------
+  saveBtn.addEventListener('click', async () => {
+    if (!cropper) return;
+    const s = students[currentIndex];
+    const fileBase = sanitizeFileName(s.chestNo || s.name || `student_${currentIndex + 1}`);
+    const fileName = `${fileBase}.jpg`;
+
+    saveBtn.disabled = true;
+    saveStatus.textContent = 'Saving…';
+    saveStatus.className = 'status-msg';
+
+    const canvas = cropper.getCroppedCanvas({
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: 'high',
+    });
+
+    canvas.toBlob(async (blob) => {
+      if (!blob){
+        saveStatus.textContent = 'Could not export that image.';
+        saveStatus.className = 'status-msg error';
+        saveBtn.disabled = false;
+        return;
+      }
+
+      try {
+        if (dirHandle){
+          const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        } else {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        }
+
+        s.status = 'done';
+        renderRosterList();
+        saveStatus.textContent = `Saved as ${fileName}`;
+        saveStatus.className = 'status-msg ok';
+
+        // Auto-advance to the next pending student, else next in list
+        const nextPending = students.findIndex((st, i) => i > currentIndex && st.status !== 'done');
+        setTimeout(() => {
+          if (nextPending !== -1) goToIndex(nextPending);
+          else if (currentIndex < students.length - 1) goToIndex(currentIndex + 1);
+          else saveBtn.disabled = false;
+        }, 450);
+      } catch (err){
+        console.error(err);
+        saveStatus.textContent = 'Could not save that file.';
+        saveStatus.className = 'status-msg error';
+        saveBtn.disabled = false;
+      }
+    }, 'image/jpeg', 0.92);
+  });
+
+})();
+</script>
+</body>
+</html>

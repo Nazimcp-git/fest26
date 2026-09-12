@@ -245,6 +245,77 @@ async function renderDashboardTab() {
           <tbody class="divide-y divide-gray-50">${tableBody}</tbody>
         `)}
       </div>
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2"><i class="fas fa-external-link-alt text-sm text-indigo-500"></i>Quick Links — External Portals</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <a href="../report-maker/" target="_blank" class="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl border border-indigo-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                <i class="fas fa-file-excel text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 text-sm">Report Maker</h3>
+                <p class="text-[11px] text-gray-500">Export data to Excel</p>
+              </div>
+            </div>
+          </a>
+          <a href="../penalty/" target="_blank" class="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl border border-red-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                <i class="fas fa-user-minus text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 text-sm">Penalty Portal</h3>
+                <p class="text-[11px] text-gray-500">Student penalty management</p>
+              </div>
+            </div>
+          </a>
+          <a href="../registrations/" target="_blank" class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                <i class="fas fa-clipboard-check text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 text-sm">Registration Portal</h3>
+                <p class="text-[11px] text-gray-500">Manage participant registrations</p>
+              </div>
+            </div>
+          </a>
+          <a href="../atm/" target="_blank" class="bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl border border-sky-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600 group-hover:bg-sky-600 group-hover:text-white transition-colors">
+                <i class="fas fa-tv text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 text-sm">ATM Kiosk</h3>
+                <p class="text-[11px] text-gray-500">Public kiosk display</p>
+              </div>
+            </div>
+          </a>
+          <a href="../live/" target="_blank" class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                <i class="fas fa-satellite-dish text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 text-sm">Live Display</h3>
+                <p class="text-[11px] text-gray-500">TV/projector live feed</p>
+              </div>
+            </div>
+          </a>
+          <a href="../backup/" target="_blank" class="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-slate-600 group-hover:text-white transition-colors">
+                <i class="fas fa-database text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 text-sm">Backup</h3>
+                <p class="text-[11px] text-gray-500">Data backup & restore</p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
     </div>`;
 }
 

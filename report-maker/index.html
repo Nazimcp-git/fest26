@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Maker - Alert 2k26</title>
+  <meta name="description" content="Advanced report generation and Excel export tool for Alert 2k26 Arts Festival.">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="../logo/logo.png" />
+  <link rel="icon" type="image/webp" href="../logo/logo.webp" />
+  <link rel="apple-touch-icon" href="../logo/logo.png" />
+
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../results/styles/tailwind.css" />
+
+  <!-- Firebase Legacy Web SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/security.js"></script>
+  <script src="../js/auth-config.js"></script>
+
+  <!-- SheetJS for Excel Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-display {
+      font-family: 'Outfit', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .animate-shimmer {
+      background: linear-gradient(90deg, transparent 25%, rgba(99,102,241,0.08) 50%, transparent 75%);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-up {
+      animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Report card hover effects */
+    .report-card {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .report-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px -5px rgba(0,0,0,0.08), 0 4px 10px -5px rgba(0,0,0,0.04);
+    }
+    .report-card:active {
+      transform: translateY(0px);
+    }
+
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Table styling */
+    .preview-table {
+      font-size: 11px;
+    }
+    .preview-table th {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #f8fafc;
+    }
+    .preview-table tr:hover td {
+      background-color: #f1f5f9;
+    }
+
+    /* Print hide */
+    @media print {
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Root App Container -->
+  <div id="app" class="min-h-full">
+    <!-- Branded Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-50" style="background-image: radial-gradient(at 50% 40%, hsla(250,80%,70%,0.12) 0px, transparent 60%);">
+      <style>
+        @keyframes horizontalLoad {
+          0% { left: -40%; width: 30%; }
+          50% { left: 25%; width: 55%; }
+          100% { left: 100%; width: 30%; }
+        }
+        @keyframes loaderPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.88; transform: scale(0.98); } }
+        @keyframes loaderFadeOut { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.98); pointer-events: none; visibility: hidden; } }
+        .loader-logo { 
+          animation: loaderPulse 2.4s ease-in-out infinite; 
+          filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+        }
+        .loader-progress-bar { animation: horizontalLoad 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        .loader-hide { animation: loaderFadeOut 0.4s ease-out forwards; }
+      </style>
+      <div class="flex flex-col items-center">
+        <div class="mb-5 flex items-center justify-center">
+          <img src="../logo/logo.webp" onerror="this.onerror=null;this.src='../logo/logo.png'" alt="Alert 2k26" class="loader-logo h-16 sm:h-20 w-auto max-w-[260px] object-contain select-none" style="filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));" />
+        </div>
+        <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-1" style="font-family: 'Outfit', sans-serif;">Alert 2k26</h1>
+        <p class="text-xs sm:text-sm font-medium text-slate-400 tracking-wide" style="font-family: 'Plus Jakarta Sans', sans-serif;">Loading Report Maker...</p>
+        <!-- Horizontal Loading Bar -->
+        <div class="w-48 sm:w-56 h-1.5 bg-indigo-100/70 border border-indigo-200/50 rounded-full overflow-hidden relative mt-4 shadow-inner">
+          <div class="loader-progress-bar absolute top-0 bottom-0 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-600 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Safety fallback: ensure loading screen dismisses even under slow network
+    setTimeout(function() {
+      var l = document.getElementById('loading-screen');
+      if (l) {
+        l.classList.add('loader-hide');
+        setTimeout(function() { if (l && l.parentNode) l.remove(); }, 450);
+      }
+    }, 5000);
+  </script>
+
+  <script>
+    // ══════════════════════════════════════════════
+    //  GLOBAL STATE
+    // ══════════════════════════════════════════════
+    let appData = {
+      students: {},
+      teams: {},
+      programs: {},
+      results: {},
+      pointsConfig: { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 },
+      groupPointsConfig: { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 },
+      teamPointsConfig: { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 },
+      teamDirectScores: {},
+      teamPenalties: {},
+      studentPenalties: {},
+      participantRegistrations: {},
+      registrations: {}
+    };
+
+    let session = typeof SecurityEngine !== 'undefined' ? SecurityEngine.verifySession('artfest_report_session') : JSON.parse(sessionStorage.getItem('artfest_report_session') || 'null');
+    let activeReportType = null;
+    let isExporting = false;
+    let lastExportTime = null;
+    let dataLoaded = false;
+
+    // Filter state
+    let filterCategory = 'All';
+    let filterTeam = 'All';
+    let filterClass = 'All';
+    let filterStatus = 'All';
+    searchQuery = '';
+
+    const CATEGORIES_LIST = window.CATEGORIES || ["BIDAYA", "ALIYA", "UOOLA", "THANIYA", "THANAWIYYA", "KULLIYYA"];
+
+    // ══════════════════════════════════════════════
+    //  UTILITIES
+    // ══════════════════════════════════════════════
+    function sanitize(str) {
+      if (!str) return '';
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function formatDateTime(ts) {
+      if (!ts) return 'N/A';
+      return new Date(ts).toLocaleString('en-US', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    function getDataAsArray(collection) {
+      if (!appData[collection]) return [];
+      return Object.entries(appData[collection]).map(([id, val]) => ({ id, ...val }));
+    }
+
+    function getUniqueClassesList() {
+      const set = new Set();
+      Object.values(appData.students || {}).forEach(s => {
+        if (s.className && String(s.className).trim()) {
+          set.add(String(s.className).trim());
+        }
+      });
+      return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    }
+
+    // Toast Notification Engine
+    const Toast = {
+      show(msg, type = 'info') {
+        const colors = {
+          success: 'bg-emerald-600 text-white shadow-emerald-500/20',
+          error: 'bg-red-600 text-white shadow-red-500/20',
+          info: 'bg-slate-900 text-white shadow-slate-900/20',
+          export: 'bg-indigo-600 text-white shadow-indigo-500/20'
+        };
+        const icons = {
+          success: 'check-circle',
+          error: 'exclamation-circle',
+          info: 'info-circle',
+          export: 'file-excel'
+        };
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 right-6 px-5 py-3.5 rounded-2xl shadow-xl ${colors[type]} text-xs font-bold tracking-wide z-[9999] animate-fade-in flex items-center gap-3 border border-white/10`;
+        toast.innerHTML = `<i class="fas fa-${icons[type]} text-base"></i> ${sanitize(msg)}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
+      }
+    };
+
+    // ══════════════════════════════════════════════
+    //  FIREBASE SYNC
+    // ══════════════════════════════════════════════
+    db.ref().on('value', snapshot => {
+      const raw = snapshot.val() || {};
+      appData = {
+        students: raw.students || {},
+        teams: raw.teams || {},
+        programs: raw.programs || {},
+        results: raw.results || {},
+        pointsConfig: raw.pointsConfig || { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 },
+        groupPointsConfig: raw.groupPointsConfig || { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 },
+        teamPointsConfig: raw.teamPointsConfig || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 },
+        teamDirectScores: raw.teamDirectScores || {},
+        teamPenalties: raw.teamPenalties || {},
+        studentPenalties: raw.studentPenalties || {},
+        participantRegistrations: raw.participantRegistrations || {},
+        registrations: raw.registrations || {}
+      };
+      dataLoaded = true;
+      render();
+    });
+
+    // ══════════════════════════════════════════════
+    //  AUTH
+    // ══════════════════════════════════════════════
+    async function handleLogin(e) {
+      e.preventDefault();
+      const codeInput = document.getElementById('passcode-input').value.trim().toUpperCase();
+      const errEl = document.getElementById('login-error');
+      const codeHash = await SecurityEngine.hashPasscode(codeInput);
+
+      if (AuthConfig.isAdminHash(codeHash)) {
+        session = { code: codeInput, loggedInAt: Date.now() };
+        sessionStorage.setItem('artfest_report_session', JSON.stringify(session));
+        Toast.show('Authenticated — Report Maker Ready', 'success');
+        render();
+      } else {
+        errEl.textContent = 'Invalid admin passcode. Only admins can access reports.';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      session = null;
+      sessionStorage.removeItem('artfest_report_session');
+      activeReportType = null;
+      Toast.show('Logged out from Report Maker', 'info');
+      render();
+    }
+
+    function togglePasscodeVisibility() {
+      const input = document.getElementById('passcode-input');
+      const icon = document.querySelector('#toggle-passcode-btn i');
+      if (!input || !icon) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash text-sm';
+      } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye text-sm';
+      }
+    }
+
+    // ══════════════════════════════════════════════
+    //  SCORE CALCULATION ENGINE (Mirrors calculations.js)
+    // ══════════════════════════════════════════════
+    function calculateTeamPenalties() {
+      const penaltiesByTeam = {};
+      for (const teamId in appData.teams) {
+        penaltiesByTeam[teamId] = 0;
+      }
+      Object.values(appData.teamPenalties || {}).forEach(penalty => {
+        if (penaltiesByTeam.hasOwnProperty(penalty.teamId)) {
+          penaltiesByTeam[penalty.teamId] += penalty.points;
+        }
+      });
+      return penaltiesByTeam;
+    }
+
+    function calculateStudentPenalties() {
+      const penaltiesByStudent = {};
+      Object.values(appData.studentPenalties || {}).forEach(p => {
+        if (!penaltiesByStudent[p.studentId]) penaltiesByStudent[p.studentId] = 0;
+        penaltiesByStudent[p.studentId] += (p.points || 0);
+      });
+      return penaltiesByStudent;
+    }
+
+    function calculateAllScores(filter = 'all') {
+      const studentPoints = {};
+      const teamDirectPoints = {};
+      const teamPenalties = calculateTeamPenalties();
+      const studentPenalties = calculateStudentPenalties();
+
+      for (const studentId in appData.students) { studentPoints[studentId] = 0; }
+      for (const teamId in appData.teams) {
+        teamDirectPoints[teamId] = {};
+        CATEGORIES_LIST.forEach(cat => { teamDirectPoints[teamId][cat] = 0; });
+      }
+
+      const allResults = appData.results || {};
+      for (const resultId in allResults) {
+        const result = allResults[resultId];
+
+        if (filter === 'published') {
+          if (result.status !== 'published') continue;
+          if (result.scoresCalculated === false) continue;
+        }
+        if (filter === 'published+ready' && result.status !== 'published' && result.status !== 'ready') continue;
+
+        if (!result.participants) continue;
+
+        const cfg = result.programType === 'group'
+          ? appData.groupPointsConfig
+          : result.programType === 'team'
+            ? appData.teamPointsConfig
+            : appData.pointsConfig;
+
+        result.participants.forEach(participant => {
+          let points = 0;
+          if (participant.position && participant.position !== "none" && cfg[participant.position])
+            points += cfg[participant.position];
+          if (participant.grade && participant.grade !== "none" && cfg[participant.grade])
+            points += cfg[participant.grade];
+
+          if (result.programType === 'group' || result.programType === 'team') {
+            const student = appData.students[participant.studentId];
+            if (student && student.teamId && teamDirectPoints[student.teamId] && result.category) {
+              if (teamDirectPoints[student.teamId][result.category] === undefined)
+                teamDirectPoints[student.teamId][result.category] = 0;
+              teamDirectPoints[student.teamId][result.category] += points;
+            }
+          } else {
+            if (studentPoints.hasOwnProperty(participant.studentId))
+              studentPoints[participant.studentId] += points;
+          }
+        });
+      }
+
+      const teamsArray = JSON.parse(JSON.stringify(getDataAsArray("teams")));
+      const studentsArray = JSON.parse(JSON.stringify(getDataAsArray("students")));
+
+      studentsArray.forEach(student => {
+        student.totalPoints = studentPoints[student.id] || 0;
+        student.penaltyPoints = studentPenalties[student.id] || 0;
+        student.netPoints = student.totalPoints - student.penaltyPoints;
+      });
+
+      teamsArray.forEach(team => {
+        const directScores = teamDirectPoints[team.id] || {};
+        let totalDirectPoints = 0;
+        team.categoryPoints = {};
+        CATEGORIES_LIST.forEach(cat => {
+          const pts = directScores[cat] || 0;
+          team.categoryPoints[cat] = pts;
+          totalDirectPoints += pts;
+        });
+        team.totalPoints = totalDirectPoints;
+
+        studentsArray.forEach(student => {
+          if (student.teamId === team.id) {
+            team.totalPoints += student.totalPoints;
+            if (student.category && team.categoryPoints.hasOwnProperty(student.category))
+              team.categoryPoints[student.category] += student.totalPoints;
+          }
+        });
+
+        team.penaltyPoints = teamPenalties[team.id] || 0;
+        team.totalPoints -= team.penaltyPoints;
+      });
+
+      teamsArray.sort((a, b) => b.totalPoints - a.totalPoints);
+      studentsArray.sort((a, b) => (b.netPoints || 0) - (a.netPoints || 0));
+
+      const classScoresMap = {};
+      studentsArray.forEach(student => {
+        if (student.className) {
+          if (!classScoresMap[student.className]) classScoresMap[student.className] = { totalPoints: 0, studentCount: 0 };
+          classScoresMap[student.className].totalPoints += (student.netPoints || 0);
+          classScoresMap[student.className].studentCount++;
+        }
+      });
+
+      const classesArray = Object.keys(classScoresMap).map(className => ({
+        name: className,
+        totalPoints: classScoresMap[className].totalPoints,
+        studentCount: classScoresMap[className].studentCount
+      })).sort((a, b) => b.totalPoints - a.totalPoints);
+
+      return { teamsArray, studentsArray, classesArray };
+    }
+
+    // ══════════════════════════════════════════════
+    //  REPORT DATA GENERATORS
+    // ══════════════════════════════════════════════
+
+    function generateStudentReport() {
+      const { studentsArray } = calculateAllScores('published');
+      let filtered = [...studentsArray];
+      if (filterCategory !== 'All') filtered = filtered.filter(s => s.category === filterCategory);
+      if (filterTeam !== 'All') filtered = filtered.filter(s => s.teamId === filterTeam);
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(s => 
+          (s.name || '').toLowerCase().includes(q) ||
+          String(s.chestNo || '').includes(q) ||
+          (s.className || '').toLowerCase().includes(q)
+        );
+      }
+
+      return {
+        title: 'Student Leaderboard Report',
+        filename: 'Alert2k26_Student_Leaderboard',
+        headers: ['Rank', 'Chest No', 'Student Name', 'Class', 'Category', 'Team', 'Points Earned', 'Penalty Points', 'Net Points'],
+        rows: filtered.map((s, i) => [
+          i + 1,
+          s.chestNo || '',
+          s.name || '',
+          s.className || '',
+          s.category || '',
+          appData.teams[s.teamId]?.name || '',
+          s.totalPoints || 0,
+          s.penaltyPoints || 0,
+          s.netPoints || 0
+        ]),
+        stats: {
+          'Total Students': filtered.length,
+          'Total Points Earned': filtered.reduce((sum, s) => sum + (s.totalPoints || 0), 0),
+          'Total Penalty Points': filtered.reduce((sum, s) => sum + (s.penaltyPoints || 0), 0),
+          'Total Net Points': filtered.reduce((sum, s) => sum + (s.netPoints || 0), 0)
+        }
+      };
+    }
+
+    function generateTeamReport() {
+      const { teamsArray } = calculateAllScores('published');
+      const categoryHeaders = CATEGORIES_LIST.map(cat => `${cat} Points`);
+
+      return {
+        title: 'Team Standings Report',
+        filename: 'Alert2k26_Team_Standings',
+        headers: ['Rank', 'Team Name', ...categoryHeaders, 'Total (Before Penalty)', 'Penalty Points', 'Net Total Points'],
+        rows: teamsArray.map((t, i) => [
+          i + 1,
+          t.name || '',
+          ...CATEGORIES_LIST.map(cat => t.categoryPoints?.[cat] || 0),
+          (t.totalPoints || 0) + (t.penaltyPoints || 0),
+          t.penaltyPoints || 0,
+          t.totalPoints || 0
+        ]),
+        stats: {
+          'Total Teams': teamsArray.length,
+          'Leading Team': teamsArray[0]?.name || 'N/A',
+          'Leading Score': teamsArray[0]?.totalPoints || 0,
+          'Total Penalty Points': teamsArray.reduce((sum, t) => sum + (t.penaltyPoints || 0), 0)
+        }
+      };
+    }
+
+    function generateClassReport() {
+      const { classesArray, studentsArray } = calculateAllScores('published');
+
+      // Enrich class data with team & category breakdowns
+      const enrichedClasses = classesArray.map(cls => {
+        const classStudents = studentsArray.filter(s => s.className === cls.name);
+        const topStudent = classStudents[0];
+        return {
+          ...cls,
+          topStudentName: topStudent?.name || 'N/A',
+          topStudentPoints: topStudent?.netPoints || 0
+        };
+      });
+
+      return {
+        title: 'Class Rankings Report',
+        filename: 'Alert2k26_Class_Rankings',
+        headers: ['Rank', 'Class Name', 'Total Students', 'Total Points', 'Top Student', 'Top Student Points'],
+        rows: enrichedClasses.map((c, i) => [
+          i + 1,
+          c.name,
+          c.studentCount,
+          c.totalPoints,
+          c.topStudentName,
+          c.topStudentPoints
+        ]),
+        stats: {
+          'Total Classes': enrichedClasses.length,
+          'Top Class': enrichedClasses[0]?.name || 'N/A',
+          'Highest Class Score': enrichedClasses[0]?.totalPoints || 0
+        }
+      };
+    }
+
+    function generateClassStudentReport() {
+      const { studentsArray } = calculateAllScores('published');
+      let filtered = [...studentsArray];
+
+      if (filterClass !== 'All') {
+        filtered = filtered.filter(s => (s.className || 'Unassigned') === filterClass);
+      }
+      if (filterCategory !== 'All') {
+        filtered = filtered.filter(s => s.category === filterCategory);
+      }
+      if (filterTeam !== 'All') {
+        filtered = filtered.filter(s => s.teamId === filterTeam);
+      }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(s => 
+          (s.name || '').toLowerCase().includes(q) ||
+          String(s.chestNo || '').includes(q) ||
+          (s.className || '').toLowerCase().includes(q)
+        );
+      }
+
+      // Sort by class name, then netPoints descending
+      filtered.sort((a, b) => {
+        const cA = a.className || 'Unassigned';
+        const cB = b.className || 'Unassigned';
+        if (cA !== cB) return cA.localeCompare(cB, undefined, { numeric: true });
+        return (b.netPoints || 0) - (a.netPoints || 0);
+      });
+
+      const classRanks = {};
+      const rows = [];
+      filtered.forEach(s => {
+        const cls = s.className || 'Unassigned';
+        classRanks[cls] = (classRanks[cls] || 0) + 1;
+        rows.push([
+          cls,
+          classRanks[cls],
+          s.chestNo || '',
+          s.name || '',
+          s.category || '',
+          appData.teams[s.teamId]?.name || '',
+          s.totalPoints || 0,
+          s.penaltyPoints || 0,
+          s.netPoints || 0
+        ]);
+      });
+
+      // Individual class sheets for Excel export
+      const allClasses = getUniqueClassesList();
+      const extraSheets = [];
+      if (filterClass === 'All' && !searchQuery) {
+        allClasses.forEach(cls => {
+          const clsStudents = studentsArray
+            .filter(s => (s.className || 'Unassigned') === cls)
+            .sort((a, b) => (b.netPoints || 0) - (a.netPoints || 0));
+
+          if (clsStudents.length > 0) {
+            extraSheets.push({
+              sheetName: cls.replace(/[:\\/?*\[\]]/g, '_').slice(0, 31),
+              headers: ['Class Rank', 'Chest No', 'Student Name', 'Category', 'Team', 'Points Earned', 'Penalty', 'Net Points'],
+              rows: clsStudents.map((s, idx) => [
+                idx + 1,
+                s.chestNo || '',
+                s.name || '',
+                s.category || '',
+                appData.teams[s.teamId]?.name || '',
+                s.totalPoints || 0,
+                s.penaltyPoints || 0,
+                s.netPoints || 0
+              ]),
+              colWidths: [{ wch: 12 }, { wch: 12 }, { wch: 24 }, { wch: 14 }, { wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 12 }]
+            });
+          }
+        });
+      }
+
+      const distinctClasses = [...new Set(filtered.map(s => s.className || 'Unassigned'))];
+      const totalNet = filtered.reduce((sum, s) => sum + (s.netPoints || 0), 0);
+
+      return {
+        title: 'Class-wise Student Report',
+        filename: 'Alert2k26_Class_Wise_Students',
+        headers: ['Class', 'Class Rank', 'Chest No', 'Student Name', 'Category', 'Team', 'Points Earned', 'Penalty', 'Net Points'],
+        rows: rows,
+        extraSheets: extraSheets,
+        stats: {
+          'Total Students': filtered.length,
+          'Classes Count': distinctClasses.length,
+          'Total Net Points': totalNet,
+          'Avg Pts / Student': filtered.length ? (totalNet / filtered.length).toFixed(1) : 0
+        }
+      };
+    }
+
+    function generateCategoryReport() {
+      const { studentsArray } = calculateAllScores('published');
+      const sections = [];
+
+      CATEGORIES_LIST.forEach(cat => {
+        const catStudents = studentsArray
+          .filter(s => s.category === cat)
+          .sort((a, b) => (b.netPoints || 0) - (a.netPoints || 0));
+
+        sections.push({
+          category: cat,
+          students: catStudents,
+          totalPoints: catStudents.reduce((sum, s) => sum + (s.netPoints || 0), 0),
+          count: catStudents.length
+        });
+      });
+
+      // Flatten for table display
+      const rows = [];
+      sections.forEach(sec => {
+        sec.students.forEach((s, i) => {
+          rows.push([
+            sec.category,
+            i + 1,
+            s.chestNo || '',
+            s.name || '',
+            s.className || '',
+            appData.teams[s.teamId]?.name || '',
+            s.totalPoints || 0,
+            s.penaltyPoints || 0,
+            s.netPoints || 0
+          ]);
+        });
+      });
+
+      return {
+        title: 'Category Breakdown Report',
+        filename: 'Alert2k26_Category_Breakdown',
+        headers: ['Category', 'Rank', 'Chest No', 'Student Name', 'Class', 'Team', 'Points Earned', 'Penalty', 'Net Points'],
+        rows: rows,
+        stats: Object.fromEntries(sections.map(s => [`${s.category} Students`, `${s.count} (${s.totalPoints} pts)`]))
+      };
+    }
+
+    function generateProgramReport() {
+      const programs = getDataAsArray('programs');
+      const results = getDataAsArray('results');
+
+      let filteredPrograms = [...programs];
+      if (filterCategory !== 'All') filteredPrograms = filteredPrograms.filter(p => p.category === filterCategory);
+      if (filterStatus !== 'All') {
+        filteredPrograms = filteredPrograms.filter(p => {
+          const result = results.find(r => r.programId === p.id);
+          if (filterStatus === 'published') return result?.status === 'published';
+          if (filterStatus === 'pending') return !result || result.status === 'pending';
+          if (filterStatus === 'ready') return result?.status === 'ready';
+          return true;
+        });
+      }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filteredPrograms = filteredPrograms.filter(p => (p.name || '').toLowerCase().includes(q));
+      }
+
+      filteredPrograms.sort((a, b) => (a.category || '').localeCompare(b.category || '') || (a.name || '').localeCompare(b.name || ''));
+
+      const rows = [];
+      filteredPrograms.forEach(prog => {
+        const result = results.find(r => r.programId === prog.id);
+        const status = result?.status || 'Not Entered';
+        const participants = result?.participants || [];
+
+        if (participants.length === 0) {
+          rows.push([
+            prog.name || '',
+            prog.category || '',
+            prog.programType || 'individual',
+            prog.stageType || '',
+            status,
+            '', '', '', '', ''
+          ]);
+        } else {
+          participants.forEach((part, idx) => {
+            const student = appData.students[part.studentId];
+            rows.push([
+              idx === 0 ? (prog.name || '') : '',
+              idx === 0 ? (prog.category || '') : '',
+              idx === 0 ? (prog.programType || 'individual') : '',
+              idx === 0 ? (prog.stageType || '') : '',
+              idx === 0 ? status : '',
+              part.name || student?.name || '',
+              part.studentId ? (student?.chestNo || '') : '',
+              appData.teams[student?.teamId]?.name || '',
+              part.position && part.position !== 'none' ? part.position : '',
+              part.grade && part.grade !== 'none' ? part.grade : ''
+            ]);
+          });
+        }
+      });
+
+      return {
+        title: 'Program Results Report',
+        filename: 'Alert2k26_Program_Results',
+        headers: ['Program Name', 'Category', 'Type', 'Stage Type', 'Status', 'Participant Name', 'Chest No', 'Team', 'Position', 'Grade'],
+        rows: rows,
+        stats: {
+          'Total Programs': filteredPrograms.length,
+          'Published': filteredPrograms.filter(p => results.find(r => r.programId === p.id)?.status === 'published').length,
+          'Pending': filteredPrograms.filter(p => { const r = results.find(r2 => r2.programId === p.id); return !r || r.status === 'pending'; }).length,
+          'Ready': filteredPrograms.filter(p => results.find(r => r.programId === p.id)?.status === 'ready').length
+        }
+      };
+    }
+
+    // ══════════════════════════════════════════════
+    //  EXCEL EXPORT ENGINE
+    // ══════════════════════════════════════════════
+
+    function exportSingleReport(reportData) {
+      if (isExporting) return;
+      isExporting = true;
+      render();
+
+      try {
+        const wb = XLSX.utils.book_new();
+
+        // Stats sheet row
+        const statsRows = [['Report', reportData.title], ['Generated At', new Date().toLocaleString()], [''], ['Metric', 'Value']];
+        Object.entries(reportData.stats).forEach(([key, val]) => statsRows.push([key, val]));
+
+        const wsStats = XLSX.utils.aoa_to_sheet(statsRows);
+        XLSX.utils.book_append_sheet(wb, wsStats, 'Summary');
+
+        // Data sheet
+        const dataRows = [reportData.headers, ...reportData.rows];
+        const wsData = XLSX.utils.aoa_to_sheet(dataRows);
+
+        // Auto-width columns
+        const colWidths = reportData.headers.map((h, i) => {
+          let maxLen = h.length;
+          reportData.rows.forEach(row => {
+            const cellLen = String(row[i] || '').length;
+            if (cellLen > maxLen) maxLen = cellLen;
+          });
+          return { wch: Math.min(maxLen + 4, 40) };
+        });
+        wsData['!cols'] = colWidths;
+
+        XLSX.utils.book_append_sheet(wb, wsData, 'Data');
+
+        // Optional extra sheets (e.g. per-class tabs)
+        if (reportData.extraSheets && reportData.extraSheets.length > 0) {
+          reportData.extraSheets.forEach(es => {
+            const wsExtra = XLSX.utils.aoa_to_sheet([es.headers, ...es.rows]);
+            if (es.colWidths) {
+              wsExtra['!cols'] = es.colWidths;
+            }
+            XLSX.utils.book_append_sheet(wb, wsExtra, es.sheetName);
+          });
+        }
+
+        XLSX.writeFile(wb, `${reportData.filename}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+        lastExportTime = Date.now();
+        Toast.show(`${reportData.title} exported successfully!`, 'export');
+      } catch (err) {
+        console.error('Export failed:', err);
+        Toast.show('Export failed: ' + err.message, 'error');
+      } finally {
+        isExporting = false;
+        render();
+      }
+    }
+
+    function exportFullSummary() {
+      if (isExporting) return;
+      isExporting = true;
+      render();
+
+      try {
+        const wb = XLSX.utils.book_new();
+        const timestamp = new Date().toLocaleString();
+
+        // 1. Overview Sheet
+        const overviewRows = [
+          ['ALERT 2K26 — FULL FESTIVAL REPORT'],
+          ['Generated At', timestamp],
+          [''],
+          ['Category', 'Total Students', 'Total Programs', 'Published Results']
+        ];
+        const programs = getDataAsArray('programs');
+        const results = getDataAsArray('results');
+        CATEGORIES_LIST.forEach(cat => {
+          const catStudents = Object.values(appData.students).filter(s => s.category === cat);
+          const catPrograms = programs.filter(p => p.category === cat);
+          const catPublished = results.filter(r => {
+            const prog = programs.find(p => p.id === r.programId);
+            return prog?.category === cat && r.status === 'published';
+          });
+          overviewRows.push([cat, catStudents.length, catPrograms.length, catPublished.length]);
+        });
+        const wsOverview = XLSX.utils.aoa_to_sheet(overviewRows);
+        wsOverview['!cols'] = [{ wch: 20 }, { wch: 16 }, { wch: 16 }, { wch: 18 }];
+        XLSX.utils.book_append_sheet(wb, wsOverview, 'Overview');
+
+        // 2. Team Standings
+        const teamReport = generateTeamReport();
+        const wsTeams = XLSX.utils.aoa_to_sheet([teamReport.headers, ...teamReport.rows]);
+        wsTeams['!cols'] = teamReport.headers.map(() => ({ wch: 18 }));
+        XLSX.utils.book_append_sheet(wb, wsTeams, 'Team Standings');
+
+        // 3. Student Leaderboard
+        // Reset filters for full export
+        const savedCategory = filterCategory;
+        const savedTeam = filterTeam;
+        const savedClass = filterClass;
+        const savedSearch = searchQuery;
+        filterCategory = 'All';
+        filterTeam = 'All';
+        filterClass = 'All';
+        searchQuery = '';
+
+        const studentReport = generateStudentReport();
+        const wsStudents = XLSX.utils.aoa_to_sheet([studentReport.headers, ...studentReport.rows]);
+        wsStudents['!cols'] = studentReport.headers.map(() => ({ wch: 18 }));
+        XLSX.utils.book_append_sheet(wb, wsStudents, 'Student Leaderboard');
+
+        // 4. Class Rankings
+        const classReport = generateClassReport();
+        const wsClasses = XLSX.utils.aoa_to_sheet([classReport.headers, ...classReport.rows]);
+        wsClasses['!cols'] = classReport.headers.map(() => ({ wch: 18 }));
+        XLSX.utils.book_append_sheet(wb, wsClasses, 'Class Rankings');
+
+        // 5. Class-wise Students
+        const classStudentReport = generateClassStudentReport();
+        const wsClassStudents = XLSX.utils.aoa_to_sheet([classStudentReport.headers, ...classStudentReport.rows]);
+        wsClassStudents['!cols'] = classStudentReport.headers.map(() => ({ wch: 18 }));
+        XLSX.utils.book_append_sheet(wb, wsClassStudents, 'Class-wise Students');
+
+        // Restore filters
+        filterCategory = savedCategory;
+        filterTeam = savedTeam;
+        filterClass = savedClass;
+        searchQuery = savedSearch;
+
+        // 6. Category-wise Student Rankings (separate sheet per category)
+        CATEGORIES_LIST.forEach(cat => {
+          const catStudents = calculateAllScores('published').studentsArray
+            .filter(s => s.category === cat)
+            .sort((a, b) => (b.netPoints || 0) - (a.netPoints || 0));
+
+          const catHeaders = ['Rank', 'Chest No', 'Name', 'Class', 'Team', 'Points', 'Penalty', 'Net'];
+          const catRows = catStudents.map((s, i) => [
+            i + 1,
+            s.chestNo || '',
+            s.name || '',
+            s.className || '',
+            appData.teams[s.teamId]?.name || '',
+            s.totalPoints || 0,
+            s.penaltyPoints || 0,
+            s.netPoints || 0
+          ]);
+
+          const wsCat = XLSX.utils.aoa_to_sheet([catHeaders, ...catRows]);
+          wsCat['!cols'] = catHeaders.map(() => ({ wch: 16 }));
+          XLSX.utils.book_append_sheet(wb, wsCat, cat.slice(0, 31));
+        });
+
+        // 6. Program Results
+        const savedStatus = filterStatus;
+        filterCategory = 'All';
+        filterStatus = 'All';
+        searchQuery = '';
+
+        const progReport = generateProgramReport();
+        const wsProgs = XLSX.utils.aoa_to_sheet([progReport.headers, ...progReport.rows]);
+        wsProgs['!cols'] = progReport.headers.map(() => ({ wch: 18 }));
+        XLSX.utils.book_append_sheet(wb, wsProgs, 'Program Results');
+
+        // Restore all filters
+        filterCategory = savedCategory;
+        filterTeam = savedTeam;
+        filterStatus = savedStatus;
+        searchQuery = savedSearch;
+
+        // 7. Penalties Sheet
+        const teamPenaltiesList = Object.entries(appData.teamPenalties || {}).map(([id, p]) => ({ id, ...p }));
+        const studentPenaltiesList = Object.entries(appData.studentPenalties || {}).map(([id, p]) => ({ id, ...p }));
+
+        const penaltyHeaders = ['Type', 'Target Name', 'Team', 'Points Deducted', 'Reason', 'Date'];
+        const penaltyRows = [];
+        teamPenaltiesList.forEach(p => {
+          penaltyRows.push(['Team', appData.teams[p.teamId]?.name || p.teamId, '', p.points || 0, p.reason || '', formatDateTime(p.createdAt)]);
+        });
+        studentPenaltiesList.forEach(p => {
+          penaltyRows.push(['Student', p.studentName || appData.students[p.studentId]?.name || '', appData.teams[p.teamId]?.name || '', p.points || 0, p.reason || '', formatDateTime(p.createdAt)]);
+        });
+
+        const wsPenalties = XLSX.utils.aoa_to_sheet([penaltyHeaders, ...penaltyRows]);
+        wsPenalties['!cols'] = penaltyHeaders.map(() => ({ wch: 20 }));
+        XLSX.utils.book_append_sheet(wb, wsPenalties, 'Penalties');
+
+        XLSX.writeFile(wb, `Alert2k26_Full_Festival_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+        lastExportTime = Date.now();
+        Toast.show('Full Festival Summary exported! (Multi-sheet workbook)', 'export');
+      } catch (err) {
+        console.error('Full export failed:', err);
+        Toast.show('Full export failed: ' + err.message, 'error');
+      } finally {
+        isExporting = false;
+        render();
+      }
+    }
+
+    // ══════════════════════════════════════════════
+    //  REPORT TYPE CONFIGS
+    // ══════════════════════════════════════════════
+    const REPORT_TYPES = {
+      students: {
+        id: 'students',
+        title: 'Student Leaderboard',
+        subtitle: 'All students ranked by total points with team, class, and category info',
+        icon: 'fa-graduation-cap',
+        styles: { bg: '#eef2ff', text: '#4f46e5', border: '#c7d2fe', badgeBg: '#eef2ff', badgeText: '#4338ca' },
+        generate: generateStudentReport,
+        hasFilters: true,
+        hasTeamFilter: true,
+        hasCategoryFilter: true,
+        hasSearch: true
+      },
+      class_students: {
+        id: 'class_students',
+        title: 'Class-wise Students',
+        subtitle: 'Student scores, ranks, and details organized and filterable by class',
+        icon: 'fa-address-book',
+        styles: { bg: '#ecfeff', text: '#0891b2', border: '#a5f3fc', badgeBg: '#ecfeff', badgeText: '#0e7490' },
+        generate: generateClassStudentReport,
+        hasFilters: true,
+        hasClassFilter: true,
+        hasCategoryFilter: true,
+        hasTeamFilter: true,
+        hasSearch: true
+      },
+      teams: {
+        id: 'teams',
+        title: 'Team Standings',
+        subtitle: 'Full team rankings with category-wise point breakdown and penalties',
+        icon: 'fa-users',
+        styles: { bg: '#f5f3ff', text: '#7c3aed', border: '#ddd6fe', badgeBg: '#f5f3ff', badgeText: '#6d28d9' },
+        generate: generateTeamReport,
+        hasFilters: false
+      },
+      classes: {
+        id: 'classes',
+        title: 'Class Rankings',
+        subtitle: 'All classes ranked by aggregate student points',
+        icon: 'fa-school',
+        styles: { bg: '#ecfdf5', text: '#059669', border: '#a7f3d0', badgeBg: '#ecfdf5', badgeText: '#047857' },
+        generate: generateClassReport,
+        hasFilters: false
+      },
+      categories: {
+        id: 'categories',
+        title: 'Category Breakdown',
+        subtitle: 'Student rankings within each category (BIDAYA, ALIYA, UOOLA, etc.)',
+        icon: 'fa-layer-group',
+        styles: { bg: '#fffbeb', text: '#d97706', border: '#fde68a', badgeBg: '#fffbeb', badgeText: '#b45309' },
+        generate: generateCategoryReport,
+        hasFilters: false
+      },
+      programs: {
+        id: 'programs',
+        title: 'Program Results',
+        subtitle: 'All programs with participants, positions, grades, and completion status',
+        icon: 'fa-clipboard-list',
+        styles: { bg: '#fff1f2', text: '#e11d48', border: '#fecdd3', badgeBg: '#fff1f2', badgeText: '#be123c' },
+        generate: generateProgramReport,
+        hasFilters: true,
+        hasCategoryFilter: true,
+        hasStatusFilter: true,
+        hasSearch: true
+      }
+    };
+
+    // ══════════════════════════════════════════════
+    //  UI ACTIONS
+    // ══════════════════════════════════════════════
+    function selectReport(type) {
+      activeReportType = type;
+      filterCategory = 'All';
+      filterTeam = 'All';
+      filterClass = 'All';
+      filterStatus = 'All';
+      searchQuery = '';
+      render();
+    }
+
+    function goBackToMenu() {
+      activeReportType = null;
+      render();
+    }
+
+    function handleFilterChange(field, value) {
+      if (field === 'category') filterCategory = value;
+      if (field === 'team') filterTeam = value;
+      if (field === 'class') filterClass = value;
+      if (field === 'status') filterStatus = value;
+      if (field === 'search') searchQuery = value;
+      render();
+    }
+
+    // ══════════════════════════════════════════════
+    //  RENDER ENGINE
+    // ══════════════════════════════════════════════
+    function render() {
+      const appEl = document.getElementById('app');
+      // Dismiss loading screen
+      const _loader = document.getElementById('loading-screen');
+      if (_loader) { _loader.classList.add('loader-hide'); setTimeout(() => _loader.remove(), 450); }
+
+      // ──── LOGIN GATE ────
+      if (!session) {
+        appEl.innerHTML = `
+          <div class="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-gradient-to-br from-slate-100 via-white to-indigo-50/40 text-slate-800">
+            <div class="w-full max-w-md animate-fade-in">
+              <div class="text-center mb-8">
+                <div class="flex items-center justify-center mb-3">
+                  <img src="../logo/logo.webp" onerror="this.onerror=null;this.src='../logo/logo.png'" alt="Alert 2k26" class="h-14 sm:h-16 w-auto max-w-[240px] object-contain select-none" style="filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)) drop-shadow(0 0 1.5px rgba(0,0,0,0.75));" />
+                </div>
+                <h1 class="font-display text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Alert 2k26</h1>
+                <p class="text-indigo-600 font-bold text-xs uppercase tracking-[0.2em] mt-1">Report Maker Portal</p>
+              </div>
+              <div class="bg-white border border-slate-200/80 rounded-3xl p-8 shadow-xl shadow-slate-200/50">
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                  <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <i class="fas fa-file-excel text-base"></i>
+                  </div>
+                  <div>
+                    <h2 class="text-base font-bold text-slate-900">Admin Login Required</h2>
+                    <p class="text-xs text-slate-500 font-medium">Enter admin passcode to generate reports.</p>
+                  </div>
+                </div>
+                <form onsubmit="handleLogin(event)" class="space-y-4">
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">Admin Passcode</label>
+                    <div class="relative flex items-center">
+                      <i class="fas fa-key text-slate-400 absolute left-4 text-xs"></i>
+                      <input type="password" id="passcode-input" required placeholder="Enter admin passcode" autocomplete="off"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-12 py-3 text-slate-900 font-mono font-bold text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all uppercase">
+                      <button type="button" onclick="togglePasscodeVisibility()" id="toggle-passcode-btn" class="absolute right-4 text-slate-400 hover:text-slate-700 transition-colors">
+                        <i class="fas fa-eye text-sm"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div id="login-error" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold text-center"></div>
+                  <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-xs rounded-2xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-right-to-bracket"></i> Authenticate & Open Reports
+                  </button>
+                </form>
+                <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+                  <p class="text-[11px] text-slate-400 font-medium"><i class="fas fa-shield-alt mr-1"></i>Admin-only access. Reports contain full festival data.</p>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        return;
+      }
+
+      // ──── DASHBOARD ────
+      const studentsCount = Object.keys(appData.students || {}).length;
+      const teamsCount = Object.keys(appData.teams || {}).length;
+      const programsCount = Object.keys(appData.programs || {}).length;
+      const resultsPublished = Object.values(appData.results || {}).filter(r => r.status === 'published').length;
+
+      // If a report type is selected, show the detail view
+      if (activeReportType && REPORT_TYPES[activeReportType]) {
+        renderReportDetail(appEl);
+        return;
+      }
+
+      // Main report selection menu
+      appEl.innerHTML = `
+        <div class="min-h-screen bg-slate-50 pb-20 animate-fade-in">
+          <!-- Header -->
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-8">
+            <div class="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-indigo-600/20 flex-shrink-0">
+                  <i class="fas fa-file-excel text-xl"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h1 class="text-xl sm:text-2xl font-black font-display text-slate-900 tracking-tight">Report Maker</h1>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700">
+                      ${dataLoaded ? 'Live Data' : 'Loading...'}
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-500 font-medium mt-0.5">Generate & export advanced festival reports to Excel.</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-700 font-mono font-bold text-xs border border-slate-200">
+                  Admin: ${sanitize(session.code)}
+                </span>
+                <button onclick="handleLogout()" class="px-4 py-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold text-xs transition-all border border-red-200/60">
+                  Logout
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Stats Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+              <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Students</span>
+                <p class="text-2xl font-black font-display text-slate-900 mt-1">${studentsCount}</p>
+              </div>
+              <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Teams</span>
+                <p class="text-2xl font-black font-display text-slate-900 mt-1">${teamsCount}</p>
+              </div>
+              <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Programs</span>
+                <p class="text-2xl font-black font-display text-slate-900 mt-1">${programsCount}</p>
+              </div>
+              <div class="bg-white rounded-2xl p-4 shadow-sm" style="border: 1px solid rgba(16,185,129,0.3);">
+                <span class="text-[10px] font-bold uppercase tracking-wider block" style="color: #059669;">Published</span>
+                <p class="text-2xl font-black font-display mt-1" style="color: #059669;">${resultsPublished}</p>
+              </div>
+            </div>
+
+            <!-- Full Summary Export Card -->
+            <div class="rounded-3xl p-6 sm:p-8 shadow-xl mb-8 text-white relative overflow-hidden" style="background: linear-gradient(135deg, #4f46e5, #7c3aed, #9333ea); box-shadow: 0 20px 40px -10px rgba(79,70,229,0.25);">
+              <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+              <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4"></div>
+              <div class="relative z-10">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <div class="flex items-center gap-3 mb-2">
+                      <div class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-crown text-lg" style="color: #fcd34d;"></i>
+                      </div>
+                      <div>
+                        <h2 class="text-lg sm:text-xl font-black font-display tracking-tight">Full Festival Summary</h2>
+                        <p class="text-xs font-medium" style="color: #c7d2fe;">Multi-sheet Excel workbook with all festival data</p>
+                      </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                      <span class="px-2.5 py-1 bg-white/10 rounded-lg text-[10px] font-bold tracking-wide backdrop-blur-sm border border-white/10">Team Standings</span>
+                      <span class="px-2.5 py-1 bg-white/10 rounded-lg text-[10px] font-bold tracking-wide backdrop-blur-sm border border-white/10">Student Leaderboard</span>
+                      <span class="px-2.5 py-1 bg-white/10 rounded-lg text-[10px] font-bold tracking-wide backdrop-blur-sm border border-white/10">Class Rankings</span>
+                      <span class="px-2.5 py-1 bg-white/10 rounded-lg text-[10px] font-bold tracking-wide backdrop-blur-sm border border-white/10">Class-wise Students</span>
+                      <span class="px-2.5 py-1 bg-white/10 rounded-lg text-[10px] font-bold tracking-wide backdrop-blur-sm border border-white/10">Category Sheets</span>
+                      <span class="px-2.5 py-1 bg-white/10 rounded-lg text-[10px] font-bold tracking-wide backdrop-blur-sm border border-white/10">Program Results</span>
+                      <span class="px-2.5 py-1 bg-white/10 rounded-lg text-[10px] font-bold tracking-wide backdrop-blur-sm border border-white/10">Penalties</span>
+                    </div>
+                  </div>
+                  <button onclick="exportFullSummary()" ${isExporting ? 'disabled' : ''}
+                    class="px-8 py-4 bg-white font-black text-sm rounded-2xl shadow-xl transition-all flex items-center gap-3 flex-shrink-0 disabled:opacity-50" style="color: #4338ca; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12);">
+                    ${isExporting ? '<i class="fas fa-spinner fa-spin"></i> Generating...' : '<i class="fas fa-download text-lg"></i> Export Full Report'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Individual Report Cards Grid -->
+            <h2 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <i class="fas fa-th-large" style="color: #6366f1;"></i> Individual Reports
+              <span class="text-slate-400 font-medium">— Generate & preview specific data sets</span>
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+              ${Object.values(REPORT_TYPES).map((rt, idx) => `
+                <button onclick="selectReport('${rt.id}')" class="report-card bg-white border border-slate-200/80 rounded-3xl p-6 text-left shadow-sm animate-slide-up" style="animation-delay: ${idx * 60}ms; opacity: 0;">
+                  <div class="flex items-start justify-between mb-4">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm" style="background: ${rt.styles.bg}; color: ${rt.styles.text};">
+                      <i class="fas ${rt.icon} text-xl"></i>
+                    </div>
+                    <i class="fas fa-arrow-right text-slate-300 text-sm mt-1"></i>
+                  </div>
+                  <h3 class="text-base font-black text-slate-900 font-display mb-1">${rt.title}</h3>
+                  <p class="text-xs text-slate-500 font-medium leading-relaxed">${rt.subtitle}</p>
+                  <div class="mt-4 flex items-center gap-2">
+                    <span class="px-2.5 py-1 text-[10px] font-black rounded-lg uppercase tracking-wider" style="background: ${rt.styles.badgeBg}; color: ${rt.styles.badgeText};">Preview & Export</span>
+                    ${rt.hasFilters ? '<span class="px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg"><i class="fas fa-filter mr-1"></i>Filterable</span>' : ''}
+                  </div>
+                </button>
+              `).join('')}
+            </div>
+
+            ${lastExportTime ? `
+              <div class="text-center text-xs text-slate-400 font-medium pb-8">
+                <i class="fas fa-check-circle mr-1" style="color: #10b981;"></i> Last export: ${formatDateTime(lastExportTime)}
+              </div>
+            ` : ''}
+          </div>
+        </div>`;
+    }
+
+    // ──── REPORT DETAIL VIEW ────
+    function renderReportDetail(appEl) {
+      const rt = REPORT_TYPES[activeReportType];
+      const reportData = rt.generate();
+
+      // Limit preview rows for performance
+      const previewRows = reportData.rows.slice(0, 100);
+      const hasMore = reportData.rows.length > 100;
+
+      appEl.innerHTML = `
+        <div class="min-h-screen bg-slate-50 pb-20 animate-fade-in">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
+
+            <!-- Back & Title Header -->
+            <div class="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <button onclick="goBackToMenu()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all flex-shrink-0">
+                  <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0" style="background: ${rt.styles.bg}; color: ${rt.styles.text};">
+                  <i class="fas ${rt.icon} text-xl"></i>
+                </div>
+                <div>
+                  <h1 class="text-lg sm:text-xl font-black font-display text-slate-900 tracking-tight">${reportData.title}</h1>
+                  <p class="text-xs text-slate-500 font-medium mt-0.5">${reportData.rows.length} rows · Generated from live data</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 flex-wrap">
+                <button onclick="exportSingleReport(REPORT_TYPES['${rt.id}'].generate())" ${isExporting ? 'disabled' : ''}
+                  class="px-6 py-3 text-white font-bold text-xs rounded-2xl shadow-lg transition-all flex items-center gap-2 disabled:opacity-50" style="background: linear-gradient(to right, #4f46e5, #7c3aed); box-shadow: 0 8px 20px -5px rgba(79,70,229,0.3);">
+                  ${isExporting ? '<i class="fas fa-spinner fa-spin"></i>' : '<i class="fas fa-file-excel text-base"></i>'} Export to Excel
+                </button>
+                <button onclick="exportFullSummary()" ${isExporting ? 'disabled' : ''}
+                  class="px-5 py-3 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 font-bold text-xs rounded-2xl transition-all flex items-center gap-2 disabled:opacity-60 shadow-sm">
+                  <i class="fas fa-crown text-base" style="color: #f59e0b;"></i> Full Summary
+                </button>
+              </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-2 gap-4 mb-6" style="grid-template-columns: repeat(${Math.min(Object.keys(reportData.stats).length, 4)}, minmax(0, 1fr));">
+              ${Object.entries(reportData.stats).map(([key, val]) => `
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">${sanitize(key)}</span>
+                  <p class="text-lg font-black font-display text-slate-900 mt-1">${sanitize(String(val))}</p>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Filters Bar -->
+            ${rt.hasFilters ? `
+              <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm mb-6 flex flex-wrap items-center gap-3">
+                <span class="text-xs font-bold text-slate-500"><i class="fas fa-filter mr-1"></i>Filters:</span>
+
+                ${rt.hasCategoryFilter ? `
+                  <select onchange="handleFilterChange('category', this.value)" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-indigo-500">
+                    <option value="All" ${filterCategory === 'All' ? 'selected' : ''}>All Categories</option>
+                    ${CATEGORIES_LIST.map(cat => `<option value="${cat}" ${filterCategory === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+                  </select>
+                ` : ''}
+
+                ${rt.hasClassFilter ? `
+                  <select onchange="handleFilterChange('class', this.value)" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-indigo-500">
+                    <option value="All" ${filterClass === 'All' ? 'selected' : ''}>All Classes</option>
+                    ${getUniqueClassesList().map(cls => `<option value="${cls}" ${filterClass === cls ? 'selected' : ''}>Class: ${sanitize(cls)}</option>`).join('')}
+                  </select>
+                ` : ''}
+
+                ${rt.hasTeamFilter ? `
+                  <select onchange="handleFilterChange('team', this.value)" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-indigo-500">
+                    <option value="All" ${filterTeam === 'All' ? 'selected' : ''}>All Teams</option>
+                    ${Object.entries(appData.teams || {}).map(([id, t]) => `<option value="${id}" ${filterTeam === id ? 'selected' : ''}>${sanitize(t.name)}</option>`).join('')}
+                  </select>
+                ` : ''}
+
+                ${rt.hasStatusFilter ? `
+                  <select onchange="handleFilterChange('status', this.value)" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold focus:outline-none focus:border-indigo-500">
+                    <option value="All" ${filterStatus === 'All' ? 'selected' : ''}>All Statuses</option>
+                    <option value="published" ${filterStatus === 'published' ? 'selected' : ''}>Published</option>
+                    <option value="ready" ${filterStatus === 'ready' ? 'selected' : ''}>Ready</option>
+                    <option value="pending" ${filterStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                  </select>
+                ` : ''}
+
+                ${rt.hasSearch ? `
+                  <div class="relative flex-grow max-w-xs">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" placeholder="Search..." value="${sanitize(searchQuery)}" oninput="handleFilterChange('search', this.value)"
+                      class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 font-medium">
+                  </div>
+                ` : ''}
+
+                <button onclick="filterCategory='All';filterTeam='All';filterClass='All';filterStatus='All';searchQuery='';render();" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-red-600 transition-colors">
+                  <i class="fas fa-times mr-1"></i>Clear
+                </button>
+              </div>
+            ` : ''}
+
+            <!-- Data Preview Table -->
+            <div class="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden mb-6">
+              <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                  <i class="fas fa-table text-indigo-500"></i> Data Preview
+                  <span class="text-slate-400 font-medium">(${hasMore ? 'showing first 100 of ' + reportData.rows.length : reportData.rows.length} rows)</span>
+                </h3>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${reportData.headers.length} columns</span>
+              </div>
+              <div class="overflow-x-auto custom-scrollbar max-h-[520px] overflow-y-auto">
+                <table class="preview-table w-full">
+                  <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                      ${reportData.headers.map(h => `
+                        <th class="px-4 py-3 text-left text-[10px] font-black text-slate-600 uppercase tracking-wider whitespace-nowrap">${sanitize(h)}</th>
+                      `).join('')}
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${previewRows.length === 0 ? `
+                      <tr>
+                        <td colspan="${reportData.headers.length}" class="px-4 py-16 text-center text-sm text-slate-400">
+                          <i class="fas fa-inbox text-3xl text-slate-300 block mb-3"></i>
+                          No data matches the current filters.
+                        </td>
+                      </tr>
+                    ` : previewRows.map((row, ri) => `
+                      <tr class="hover:bg-slate-50/50 transition-colors">
+                        ${row.map((cell, ci) => `
+                          <td class="px-4 py-2.5 text-xs ${ci === 0 ? 'font-bold text-slate-900' : 'text-slate-700'} whitespace-nowrap font-medium">${sanitize(String(cell))}</td>
+                        `).join('')}
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+              ${hasMore ? `
+                <div class="px-5 py-3 bg-amber-50 border-t border-amber-200 text-xs text-amber-800 font-semibold flex items-center gap-2">
+                  <i class="fas fa-info-circle"></i> Showing first 100 rows. Export to Excel to see all ${reportData.rows.length} rows.
+                </div>
+              ` : ''}
+            </div>
+
+          </div>
+        </div>`;
+    }
+
+    // Initial Render
+    render();
+  </script>
+</body>
+</html>

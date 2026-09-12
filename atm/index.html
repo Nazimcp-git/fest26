@@ -50,7 +50,7 @@
     }
   </script>
   <style>
-    html, body { margin: 0; padding: 0; overflow: hidden; height: 100vh; background-color: #030712; }
+    html, body { margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw; background-color: #030712; user-select: none; }
     .custom-scrollbar::-webkit-scrollbar { display: none; }
     .custom-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -127,6 +127,7 @@
       scannedCode: '',
       studentId: null,
       autoResetTimer: null,
+      countdownInterval: null,
       clockInterval: null
     };
 
@@ -188,6 +189,7 @@
 
     function resetToIdle() {
       if (activeState.autoResetTimer) clearTimeout(activeState.autoResetTimer);
+      if (activeState.countdownInterval) clearInterval(activeState.countdownInterval);
       activeState.mode = 'idle';
       activeState.scannedCode = '';
       activeState.studentId = null;
@@ -196,6 +198,24 @@
 
     function triggerAutoReset(seconds = 15) {
       if (activeState.autoResetTimer) clearTimeout(activeState.autoResetTimer);
+      if (activeState.countdownInterval) clearInterval(activeState.countdownInterval);
+
+      let remaining = seconds;
+      const updateEl = () => {
+        const el = document.getElementById('auto-reset-countdown');
+        if (el) el.textContent = remaining + 's';
+      };
+      updateEl();
+
+      activeState.countdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(activeState.countdownInterval);
+        } else {
+          updateEl();
+        }
+      }, 1000);
+
       activeState.autoResetTimer = setTimeout(() => {
         resetToIdle();
       }, seconds * 1000);
@@ -433,14 +453,14 @@
       const penaltiesList = [];
       Object.values(appData.studentPenalties || {}).forEach(pen => {
         if (!pen) return;
-        const penSid = String(pen.studentId != null ? pen.studentId : (pen.id || '')).trim().toLowerCase();
-        const penChest = String(pen.studentChestNo != null ? pen.studentChestNo : (pen.chestNo || '')).trim().toLowerCase();
+        const penSid = String(pen.studentId != null ? pen.studentId : (pen.id || '')).trim();
+        const penChest = String(pen.studentChestNo != null ? pen.studentChestNo : (pen.chestNo || '')).trim();
         let matchesPen = false;
 
-        if (penSid && (penSid === resolvedStudentKey.toLowerCase() || penSid === resolvedStudentId.toLowerCase())) {
+        if (penSid && (penSid === resolvedStudentKey || (resolvedStudentId && penSid === resolvedStudentId))) {
           matchesPen = true;
         } else if (penChest && resolvedChestNo) {
-          if (penChest === resolvedChestNo.toLowerCase()) matchesPen = true;
+          if (penChest.toLowerCase() === resolvedChestNo.toLowerCase()) matchesPen = true;
           if (resolvedChestNum !== null && /^\d+$/.test(penChest) && parseInt(penChest, 10) === resolvedChestNum) matchesPen = true;
         }
 
@@ -786,58 +806,66 @@
         const { student, team, netPoints, grossPoints, penaltyTotal, penaltiesList, prizedPrograms, allPrograms, rank, totalCategoryStudents } = details;
 
         const prizedRowsHtml = prizedPrograms.length === 0 ? `
-          <div class="text-center py-6 ${theme.cardBgSubtle} rounded-2xl">
-            <i class="fas fa-award text-3xl ${theme.subTextMuted} mb-2"></i>
-            <p class="${theme.subText} text-sm font-medium">No prizes/positions recorded yet for this student.</p>
+          <div class="h-full flex flex-col items-center justify-center p-6 text-center rounded-xl border border-dashed border-gray-500/20">
+            <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mb-2 text-amber-500/60">
+              <i class="fas fa-award text-xl"></i>
+            </div>
+            <p class="${theme.titleColor} text-xs font-bold">No Prizes Announced Yet</p>
+            <p class="${theme.subTextMuted} text-[10px] mt-0.5">Published awards will appear here</p>
           </div>` : prizedPrograms.map(a => {
             const posBadge = a.position && a.position !== 'none' ? `
-              <span class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-amber-500/15 border border-amber-500/30 text-amber-500">
-                <i class="fas fa-trophy mr-1.5"></i>${a.position.toUpperCase()}
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center gap-1">
+                <i class="fas fa-trophy"></i>${a.position.toUpperCase()}
               </span>` : '';
             const gradeBadge = a.grade && a.grade !== 'none' ? `
-              <span class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-blue-500/15 border border-blue-500/30 text-blue-500">
-                <i class="fas fa-certificate mr-1.5"></i>${a.grade.toUpperCase()} GRADE
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-blue-500/15 border border-blue-500/30 text-blue-400">
+                ${a.grade.replace('_', ' ').toUpperCase()}
               </span>` : '';
 
             return `
-              <div class="${theme.itemBg} rounded-xl p-4 flex items-center justify-between gap-4 transition-colors">
-                <div class="min-w-0">
-                  <h4 class="text-lg font-black ${theme.titleColor} truncate">${sanitize(a.programName)}</h4>
-                  <div class="flex items-center gap-3 mt-1 text-xs ${theme.subText} font-medium">
-                    <span class="uppercase tracking-wider font-bold text-orange-500">${sanitize(a.category)}</span>
+              <div class="${theme.itemBg} rounded-xl p-2.5 flex items-center justify-between gap-2.5 border transition-colors hover:border-orange-500/30">
+                <div class="min-w-0 flex-1">
+                  <h4 class="text-xs font-bold ${theme.titleColor} truncate">${sanitize(a.programName)}</h4>
+                  <div class="flex items-center gap-1.5 mt-0.5 text-[9px] ${theme.subText} font-medium">
+                    <span class="uppercase font-bold text-orange-500">${sanitize(a.category)}</span>
                     <span>·</span>
                     <span class="capitalize">${a.programType}</span>
+                    <span>·</span>
+                    <span class="capitalize">${a.stageType}</span>
                   </div>
                 </div>
-                <div class="flex items-center gap-3 flex-shrink-0">
+                <div class="flex items-center gap-1.5 flex-shrink-0">
                   ${posBadge}
                   ${gradeBadge}
-                  <div class="px-4 py-1.5 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-500 font-black text-base">
-                    +${a.points} Pts
+                  <div class="px-2 py-0.5 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 font-black text-xs">
+                    +${a.points} pts
                   </div>
                 </div>
               </div>`;
           }).join('');
 
         const registeredRowsHtml = allPrograms.length === 0 ? `
-          <div class="text-center py-6 ${theme.cardBgSubtle} rounded-2xl">
-            <i class="fas fa-list-check text-3xl ${theme.subTextMuted} mb-2"></i>
-            <p class="${theme.subText} text-sm font-medium">No registered programs found.</p>
+          <div class="h-full flex flex-col items-center justify-center p-6 text-center rounded-xl border border-dashed border-gray-500/20">
+            <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-2 text-blue-500/60">
+              <i class="fas fa-calendar-check text-xl"></i>
+            </div>
+            <p class="${theme.titleColor} text-xs font-bold">No Programs Enrolled</p>
+            <p class="${theme.subTextMuted} text-[10px] mt-0.5">No registered programs in roster</p>
           </div>` : allPrograms.map(p => {
             let statusTag = '';
             if (p.status === 'prized') {
-              statusTag = `<span class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-amber-500/15 border border-amber-500/30 text-amber-500"><i class="fas fa-trophy mr-1.5"></i>Prized Winner (+${p.points} pts)</span>`;
+              statusTag = `<span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center gap-1"><i class="fas fa-trophy"></i>Prized (+${p.points})</span>`;
             } else if (p.status === 'participated') {
-              statusTag = `<span class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${theme.cardBgInner} ${theme.subText} border border-gray-500/10"><i class="fas fa-user-check mr-1.5"></i>Participated</span>`;
+              statusTag = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center gap-1"><i class="fas fa-check"></i>Done</span>`;
             } else {
-              statusTag = `<span class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-500/10 border border-blue-500/20 text-blue-500"><i class="fas fa-clock mr-1.5 font-normal"></i>Registered / Upcoming</span>`;
+              statusTag = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center gap-1"><i class="fas fa-clock"></i>Upcoming</span>`;
             }
 
             return `
-              <div class="${theme.itemBg} rounded-xl p-3.5 flex items-center justify-between gap-4">
-                <div class="min-w-0">
-                  <p class="font-bold ${theme.titleColor} text-base truncate">${sanitize(p.programName)}</p>
-                  <p class="text-[10px] ${theme.subText} uppercase tracking-wider mt-0.5">${sanitize(p.category)} · ${p.programType}</p>
+              <div class="${theme.itemBg} rounded-xl p-2.5 flex items-center justify-between gap-2.5 border transition-colors hover:border-blue-500/30">
+                <div class="min-w-0 flex-1">
+                  <p class="font-bold ${theme.titleColor} text-xs truncate">${sanitize(p.programName)}</p>
+                  <p class="text-[9px] ${theme.subText} uppercase tracking-wider mt-0.5">${sanitize(p.category)} · ${p.programType} · ${p.stageType}</p>
                 </div>
                 <div class="flex-shrink-0">
                   ${statusTag}
@@ -845,139 +873,218 @@
               </div>`;
           }).join('');
 
-        const penaltiesHtml = penaltiesList.length === 0 ? '' : `
-          <div class="mb-4 bg-red-500/10 border border-red-500/20 rounded-2xl p-4">
-            <h4 class="text-xs font-bold text-red-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-              <i class="fas fa-minus-circle"></i> Applied Minus Points (-${penaltyTotal} pts)
-            </h4>
-            <div class="space-y-1.5">
-              ${penaltiesList.map(p => `
-                <div class="flex justify-between items-center text-xs ${theme.titleColor}">
-                  <span>${sanitize(p.reason)}</span>
-                  <span class="font-bold text-red-500">-${p.points} pts</span>
-                </div>`).join('')}
+        const penaltiesHtmlCompact = penaltiesList.length === 0 ? '' : `
+          <div class="mt-2 bg-red-500/10 border border-red-500/20 rounded-xl p-2 text-left">
+            <div class="text-[10px] font-bold text-red-400 uppercase tracking-wider flex items-center justify-between">
+              <span><i class="fas fa-exclamation-circle mr-1"></i>Penalty Deductions</span>
+              <span class="font-mono font-black">-${penaltyTotal} pts</span>
+            </div>
+            <div class="text-[9px] text-red-300/80 truncate mt-0.5">
+              ${penaltiesList.map(p => sanitize(p.reason || 'Penalty')).join(', ')}
             </div>
           </div>`;
 
         appEl.innerHTML = `
-          <div class="h-screen ${theme.bgContainer} flex flex-col relative overflow-hidden">
+          <div class="h-screen w-screen ${theme.bgContainer} flex flex-col relative overflow-hidden select-none">
             
             <!-- Top Auto-Reset Progress Bar -->
-            <div class="w-full h-1.5 bg-gray-500/10 relative flex-shrink-0">
-              <div class="h-full bg-gradient-to-r from-orange-500 to-amber-400 animate-progress"></div>
+            <div class="w-full h-1 bg-gray-500/10 relative flex-shrink-0">
+              <div class="h-full bg-gradient-to-r from-orange-500 via-amber-400 to-yellow-300 animate-progress"></div>
             </div>
 
-            <!-- Top Header -->
-            <div class="flex items-center justify-between px-10 py-4 flex-shrink-0 border-b border-gray-500/10">
-              <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-lg">
-                  <i class="fas fa-id-card text-white text-base"></i>
+            <!-- Top Header Bar -->
+            <header class="h-14 flex items-center justify-between px-5 sm:px-8 border-b ${theme.cardBgSubtle} flex-shrink-0 z-20">
+              <!-- Left: Brand / Title -->
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-md shadow-orange-500/20">
+                  <i class="fas fa-barcode text-white text-sm"></i>
                 </div>
                 <div>
-                  <span class="${theme.titleColor} font-black text-lg">STUDENT SCORE ATM</span>
-                  <span class="${theme.subText} text-xs font-medium ml-3">Verified Student Profile</span>
+                  <div class="flex items-center gap-2">
+                    <span class="${theme.titleColor} font-black text-base tracking-tight">Alert 2k26</span>
+                    <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30">ATM</span>
+                  </div>
+                  <p class="${theme.subText} text-[10px] font-medium leading-none">Student Kiosk Dashboard</p>
                 </div>
               </div>
-              <div class="flex items-center gap-3">
-                <button onclick="toggleTheme()" class="px-3.5 py-2 ${theme.toggleBtn} rounded-xl text-xs font-bold transition-colors flex items-center gap-2">
-                  <i class="fas ${theme.toggleIcon}"></i> ${theme.isDark ? 'Light' : 'Dark'} Theme
+
+              <!-- Center: Fast Scan / Search Bar -->
+              <form onsubmit="event.preventDefault(); processScannedCode(document.getElementById('header-chest-search').value);" class="hidden md:flex items-center gap-2">
+                <div class="relative">
+                  <input type="text" id="header-chest-search" placeholder="Scan ID or enter Chest No..." 
+                    class="w-48 lg:w-60 px-3 py-1.5 pl-8 rounded-xl ${theme.inputBg} text-xs outline-none focus:border-orange-500 font-bold tracking-wider transition-all">
+                  <i class="fas fa-search absolute left-2.5 top-2 text-[10px] text-orange-400"></i>
+                </div>
+                <button type="submit" class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition-all shadow-sm">
+                  Go
                 </button>
-                <button onclick="resetToIdle()" class="px-4 py-2 ${theme.closeBtn} rounded-xl text-xs font-bold transition-colors flex items-center gap-2">
-                  <i class="fas fa-times"></i> Close Screen
+              </form>
+
+              <!-- Right: Controls & Timer -->
+              <div class="flex items-center gap-2.5">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/25 text-orange-400 text-xs font-bold">
+                  <i class="fas fa-clock text-[10px]"></i>
+                  <span id="auto-reset-countdown" class="tabular-nums">15s</span>
+                </div>
+                <button onclick="toggleTheme()" class="px-3 py-1.5 ${theme.toggleBtn} rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+                  <i class="fas ${theme.toggleIcon}"></i> <span class="hidden sm:inline">${theme.isDark ? 'Light' : 'Dark'}</span>
+                </button>
+                <button onclick="resetToIdle()" class="px-3.5 py-1.5 ${theme.closeBtn} rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm">
+                  <i class="fas fa-house"></i> <span>Home</span>
                 </button>
               </div>
-            </div>
+            </header>
 
-            <!-- Main Content Grid -->
-            <div class="flex-grow flex px-10 py-6 overflow-hidden min-h-0">
-              <div class="w-full max-w-[1600px] mx-auto grid grid-cols-12 gap-8 min-h-0">
+            <!-- Main Single-Slide Dashboard (100% Fits viewport, No scroll) -->
+            <main class="flex-grow min-h-0 p-3 sm:p-4 lg:p-5 overflow-hidden flex flex-col justify-between">
+              <div class="w-full h-full max-w-[1720px] mx-auto grid grid-cols-12 gap-3 sm:gap-4 min-h-0 overflow-hidden">
+                
+                <!-- 1. LEFT PANEL (4 Cols on lg, Identity & Points Summary) -->
+                <section class="col-span-12 lg:col-span-4 flex flex-col justify-between h-full min-h-0 ${theme.cardBgSubtle} rounded-2xl p-4 sm:p-5 border overflow-hidden shadow-lg">
+                  
+                  <!-- Top: Identity -->
+                  <div class="flex-shrink-0">
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                      <div class="px-3 py-1 rounded-xl bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/30 text-orange-400 font-black text-sm tracking-wider flex items-center gap-1.5">
+                        <i class="fas fa-id-badge text-xs"></i>
+                        <span>CHEST #${sanitize(student.chestNo)}</span>
+                      </div>
+                      <span class="px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider bg-sky-500/15 border border-sky-500/30 text-sky-400">
+                        ${sanitize(student.category)}
+                      </span>
+                    </div>
 
-                <!-- Left Profile Summary Card (4 cols) -->
-                <div class="col-span-4 flex flex-col justify-between ${theme.cardBgSubtle} rounded-3xl p-8 min-h-0">
-                  <div>
-                    <!-- Student Header -->
-                    <div class="flex items-center gap-4 mb-6">
-                      <div class="w-20 h-20 rounded-2xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden relative group">
+                    <div class="flex items-center gap-3.5">
+                      <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-orange-500/10 border border-orange-500/25 flex items-center justify-center flex-shrink-0 overflow-hidden relative shadow-md">
                         <img src="https://raw.githubusercontent.com/Nazimcp-git/azinco/refs/heads/main/images/${encodeURIComponent(student.chestNo)}.jpg" alt="${sanitize(student.name)}"
                           class="w-full h-full object-cover rounded-2xl"
                           onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
-                        <div class="w-full h-full rounded-2xl flex items-center justify-center bg-orange-500/15">
-                          <span class="text-2xl font-black text-orange-500">${sanitize(student.chestNo)}</span>
+                        <div class="w-full h-full rounded-2xl flex items-center justify-center bg-gradient-to-br from-orange-500/20 to-amber-600/20 text-orange-400 font-black text-2xl">
+                          ${sanitize(student.chestNo)}
                         </div>
                       </div>
-                      <div class="min-w-0">
-                        <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] bg-orange-500/15 border border-orange-500/30 text-orange-500">
-                          ${sanitize(student.category)}
+                      <div class="min-w-0 flex-1">
+                        <h2 class="text-xl sm:text-2xl font-black ${theme.titleColor} tracking-tight truncate leading-tight">${sanitize(student.name)}</h2>
+                        <p class="text-xs sm:text-sm font-semibold ${theme.subText} mt-1 flex items-center gap-1.5 truncate">
+                          <i class="fas fa-shield-halved text-orange-400"></i> ${sanitize(team.name)} ${student.className ? `· Class ${sanitize(student.className)}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Center: Score Spotlight Card -->
+                  <div class="my-auto py-2 flex-shrink-0">
+                    <div class="bg-gradient-to-br from-orange-500/15 via-amber-500/10 to-transparent border border-orange-500/30 rounded-2xl p-4 sm:p-5 text-center shadow-inner relative overflow-hidden">
+                      <div class="flex items-center justify-between px-1">
+                        <span class="text-[10px] sm:text-xs font-bold text-orange-400 uppercase tracking-widest flex items-center gap-1.5">
+                          <i class="fas fa-star text-amber-400 text-xs"></i> Total Published Score
                         </span>
-                        <h2 class="text-3xl font-black ${theme.titleColor} tracking-tight mt-2 truncate">${sanitize(student.name)}</h2>
-                        <p class="text-sm font-medium ${theme.subText} mt-1">${sanitize(team.name)} ${student.className ? `· Class ${sanitize(student.className)}` : ''}</p>
+                        ${penaltyTotal > 0 ? `<span class="text-[10px] font-bold text-red-400 bg-red-500/15 px-2 py-0.5 rounded border border-red-500/30">-${penaltyTotal} Pen</span>` : ''}
                       </div>
-                    </div>
-
-                    <!-- Total Score Display -->
-                    <div class="bg-gradient-to-br from-orange-500/15 via-amber-500/10 to-transparent border border-orange-500/30 rounded-2xl p-6 text-center mb-6">
-                      <span class="text-xs font-bold text-orange-500 uppercase tracking-[0.2em]">Total Score</span>
-                      <div class="text-6xl font-black ${theme.titleColor} tracking-tight mt-2 mb-1">${netPoints}</div>
-                      <span class="text-xs ${theme.subText} font-medium">Individual Points</span>
-                    </div>
-
-                    <!-- Category Rank & Stats -->
-                    <div class="grid grid-cols-3 gap-3">
-                      <div class="${theme.cardBgInner} rounded-2xl p-3 text-center">
-                        <span class="text-[9px] font-bold ${theme.subText} uppercase tracking-widest">Rank</span>
-                        <div class="text-2xl font-black text-amber-500 mt-1">#${rank}</div>
-                        <span class="text-[9px] ${theme.subTextMuted} font-medium">of ${totalCategoryStudents}</span>
-                      </div>
-                      <div class="${theme.cardBgInner} rounded-2xl p-3 text-center">
-                        <span class="text-[9px] font-bold ${theme.subText} uppercase tracking-widest">Registered</span>
-                        <div class="text-2xl font-black ${theme.titleColor} mt-1">${allPrograms.length}</div>
-                        <span class="text-[9px] ${theme.subTextMuted} font-medium">Programs</span>
-                      </div>
-                      <div class="${theme.cardBgInner} rounded-2xl p-3 text-center">
-                        <span class="text-[9px] font-bold ${theme.subText} uppercase tracking-widest">Prized</span>
-                        <div class="text-2xl font-black text-orange-500 mt-1">${prizedPrograms.length}</div>
-                        <span class="text-[9px] ${theme.subTextMuted} font-medium">Awards</span>
-                      </div>
+                      <div class="text-6xl sm:text-7xl font-black ${theme.titleColor} tracking-tight my-1 drop-shadow-sm font-sans">${netPoints}</div>
+                      <p class="text-xs ${theme.subText} font-medium">Individual Points</p>
+                      ${penaltiesHtmlCompact}
                     </div>
                   </div>
 
-                  <!-- Instruction -->
-                  <div class="pt-4 border-t border-gray-500/10 text-center">
-                    <p class="text-xs ${theme.subTextMuted} font-medium">Screen auto-resets in 15 seconds after scan.</p>
-                  </div>
-                </div>
+                  <!-- Bottom: 3 KPI Blocks + Quick Scan -->
+                  <div class="flex-shrink-0 space-y-3">
+                    <div class="grid grid-cols-3 gap-2">
+                      <div class="${theme.cardBgInner} rounded-xl p-2.5 text-center border border-white/5">
+                        <span class="text-[9px] font-bold ${theme.subText} uppercase tracking-wider block">Cat. Rank</span>
+                        <div class="text-lg sm:text-xl font-black text-amber-400 mt-0.5 leading-tight">#${rank}</div>
+                        <span class="text-[8px] ${theme.subTextMuted} font-medium block">of ${totalCategoryStudents}</span>
+                      </div>
+                      <div class="${theme.cardBgInner} rounded-xl p-2.5 text-center border border-white/5">
+                        <span class="text-[9px] font-bold ${theme.subText} uppercase tracking-wider block">Enrolled</span>
+                        <div class="text-lg sm:text-xl font-black ${theme.titleColor} mt-0.5 leading-tight">${allPrograms.length}</div>
+                        <span class="text-[8px] ${theme.subTextMuted} font-medium block">Events</span>
+                      </div>
+                      <div class="${theme.cardBgInner} rounded-xl p-2.5 text-center border border-white/5">
+                        <span class="text-[9px] font-bold ${theme.subText} uppercase tracking-wider block">Prizes</span>
+                        <div class="text-lg sm:text-xl font-black text-orange-400 mt-0.5 leading-tight">${prizedPrograms.length}</div>
+                        <span class="text-[8px] ${theme.subTextMuted} font-medium block">Awards</span>
+                      </div>
+                    </div>
 
-                <!-- Right Programs List (8 cols) -->
-                <div class="col-span-8 flex flex-col min-h-0 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+                    <form onsubmit="event.preventDefault(); processScannedCode(document.getElementById('kiosk-quick-chest').value);" class="flex items-center gap-2">
+                      <input type="text" id="kiosk-quick-chest" placeholder="Scan next ID card / enter chest..." 
+                        class="w-full px-3.5 py-2 rounded-xl ${theme.inputBg} text-xs outline-none focus:border-orange-500 text-center font-bold tracking-wider">
+                      <button type="submit" class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-orange-500/20 flex-shrink-0">
+                        Scan
+                      </button>
+                    </form>
+                  </div>
+
+                </section>
+
+                <!-- 2. RIGHT PANEL (8 Cols, 2 Sub-Columns Side-by-Side: Honors & Full Roster) -->
+                <section class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 h-full min-h-0 overflow-hidden">
                   
-                  ${penaltiesHtml}
+                  <!-- Sub-Col 1: Published Honors & Achievements -->
+                  <div class="flex flex-col h-full min-h-0 ${theme.cardBgSubtle} rounded-2xl p-4 border overflow-hidden shadow-lg">
+                    <div class="flex items-center justify-between pb-3 border-b border-white/5 flex-shrink-0 mb-3">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center text-xs">
+                          <i class="fas fa-trophy"></i>
+                        </div>
+                        <div>
+                          <h3 class="text-xs font-bold uppercase tracking-wider ${theme.titleColor}">Published Achievements</h3>
+                          <p class="text-[9px] ${theme.subText}">Winners & Positions</p>
+                        </div>
+                      </div>
+                      <span class="px-2 py-0.5 rounded-lg text-xs font-black bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                        ${prizedPrograms.length}
+                      </span>
+                    </div>
 
-                  <!-- 1. Prized Programs & Achievements Section -->
-                  <div>
-                    <h3 class="text-xs font-bold text-amber-500 uppercase tracking-[0.2em] mb-3 flex items-center justify-between">
-                      <span class="flex items-center gap-2"><i class="fas fa-trophy text-amber-400"></i> Prized Programs & Achievements (${prizedPrograms.length})</span>
-                      <span class="text-[10px] text-gray-400 font-normal">Winners & Position Holders</span>
-                    </h3>
-                    <div class="space-y-2.5">
+                    <div class="flex-grow min-h-0 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                       ${prizedRowsHtml}
                     </div>
                   </div>
 
-                  <!-- 2. All Registered Programs Section -->
-                  <div>
-                    <h3 class="text-xs font-bold ${theme.subText} uppercase tracking-[0.2em] mb-3 flex items-center justify-between">
-                      <span class="flex items-center gap-2"><i class="fas fa-list-check text-blue-400"></i> All Registered Programs (${allPrograms.length})</span>
-                      <span class="text-[10px] text-gray-400 font-normal">Full Registration Roster</span>
-                    </h3>
-                    <div class="space-y-2.5">
+                  <!-- Sub-Col 2: All Enrolled Programs Roster -->
+                  <div class="flex flex-col h-full min-h-0 ${theme.cardBgSubtle} rounded-2xl p-4 border overflow-hidden shadow-lg">
+                    <div class="flex items-center justify-between pb-3 border-b border-white/5 flex-shrink-0 mb-3">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-xs">
+                          <i class="fas fa-list-check"></i>
+                        </div>
+                        <div>
+                          <h3 class="text-xs font-bold uppercase tracking-wider ${theme.titleColor}">Enrolled Events Roster</h3>
+                          <p class="text-[9px] ${theme.subText}">All Registered Competitions</p>
+                        </div>
+                      </div>
+                      <span class="px-2 py-0.5 rounded-lg text-xs font-black bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                        ${allPrograms.length}
+                      </span>
+                    </div>
+
+                    <div class="flex-grow min-h-0 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                       ${registeredRowsHtml}
                     </div>
                   </div>
 
-                </div>
+                </section>
 
               </div>
-            </div>
+            </main>
+
+            <!-- Bottom Ticker -->
+            <footer class="h-10 border-t ${theme.tickerBar} flex-shrink-0 z-20 flex items-center overflow-hidden">
+              <div class="flex-shrink-0 px-4 h-full bg-gradient-to-r from-orange-500 to-amber-600 flex items-center">
+                <span class="text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                  <i class="fas fa-ranking-star"></i> Leaderboard
+                </span>
+              </div>
+              <div class="flex-grow overflow-hidden">
+                <div class="flex items-center animate-ticker whitespace-nowrap">
+                  ${tickerItems}
+                  <div class="w-16 flex-shrink-0"></div>
+                  ${tickerItems}
+                </div>
+              </div>
+            </footer>
 
           </div>`;
         return;

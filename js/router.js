@@ -57,9 +57,7 @@ async function router(softUpdate = false) {
           <div class="px-6">
             <div class="flex items-center justify-between h-16">
               <a href="#/" class="flex items-center gap-3 group">
-                <div class="w-10 h-10 rounded-[1.25rem] bg-orange-500/10 text-orange-600 border border-orange-500/20 flex items-center justify-center transition-all group-hover:scale-105">
-                  <i class="fas fa-trophy text-sm"></i>
-                </div>
+                <img src="../logo/logo.webp" onerror="this.onerror=null;this.src='../logo/logo.png'" alt="Alert 2k26" class="h-9 w-auto max-h-9 object-contain select-none transition-all group-hover:scale-105" style="filter: drop-shadow(0 2px 6px rgba(0,0,0,0.55)) drop-shadow(0 0 1.5px rgba(0,0,0,0.75));" />
                 <span class="font-bold text-gray-900 text-lg tracking-tight">Alert <span class="text-orange-600">2k26</span></span>
               </a>
               <div class="hidden md:flex items-center gap-2" id="desktop-nav">

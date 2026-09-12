@@ -1,25 +1,35 @@
 {
   "rules": {
     ".read": true,
+
     "students": {
-      ".validate": "newData.hasChildren(['chestNo', 'name', 'teamId'])",
+      ".write": "auth != null",
       "$studentId": {
-        ".validate": "newData.child('chestNo').isString() && newData.child('name').isString()"
+        ".validate": "newData.hasChildren(['chestNo', 'name', 'teamId']) && newData.child('chestNo').isString() && newData.child('name').isString() && newData.child('teamId').isString()"
       }
     },
+
     "teams": {
+      ".write": "auth != null",
       "$teamId": {
         ".validate": "newData.child('name').isString()"
       }
     },
+
     "programs": {
+      ".write": "auth != null",
       "$programId": {
         ".validate": "newData.child('name').isString() && newData.child('category').isString()"
       }
     },
+
     "results": {
+      ".write": "auth != null",
       "$resultId": {
-        ".validate": "newData.hasChildren(['programId', 'programName', 'participants'])",
+        ".validate": "newData.hasChildren(['programId', 'programName', 'status'])",
+        "status": {
+          ".validate": "newData.isString() && (newData.val() === 'pending' || newData.val() === 'ready' || newData.val() === 'published')"
+        },
         "participants": {
           "$participantIndex": {
             ".validate": "newData.hasChildren(['studentId', 'name'])"
@@ -27,32 +37,81 @@
         }
       }
     },
-    "studentPenalties": {
-      "$penaltyId": {
-        ".validate": "newData.hasChildren(['studentId', 'points', 'reason']) && newData.child('points').isNumber() && newData.child('points').val() > 0"
+
+    "pointsConfig": {
+      ".write": "auth != null",
+      ".validate": "newData.hasChildren(['first', 'second', 'third'])"
+    },
+
+    "groupPointsConfig": {
+      ".write": "auth != null",
+      ".validate": "newData.hasChildren(['first', 'second', 'third'])"
+    },
+
+    "teamPointsConfig": {
+      ".write": "auth != null",
+      ".validate": "newData.hasChildren(['first', 'second', 'third'])"
+    },
+
+    "teamDirectScores": {
+      ".write": "auth != null",
+      "$teamId": {
+        "$category": {
+          ".validate": "newData.isNumber()"
+        }
       }
     },
+
     "teamPenalties": {
+      ".write": "auth != null",
       "$penaltyId": {
         ".validate": "newData.hasChildren(['teamId', 'points', 'reason']) && newData.child('points').isNumber() && newData.child('points').val() > 0"
       }
     },
+
+    "studentPenalties": {
+      ".write": "auth != null",
+      "$penaltyId": {
+        ".validate": "newData.hasChildren(['studentId', 'points', 'reason']) && newData.child('points').isNumber() && newData.child('points').val() > 0"
+      }
+    },
+
     "participantRegistrations": {
+      ".write": "auth != null",
       "$programId": {
         "$teamId": {
-          ".validate": "newData.isArray() || newData.isObject() || newData.isString()"
+          ".validate": "true"
         }
       }
     },
-    "teacherJudges": {
-      "$judgeId": {
-        ".validate": "newData.hasChildren(['name', 'code'])"
+
+    "registrations": {
+      ".write": "auth != null"
+    },
+
+    "registrationPrograms": {
+      ".write": "auth != null",
+      "$programId": {
+        ".validate": "newData.isBoolean()"
       }
     },
+
+    "registrationProgramss": {
+      ".write": "auth != null",
+      "$programId": {
+        ".validate": "newData.isBoolean()"
+      }
+    },
+
     "notifications": {
+      ".write": "auth != null",
       "$notificationId": {
         ".validate": "newData.hasChildren(['type', 'timestamp'])"
       }
+    },
+
+    "settings": {
+      ".write": "auth != null"
     }
   }
 }

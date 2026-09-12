@@ -28,7 +28,8 @@ function syncData() {
       teamPointsConfig:     raw.teamPointsConfig     || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 },
       teamDirectScores:     raw.teamDirectScores     || {},
       teamPenalties:        raw.teamPenalties        || {},
-      participantRegistrations: raw.participantRegistrations || {}
+      participantRegistrations: raw.participantRegistrations || {},
+      registrations:        raw.registrations        || {}
     };
 
     // Invalidate calculation caches on data change

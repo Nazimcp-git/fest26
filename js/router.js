@@ -38,7 +38,10 @@ async function router(softUpdate = false) {
 
   // Dismiss loading screen if present
   const _loader = document.getElementById('loading-screen');
-  if (_loader) { _loader.remove(); }
+  if (_loader) {
+    _loader.classList.add('loader-hide');
+    setTimeout(() => { if (_loader && _loader.parentNode) _loader.remove(); }, 450);
+  }
 
   if (!softUpdate) {
     appEl.innerHTML = `

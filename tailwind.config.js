@@ -4,9 +4,7 @@ module.exports = {
     "./index.html",
     "./**/*.html",
     "./js/**/*.js",
-    "./results/**/*.js",
     "./penalty/**/*.html",
-    "./judge/**/*.html",
     "./live/**/*.html",
     "./registrations/**/*.html"
   ],

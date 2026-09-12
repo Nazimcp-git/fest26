@@ -479,50 +479,198 @@ async function renderSearchPage() {
 /**
  * STUDENT PROFILE PAGE
  */
-async function renderStudentPage(studentId) {
-  const student = appData.students[studentId];
-  if (!student) return `<div class="py-20 text-center text-gray-500 font-medium bg-white/60 backdrop-blur-xl rounded-3xl border border-white/60 max-w-2xl mx-auto mt-12">Student not found.</div>`;
+async function renderStudentPage(studentLookup) {
+  if (!studentLookup) return `<div class="py-20 text-center text-gray-500 font-medium bg-white/60 backdrop-blur-xl rounded-3xl border border-white/60 max-w-2xl mx-auto mt-12">Student not found.</div>`;
+  const cleanTarget = String(studentLookup).trim().toLowerCase();
+  const cleanNum = /^\d+$/.test(cleanTarget) ? parseInt(cleanTarget, 10) : null;
 
+  // 1. CHEST NUMBER FIRST (If searched target matches any student's chest number)
+  let studentEntry = Object.entries(appData.students || {}).find(([id, s]) => {
+    if (!s) return false;
+    const chest = String(s.chestNo != null ? s.chestNo : (s.chest || '')).trim().toLowerCase();
+    if (chest && chest === cleanTarget) return true;
+    if (cleanNum !== null && /^\d+$/.test(chest) && parseInt(chest, 10) === cleanNum) return true;
+    return false;
+  });
+
+  // 2. Direct key or internal ID lookup if no student has that chest number
+  if (!studentEntry) {
+    if (appData.students[studentLookup]) {
+      studentEntry = [studentLookup, appData.students[studentLookup]];
+    } else {
+      studentEntry = Object.entries(appData.students || {}).find(([id, s]) => {
+        if (!s) return false;
+        return id === studentLookup || s.id === studentLookup ||
+               String(id).trim().toLowerCase() === cleanTarget ||
+               String(s.id || '').trim().toLowerCase() === cleanTarget;
+      });
+    }
+  }
+
+  if (!studentEntry) return `<div class="py-20 text-center text-gray-500 font-medium bg-white/60 backdrop-blur-xl rounded-3xl border border-white/60 max-w-2xl mx-auto mt-12">Student not found.</div>`;
+
+  const [studentKey, student] = studentEntry;
   const teamName = appData.teams[student.teamId]?.name || 'Unknown';
   
+  const resolvedStudentKey = studentKey;
+  const resolvedStudentId = String(student.id || studentKey).trim();
+  const resolvedChestNo = String(student.chestNo != null ? student.chestNo : (student.chest || '')).trim();
+  const resolvedChestNum = (/^\d+$/).test(resolvedChestNo) ? parseInt(resolvedChestNo, 10) : null;
+
+  // Strict Category Matching Rule: An ALIYA student can NEVER participate in a THANIYA or any non-matching category program
+  const isProgramCategoryEligible = (progCategory, studentCategory) => {
+    if (!studentCategory) return false;
+    if (!progCategory) return false;
+    const pCat = String(progCategory).trim().toUpperCase();
+    const sCat = String(studentCategory).trim().toUpperCase();
+    if (pCat === 'GENERAL' || pCat === 'ALL' || sCat === 'GENERAL') return true;
+    return pCat === sCat;
+  };
+
+  const matchParticipant = (p) => {
+    if (!p || typeof p !== 'object') return false;
+
+    // Check studentId/key first with EXACT case (Firebase push IDs are case-sensitive!)
+    const pSid = String(p.studentId != null ? p.studentId : (p.id != null ? p.id : '')).trim();
+    if (pSid) {
+      if (pSid === resolvedStudentKey) return true;
+      if (resolvedStudentId && pSid === resolvedStudentId) return true;
+    }
+
+    // Check chest number (numeric/alphanumeric labels)
+    const pChest = String(p.chestNo != null ? p.chestNo : (p.chest != null ? p.chest : '')).trim();
+    if (pChest && resolvedChestNo) {
+      if (pChest.toLowerCase() === resolvedChestNo.toLowerCase()) return true;
+      if (resolvedChestNum !== null && /^\d+$/.test(pChest) && parseInt(pChest, 10) === resolvedChestNum) return true;
+    }
+
+    return false;
+  };
+
+  const isRegisteredStudent = (item) => {
+    if (!item) return false;
+    if (typeof item === 'object') return matchParticipant(item);
+    const rawStr = String(item).trim();
+    if (!rawStr) return false;
+
+    // 1. Match student key or internal ID EXACTLY (Case-sensitive!)
+    if (rawStr === resolvedStudentKey || (resolvedStudentId && rawStr === resolvedStudentId)) {
+      return true;
+    }
+
+    // 2. Match chest number ONLY if rawStr does NOT exist as another student's database key
+    const lowerStr = rawStr.toLowerCase();
+    if (resolvedChestNo && lowerStr === resolvedChestNo.toLowerCase()) {
+      if (appData.students[rawStr] && rawStr !== resolvedStudentKey) return false;
+      return true;
+    }
+    if (resolvedChestNum !== null && /^\d+$/.test(rawStr) && parseInt(rawStr, 10) === resolvedChestNum) {
+      if (appData.students[rawStr] && rawStr !== resolvedStudentKey) return false;
+      return true;
+    }
+
+    return false;
+  };
+
   const partMap = {};
 
-  // 1. Add from Registrations
+  // 1. Add from Participant Registrations (Portal A)
   Object.entries(appData.participantRegistrations || {}).forEach(([progId, teamsObj]) => {
-    const teamRegs = teamsObj[student.teamId] || [];
-    if (teamRegs.includes(studentId)) {
-      const p = appData.programs[progId];
-      if (p) {
-        partMap[progId] = {
-          programId: progId,
-          programName: p.name,
-          category: p.category,
-          status: 'registered',
-          timestamp: 0,
-          position: 'none',
-          grade: 'none'
-        };
-      }
+    if (!teamsObj || typeof teamsObj !== 'object') return;
+    const p = appData.programs?.[progId];
+    if (!p) return;
+
+    // Strict category filter
+    if (!isProgramCategoryEligible(p.category, student.category)) return;
+
+    // Check ONLY student's own team
+    if (!student.teamId || !teamsObj[student.teamId]) return;
+    const teamRegs = Array.isArray(teamsObj[student.teamId]) ? teamsObj[student.teamId] : Object.values(teamsObj[student.teamId]);
+    const isReg = teamRegs.some(r => isRegisteredStudent(r));
+
+    if (isReg) {
+      partMap[progId] = {
+        programId: progId,
+        programName: p.name || 'Program',
+        category: p.category || student.category || 'GENERAL',
+        status: 'registered',
+        timestamp: 0,
+        position: 'none',
+        grade: 'none'
+      };
     }
   });
 
-  // 2. Update/Overwrite from Results
-  Object.values(appData.results || {}).forEach(r => {
-    const pt = (r.participants || []).find(p => p.studentId === studentId);
+  // 2. Add from Item Registrations (Portal B)
+  Object.entries(appData.registrations || {}).forEach(([regKey, regVal]) => {
+    if (!regVal || typeof regVal !== 'object') return;
+
+    const entries = (regVal.programId && (regVal.studentId || regVal.chestNo || regVal.id))
+      ? [regVal]
+      : Object.values(regVal).filter(v => v && typeof v === 'object');
+
+    entries.forEach(reg => {
+      const progId = reg.programId || regKey;
+      const p = appData.programs?.[progId] || {};
+      const progCat = reg.category || p.category;
+
+      // Strict category filter
+      if (!isProgramCategoryEligible(progCat, student.category)) return;
+      if (reg.teamId && student.teamId && reg.teamId !== student.teamId) return;
+      if (reg.teamName && teamName && reg.teamName.trim().toLowerCase() !== teamName.trim().toLowerCase()) return;
+
+      if (matchParticipant(reg) || isRegisteredStudent(reg.studentId) || isRegisteredStudent(reg.chestNo)) {
+        if (!partMap[progId]) {
+          partMap[progId] = {
+            programId: progId,
+            programName: p.name || reg.programName || 'Program',
+            category: p.category || reg.category || student.category || 'GENERAL',
+            status: 'registered',
+            timestamp: 0,
+            position: 'none',
+            grade: 'none'
+          };
+        }
+      }
+    });
+  });
+
+  // 3. Update/Overwrite from Results (PUBLISHED RESULTS ONLY)
+  // CRITICAL POLICY: Never reveal any unpublished results or points anywhere!
+  Object.entries(appData.results || {}).forEach(([resId, r]) => {
+    if (!r) return;
+    if (String(r.status || '').trim().toLowerCase() !== 'published') return;
+
+    const progId = r.programId || resId;
+    const pInfo = appData.programs?.[progId] || {};
+    const progCat = r.category || pInfo.category;
+
+    // Strict category filter: Candidate in ALIYA can never receive THANIYA results!
+    if (!isProgramCategoryEligible(progCat, student.category)) return;
+
+    let participantsList = [];
+    if (Array.isArray(r.participants)) {
+      participantsList = r.participants;
+    } else if (r.participants && typeof r.participants === 'object') {
+      participantsList = Object.values(r.participants);
+    }
+
+    const pt = participantsList.find(p => matchParticipant(p));
+
     if (pt) {
-      partMap[r.programId] = {
-        programId: r.programId,
-        programName: r.programName,
-        category: r.category,
+      partMap[progId] = {
+        programId: progId,
+        programName: r.programName || pInfo.name || 'Program',
+        category: r.category || pInfo.category || student.category || 'GENERAL',
         position: pt.position || 'none',
         grade: pt.grade || 'none',
-        status: r.status,
+        status: 'published',
         timestamp: r.timestamp || 0
       };
     } else {
-      if (partMap[r.programId] && r.status === 'published') {
-         partMap[r.programId].status = 'published_no_prize';
-         partMap[r.programId].timestamp = r.timestamp || 0;
+      if (partMap[progId]) {
+         partMap[progId].status = 'published_no_prize';
+         partMap[progId].timestamp = r.timestamp || 0;
       }
     }
   });
@@ -646,11 +794,33 @@ async function renderStudentPage(studentId) {
 window.handleProfileSearch = function(e) {
   e.preventDefault();
   const val = document.getElementById("chest-no-input").value.trim().toLowerCase();
-  const student = Object.values(appData.students || {}).find(s => s.chestNo.toLowerCase() === val);
+  const isNum = /^\d+$/.test(val);
+  const cleanNum = isNum ? parseInt(val, 10) : null;
+
+  // 1. CHEST NUMBER FIRST
+  let studentEntry = Object.entries(appData.students || {}).find(([id, s]) => {
+    if (!s) return false;
+    const c = String(s.chestNo != null ? s.chestNo : (s.chest || '')).trim().toLowerCase();
+    if (c === val) return true;
+    if (cleanNum !== null && /^\d+$/.test(c) && parseInt(c, 10) === cleanNum) return true;
+    return false;
+  });
+
+  // 2. Direct key or internal ID fallback
+  if (!studentEntry) {
+    studentEntry = Object.entries(appData.students || {}).find(([id, s]) => {
+      if (!s) return false;
+      const sKey = String(id || '').trim().toLowerCase();
+      const sId = String(s.id || '').trim().toLowerCase();
+      return sKey === val || sId === val;
+    });
+  }
+
   const errEl = document.getElementById("search-error");
-  if (student) {
+  if (studentEntry) {
+    const [studentKey, student] = studentEntry;
     errEl.classList.add("hidden");
-    window.location.hash = `/student/${student.id}`;
+    window.location.hash = `/student/${encodeURIComponent(student.chestNo || studentKey)}`;
   } else {
     errEl.textContent = `No student found with Chest Number "${val}"`;
     errEl.classList.remove("hidden");

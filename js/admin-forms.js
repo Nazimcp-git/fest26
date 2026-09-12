@@ -365,7 +365,16 @@ async function handleProfileSearch(e) {
   errorEl.textContent = '';
   if (!input) return;
   
-  const student = getDataAsArray("students").find(s => s.chestNo === input);
-  if (student) window.location.hash = "/student/" + student.id;
+  const cleanIn = input.toLowerCase();
+  const isNum = /^\d+$/.test(cleanIn);
+  const cleanNum = isNum ? parseInt(cleanIn, 10) : null;
+  const student = getDataAsArray("students").find(s => {
+    if (!s) return false;
+    const c = String(s.chestNo || '').trim().toLowerCase();
+    if (c === cleanIn) return true;
+    if (cleanNum !== null && /^\d+$/.test(c) && parseInt(c, 10) === cleanNum) return true;
+    return false;
+  });
+  if (student) window.location.hash = "/student/" + encodeURIComponent(student.chestNo || student.id);
   else errorEl.textContent = `No student found with Chest No. "${input}"`;
 }

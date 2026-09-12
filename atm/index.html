@@ -66,23 +66,40 @@
   <!-- Branded Loading Screen -->
   <div id="loading-screen" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-950" style="background-image: radial-gradient(at 50% 40%, hsla(28,100%,50%,0.08) 0px, transparent 60%);">
     <style>
-      @keyframes loaderSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      @keyframes loaderPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.85; transform: scale(0.97); } }
-      @keyframes loaderFadeOut { 0% { opacity: 1; } 100% { opacity: 0; pointer-events: none; visibility: hidden; } }
-      .loader-logo { animation: loaderPulse 2.5s ease-in-out infinite; }
-      .loader-ring { animation: loaderSpin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite; }
+      @keyframes horizontalLoad {
+        0% { left: -40%; width: 30%; }
+        50% { left: 25%; width: 55%; }
+        100% { left: 100%; width: 30%; }
+      }
+      @keyframes loaderPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.88; transform: scale(0.98); } }
+      @keyframes loaderFadeOut { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.98); pointer-events: none; visibility: hidden; } }
+      .loader-logo { animation: loaderPulse 2.4s ease-in-out infinite; }
+      .loader-progress-bar { animation: horizontalLoad 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
       .loader-hide { animation: loaderFadeOut 0.4s ease-out forwards; }
     </style>
-    <div class="relative mb-6">
-      <img src="../registrations/prelogo.webp" alt="Alert 2k26" class="loader-logo w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-xl border-2 border-white/10" />
-      <svg class="loader-ring absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)]" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="46" fill="none" stroke="#f9731615" stroke-width="3" />
-        <circle cx="50" cy="50" r="46" fill="none" stroke="#f97316" stroke-width="3" stroke-linecap="round" stroke-dasharray="72 220" />
-      </svg>
+    <div class="flex flex-col items-center">
+      <div class="mb-5 flex items-center justify-center">
+        <img src="../registrations/prelogo.webp" alt="Alert 2k26" class="loader-logo h-20 sm:h-24 w-auto max-w-[220px] object-contain drop-shadow-md select-none" />
+      </div>
+      <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight mb-1" style="font-family: Inter, sans-serif;">Alert 2k26</h1>
+      <p class="text-xs sm:text-sm font-medium text-gray-500 tracking-wide" style="font-family: Inter, sans-serif;">Loading Score ATM...</p>
+      <!-- Horizontal Loading Bar -->
+      <div class="w-48 sm:w-56 h-1.5 bg-gray-800/90 border border-gray-700/50 rounded-full overflow-hidden relative mt-4 shadow-inner">
+        <div class="loader-progress-bar absolute top-0 bottom-0 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500 rounded-full shadow-[0_0_12px_rgba(249,115,22,0.7)]"></div>
+      </div>
     </div>
-    <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight mb-1" style="font-family: Inter, sans-serif;">Alert 2k26</h1>
-    <p class="text-xs sm:text-sm font-medium text-gray-500 tracking-wide" style="font-family: Inter, sans-serif;">Loading Score ATM...</p>
   </div>
+
+  <script>
+    // Safety fallback: ensure loading screen dismisses even under slow network
+    setTimeout(function() {
+      var l = document.getElementById('loading-screen');
+      if (l) {
+        l.classList.add('loader-hide');
+        setTimeout(function() { if (l && l.parentNode) l.remove(); }, 450);
+      }
+    }, 5000);
+  </script>
 
   <div id="app"></div>
 
@@ -94,6 +111,11 @@
       students: {},
       programs: {},
       results: {},
+      participantRegistrations: {},
+      registrations: {},
+      registrationPrograms: {},
+      teamDirectScores: {},
+      teamPenalties: {},
       studentPenalties: {},
       pointsConfig: { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 },
       groupPointsConfig: { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 },
@@ -180,123 +202,310 @@
     }
 
     function getStudentProfileDetails(studentId) {
-      const student = appData.students[studentId];
-      if (!student) return null;
+      if (!studentId) return null;
+      const cleanTarget = String(studentId).trim().toLowerCase();
+      const cleanNum = /^\d+$/.test(cleanTarget) ? parseInt(cleanTarget, 10) : null;
+
+      // 1. CHEST NUMBER FIRST (If searched target matches any student's chest number)
+      let studentEntry = Object.entries(appData.students || {}).find(([id, s]) => {
+        if (!s) return false;
+        const chest = String(s.chestNo != null ? s.chestNo : (s.chest || '')).trim().toLowerCase();
+        if (chest && chest === cleanTarget) return true;
+        if (cleanNum !== null && /^\d+$/.test(chest) && parseInt(chest, 10) === cleanNum) return true;
+        return false;
+      });
+
+      // 2. Direct key or internal ID lookup if no student has that chest number
+      if (!studentEntry) {
+        if (appData.students[studentId]) {
+          studentEntry = [studentId, appData.students[studentId]];
+        } else {
+          studentEntry = Object.entries(appData.students || {}).find(([id, s]) => {
+            if (!s) return false;
+            return id === studentId || s.id === studentId ||
+                   String(id).trim().toLowerCase() === cleanTarget ||
+                   String(s.id || '').trim().toLowerCase() === cleanTarget;
+          });
+        }
+      }
+
+      if (!studentEntry) return null;
+
+      const [resolvedStudentKey, student] = studentEntry;
+      const resolvedStudentId = String(student.id || resolvedStudentKey).trim();
+      const resolvedChestNo = String(student.chestNo != null ? student.chestNo : (student.chest || '')).trim();
+      const resolvedChestNum = (/^\d+$/).test(resolvedChestNo) ? parseInt(resolvedChestNo, 10) : null;
 
       const team = appData.teams[student.teamId] || { name: 'Unknown Team' };
       const partMap = {};
 
-      // 1. Programs registered under appData.participantRegistrations
-      Object.entries(appData.participantRegistrations || {}).forEach(([progId, teamsObj]) => {
-        if (!teamsObj || typeof teamsObj !== 'object') return;
-        const rawTeamRegs = teamsObj[student.teamId];
-        if (!rawTeamRegs) return;
+      const matchParticipant = (p) => {
+        if (!p || typeof p !== 'object') return false;
 
-        let teamRegs = [];
-        if (Array.isArray(rawTeamRegs)) {
-          teamRegs = rawTeamRegs;
-        } else if (typeof rawTeamRegs === 'object') {
-          teamRegs = Object.values(rawTeamRegs);
-        } else if (typeof rawTeamRegs === 'string') {
-          teamRegs = [rawTeamRegs];
+        // Check studentId/key first with EXACT case (Firebase push IDs are case-sensitive!)
+        const pSid = String(p.studentId != null ? p.studentId : (p.id != null ? p.id : '')).trim();
+        if (pSid) {
+          if (pSid === resolvedStudentKey) return true;
+          if (resolvedStudentId && pSid === resolvedStudentId) return true;
         }
 
-        if (teamRegs.includes(studentId)) {
-          const p = appData.programs?.[progId];
-          if (p) {
-            partMap[progId] = {
-              programId: progId,
-              programName: p.name || 'Program',
-              category: p.category || student.category || 'GENERAL',
-              programType: p.programType || 'individual',
-              stageType: p.stageType || 'stage',
-              status: 'registered',
-              position: 'none',
-              grade: 'none',
-              points: 0
-            };
-          }
+        // Check chest number (numeric/alphanumeric labels)
+        const pChest = String(p.chestNo != null ? p.chestNo : (p.chest != null ? p.chest : '')).trim();
+        if (pChest && resolvedChestNo) {
+          if (pChest.toLowerCase() === resolvedChestNo.toLowerCase()) return true;
+          if (resolvedChestNum !== null && /^\d+$/.test(pChest) && parseInt(pChest, 10) === resolvedChestNum) return true;
+        }
+
+        return false;
+      };
+
+      const isRegisteredStudent = (item) => {
+        if (!item) return false;
+        if (typeof item === 'object') return matchParticipant(item);
+        const rawStr = String(item).trim();
+        if (!rawStr) return false;
+
+        // 1. Match student key or internal ID EXACTLY (Case-sensitive!)
+        if (rawStr === resolvedStudentKey || (resolvedStudentId && rawStr === resolvedStudentId)) {
+          return true;
+        }
+
+        // 2. Match chest number ONLY if rawStr does NOT exist as another student's database key
+        const lowerStr = rawStr.toLowerCase();
+        if (resolvedChestNo && lowerStr === resolvedChestNo.toLowerCase()) {
+          if (appData.students[rawStr] && rawStr !== resolvedStudentKey) return false;
+          return true;
+        }
+        if (resolvedChestNum !== null && /^\d+$/.test(rawStr) && parseInt(rawStr, 10) === resolvedChestNum) {
+          if (appData.students[rawStr] && rawStr !== resolvedStudentKey) return false;
+          return true;
+        }
+
+        return false;
+      };
+
+      // Strict Category Matching Rule: An ALIYA student can NEVER participate in a THANIYA or any non-matching category program
+      const isProgramCategoryEligible = (progCategory, studentCategory) => {
+        if (!studentCategory) return false;
+        if (!progCategory) return false;
+        const pCat = String(progCategory).trim().toUpperCase();
+        const sCat = String(studentCategory).trim().toUpperCase();
+        if (pCat === 'GENERAL' || pCat === 'ALL' || sCat === 'GENERAL') return true;
+        return pCat === sCat;
+      };
+
+      // 1. Programs registered under appData.participantRegistrations (Portal A)
+      Object.entries(appData.participantRegistrations || {}).forEach(([progId, teamsObj]) => {
+        if (!teamsObj || typeof teamsObj !== 'object') return;
+        const p = appData.programs?.[progId] || {};
+        const progCat = p.category || '';
+
+        // Strict category filter
+        if (!isProgramCategoryEligible(progCat, student.category)) return;
+
+        // Check if student is registered under their own team ONLY
+        if (!student.teamId || !teamsObj[student.teamId]) return;
+        const teamRegsList = Array.isArray(teamsObj[student.teamId]) ? teamsObj[student.teamId] : Object.values(teamsObj[student.teamId]);
+
+        if (teamRegsList.some(item => isRegisteredStudent(item))) {
+          partMap[progId] = {
+            programId: progId,
+            programName: p.name || 'Program',
+            category: p.category || student.category || 'GENERAL',
+            programType: p.programType || 'individual',
+            stageType: p.stageType || 'stage',
+            status: 'registered',
+            position: 'none',
+            grade: 'none',
+            points: 0,
+            isPublished: false
+          };
         }
       });
 
-      // 2. Published Results & Point Calculations
+      // 2. Programs registered under appData.registrations (Portal B)
+      Object.entries(appData.registrations || {}).forEach(([regKey, regVal]) => {
+        if (!regVal || typeof regVal !== 'object') return;
+
+        const entries = (regVal.programId && (regVal.studentId || regVal.chestNo || regVal.id))
+          ? [regVal]
+          : Object.values(regVal).filter(v => v && typeof v === 'object');
+
+        entries.forEach(reg => {
+          const progId = reg.programId || regKey;
+          const p = appData.programs?.[progId] || {};
+          const progCat = reg.category || p.category;
+
+          // Strict category filter
+          if (!isProgramCategoryEligible(progCat, student.category)) return;
+          if (reg.teamId && student.teamId && reg.teamId !== student.teamId) return;
+          if (reg.teamName && team.name && reg.teamName.trim().toLowerCase() !== team.name.trim().toLowerCase()) return;
+
+          if (matchParticipant(reg) || isRegisteredStudent(reg.studentId) || isRegisteredStudent(reg.chestNo)) {
+            if (!partMap[progId]) {
+              partMap[progId] = {
+                programId: progId,
+                programName: p.name || reg.programName || 'Program',
+                category: p.category || reg.category || student.category || 'GENERAL',
+                programType: p.programType || reg.programType || 'individual',
+                stageType: p.stageType || reg.stageType || 'stage',
+                status: 'registered',
+                position: 'none',
+                grade: 'none',
+                points: 0,
+                isPublished: false
+              };
+            }
+          }
+        });
+      });
+
+      // 3. Published Results & Point Calculations
+      // CRITICAL POLICY: Never reveal any unpublished results or points anywhere!
       let individualPoints = 0;
-      Object.values(appData.results || {}).forEach(r => {
-        if (!r || !r.participants) return;
-        const pt = r.participants.find(p => p.studentId === studentId);
-        
+      Object.entries(appData.results || {}).forEach(([resId, r]) => {
+        if (!r) return;
+        const isPublished = String(r.status || '').trim().toLowerCase() === 'published';
+
+        // STRICT POLICY: If result is NOT published, completely skip position, grade, and points!
+        if (!isPublished) return;
+
+        const progId = r.programId || resId;
+        const pInfo = appData.programs?.[progId] || {};
+        const progCat = r.category || pInfo.category;
+
+        // Strict category filter: Candidate in ALIYA can never receive THNAIYA results!
+        if (!isProgramCategoryEligible(progCat, student.category)) return;
+
+        // Safely extract participants list whether Array or Object
+        let participantsList = [];
+        if (Array.isArray(r.participants)) {
+          participantsList = r.participants;
+        } else if (r.participants && typeof r.participants === 'object') {
+          participantsList = Object.values(r.participants);
+        }
+
+        const pt = participantsList.find(p => matchParticipant(p));
+
         if (pt) {
           const cfg = r.programType === 'group' 
-            ? appData.groupPointsConfig 
+            ? (appData.groupPointsConfig || { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 })
             : r.programType === 'team' 
-              ? appData.teamPointsConfig 
-              : appData.pointsConfig;
+              ? (appData.teamPointsConfig || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 })
+              : (appData.pointsConfig || { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 });
 
           let pts = 0;
-          if (pt.position && pt.position !== 'none' && cfg[pt.position]) pts += cfg[pt.position];
-          if (pt.grade && pt.grade !== 'none' && cfg[pt.grade]) pts += cfg[pt.grade];
+          if (pt.position && pt.position !== 'none' && cfg[pt.position]) pts += Number(cfg[pt.position]) || 0;
+          if (pt.grade && pt.grade !== 'none' && cfg[pt.grade]) pts += Number(cfg[pt.grade]) || 0;
 
           if (r.programType !== 'group' && r.programType !== 'team') {
             individualPoints += pts;
           }
 
-          const isPrized = (pt.position && pt.position !== 'none') || (pt.grade && pt.grade !== 'none');
+          const hasPrize = (pt.position && pt.position !== 'none') || (pt.grade && pt.grade !== 'none');
 
-          partMap[r.programId] = {
-            programId: r.programId,
-            programName: r.programName || appData.programs?.[r.programId]?.name || 'Program',
-            category: r.category || appData.programs?.[r.programId]?.category || student.category,
-            programType: r.programType || 'individual',
-            stageType: r.stageType || 'stage',
+          partMap[progId] = {
+            programId: progId,
+            programName: r.programName || pInfo.name || 'Program',
+            category: r.category || pInfo.category || student.category || 'GENERAL',
+            programType: r.programType || pInfo.programType || 'individual',
+            stageType: r.stageType || pInfo.stageType || 'stage',
             position: pt.position || 'none',
             grade: pt.grade || 'none',
             points: pts,
-            status: r.status === 'published' ? (isPrized ? 'prized' : 'participated') : 'registered'
+            status: hasPrize ? 'prized' : 'participated',
+            isPublished: true
           };
-        } else if (r.status === 'published' && partMap[r.programId]) {
-          partMap[r.programId].status = 'participated';
+        } else if (partMap[progId]) {
+          if (partMap[progId].status !== 'prized') {
+            partMap[progId].status = 'participated';
+            partMap[progId].isPublished = true;
+          }
         }
       });
 
       const allPrograms = Object.values(partMap);
-      const prizedPrograms = allPrograms.filter(p => (p.position && p.position !== 'none') || (p.grade && p.grade !== 'none'));
+      // ONLY published results with prize can appear in prizedPrograms
+      const prizedPrograms = allPrograms.filter(p => p.status === 'prized' && p.isPublished === true);
 
       // Student Penalties
       let penaltyTotal = 0;
       const penaltiesList = [];
       Object.values(appData.studentPenalties || {}).forEach(pen => {
-        if (pen && pen.studentId === studentId) {
-          penaltyTotal += (pen.points || 0);
+        if (!pen) return;
+        const penSid = String(pen.studentId != null ? pen.studentId : (pen.id || '')).trim().toLowerCase();
+        const penChest = String(pen.studentChestNo != null ? pen.studentChestNo : (pen.chestNo || '')).trim().toLowerCase();
+        let matchesPen = false;
+
+        if (penSid && (penSid === resolvedStudentKey.toLowerCase() || penSid === resolvedStudentId.toLowerCase())) {
+          matchesPen = true;
+        } else if (penChest && resolvedChestNo) {
+          if (penChest === resolvedChestNo.toLowerCase()) matchesPen = true;
+          if (resolvedChestNum !== null && /^\d+$/.test(penChest) && parseInt(penChest, 10) === resolvedChestNum) matchesPen = true;
+        }
+
+        if (matchesPen) {
+          penaltyTotal += (Number(pen.points) || 0);
           penaltiesList.push(pen);
         }
       });
 
-      const netPoints = individualPoints - penaltyTotal;
+      const netPoints = Math.max(0, individualPoints - penaltyTotal);
 
-      // Category Rank
+      // Category Rank (STRICTLY FROM PUBLISHED RESULTS)
       const categoryStudents = Object.entries(appData.students || {})
         .map(([id, s]) => ({ id, ...s }))
         .filter(s => s && s.category === student.category)
         .map(s => {
           let pts = 0;
+          const sChestStr = String(s.chestNo != null ? s.chestNo : (s.chest || '')).trim().toLowerCase();
+          const sChestNum = /^\d+$/.test(sChestStr) ? parseInt(sChestStr, 10) : null;
+          const sIdKey = String(s.id || '').trim().toLowerCase();
+
+          const matchesStudent = (p) => {
+            if (!p || typeof p !== 'object') return false;
+            const pSid = String(p.studentId != null ? p.studentId : (p.id || '')).trim().toLowerCase();
+            if (pSid && (pSid === sIdKey || (s.id && pSid === String(s.id).trim().toLowerCase()))) return true;
+            const pChest = String(p.chestNo != null ? p.chestNo : (p.chest || '')).trim().toLowerCase();
+            if (pChest && sChestStr) {
+              if (pChest === sChestStr) return true;
+              if (sChestNum !== null && /^\d+$/.test(pChest) && parseInt(pChest, 10) === sChestNum) return true;
+            }
+            return false;
+          };
+
           Object.values(appData.results || {}).forEach(r => {
-            if (!r || r.programType === 'group' || r.programType === 'team' || !r.participants || r.status !== 'published') return;
-            const cfg = appData.pointsConfig;
-            r.participants.forEach(p => {
-              if (p.studentId === s.id) {
-                if (p.position && p.position !== 'none' && cfg[p.position]) pts += cfg[p.position];
-                if (p.grade && p.grade !== 'none' && cfg[p.grade]) pts += cfg[p.grade];
+            if (!r || r.programType === 'group' || r.programType === 'team') return;
+            if (String(r.status || '').trim().toLowerCase() !== 'published') return;
+            
+            const cfg = appData.pointsConfig || { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 };
+            let pList = Array.isArray(r.participants) ? r.participants : (r.participants && typeof r.participants === 'object' ? Object.values(r.participants) : []);
+
+            pList.forEach(p => {
+              if (matchesStudent(p)) {
+                if (p.position && p.position !== 'none' && cfg[p.position]) pts += Number(cfg[p.position]) || 0;
+                if (p.grade && p.grade !== 'none' && cfg[p.grade]) pts += Number(cfg[p.grade]) || 0;
               }
             });
           });
+
           Object.values(appData.studentPenalties || {}).forEach(pen => {
-            if (pen && pen.studentId === s.id) pts -= (pen.points || 0);
+            if (!pen) return;
+            const penSid = String(pen.studentId || '').trim().toLowerCase();
+            const penChest = String(pen.studentChestNo || pen.chestNo || '').trim().toLowerCase();
+            let m = false;
+            if (penSid && (penSid === sIdKey || (s.id && penSid === String(s.id).trim().toLowerCase()))) m = true;
+            else if (penChest && sChestStr) {
+              if (penChest === sChestStr) m = true;
+              if (sChestNum !== null && /^\d+$/.test(penChest) && parseInt(penChest, 10) === sChestNum) m = true;
+            }
+            if (m) pts -= (Number(pen.points) || 0);
           });
-          return { id: s.id, points: pts };
+          return { id: s.id, chestNo: s.chestNo, points: Math.max(0, pts) };
         })
         .sort((a, b) => b.points - a.points);
 
-      const rankIndex = categoryStudents.findIndex(s => s.id === studentId);
+      const rankIndex = categoryStudents.findIndex(s => s.id === resolvedStudentKey || s.id === resolvedStudentId || (s.chestNo && s.chestNo === resolvedChestNo));
       const rank = rankIndex !== -1 ? rankIndex + 1 : '—';
 
       return {
@@ -313,30 +522,70 @@
       };
     }
 
-    // ── Get Stored Team Scores for Ticker ──
+    // ── Get Team Scores for Ticker (PUBLISHED RESULTS ONLY) ──
     function getTeamScores() {
       const teams = appData.teams || {};
-      const students = appData.students || {};
-      const directScores = appData.teamDirectScores || {};
       const penalties = {};
 
       Object.values(appData.teamPenalties || {}).forEach(p => {
         if (p && p.teamId) {
           if (!penalties[p.teamId]) penalties[p.teamId] = 0;
-          penalties[p.teamId] += (p.points || 0);
+          penalties[p.teamId] += (Number(p.points) || 0);
         }
       });
 
-      const arr = Object.entries(teams).map(([id, t]) => {
-        const stored = directScores[id] || {};
-        let total = 0;
-        CATEGORIES.forEach(cat => { total += (stored[cat] || 0); });
+      // Calculate team points SOLELY from published results
+      // CRITICAL POLICY: NEVER use teamDirectScores or unpublished results!
+      const teamPoints = {};
+      Object.keys(teams).forEach(tid => { teamPoints[tid] = 0; });
 
-        Object.entries(students).forEach(([sid, s]) => {
-          if (s && s.teamId === id) total += (s.totalPoints || 0);
+      Object.values(appData.results || {}).forEach(r => {
+        if (!r || String(r.status || '').trim().toLowerCase() !== 'published') return;
+
+        const cfg = r.programType === 'group' 
+          ? (appData.groupPointsConfig || { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 })
+          : r.programType === 'team' 
+            ? (appData.teamPointsConfig || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 })
+            : (appData.pointsConfig || { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 });
+
+        let pList = Array.isArray(r.participants) ? r.participants : (r.participants && typeof r.participants === 'object' ? Object.values(r.participants) : []);
+
+        pList.forEach(p => {
+          if (!p) return;
+          let pts = 0;
+          if (p.position && p.position !== 'none' && cfg[p.position]) pts += Number(cfg[p.position]) || 0;
+          if (p.grade && p.grade !== 'none' && cfg[p.grade]) pts += Number(cfg[p.grade]) || 0;
+          if (pts <= 0) return;
+
+          // Find teamId
+          let tId = p.teamId || r.teamId;
+          if (!tId) {
+            // Direct key lookup in appData.students first
+            let st = p.studentId && appData.students ? appData.students[p.studentId] : null;
+            if (!st) {
+              const pChest = String(p.chestNo != null ? p.chestNo : (p.chest || '')).trim().toLowerCase();
+              const chestNum = /^\d+$/.test(pChest) ? parseInt(pChest, 10) : null;
+              if (pChest) {
+                st = Object.values(appData.students || {}).find(s => {
+                  if (!s) return false;
+                  const sChest = String(s.chestNo || '').trim().toLowerCase();
+                  if (sChest && sChest === pChest) return true;
+                  if (chestNum !== null && /^\d+$/.test(sChest) && parseInt(sChest, 10) === chestNum) return true;
+                  return false;
+                });
+              }
+            }
+            if (st && st.teamId) tId = st.teamId;
+          }
+
+          if (tId && teamPoints[tId] !== undefined) {
+            teamPoints[tId] += pts;
+          }
         });
+      });
 
-        total -= (penalties[id] || 0);
+      const arr = Object.entries(teams).map(([id, t]) => {
+        const total = Math.max(0, (teamPoints[id] || 0) - (penalties[id] || 0));
         return { id, name: t.name, totalPoints: total };
       });
 
@@ -349,13 +598,26 @@
       const cleanCode = String(code || '').trim().toLowerCase();
       if (!cleanCode) return;
 
-      // Find student by Chest Number or Firebase Student Key
-      const studentEntry = Object.entries(appData.students || {}).find(([id, s]) => {
+      const cleanNum = /^\d+$/.test(cleanCode) ? parseInt(cleanCode, 10) : null;
+
+      // 1. SEARCH BY CHEST NUMBER FIRST (Chest number is unique to each student)
+      let studentEntry = Object.entries(appData.students || {}).find(([id, s]) => {
         if (!s) return false;
-        const chest = String(s.chestNo || '').trim().toLowerCase();
-        const studentId = String(id || s.id || '').trim().toLowerCase();
-        return chest === cleanCode || studentId === cleanCode;
+        const chest = String(s.chestNo != null ? s.chestNo : (s.chest || '')).trim().toLowerCase();
+        if (chest && chest === cleanCode) return true;
+        if (cleanNum !== null && /^\d+$/.test(chest) && parseInt(chest, 10) === cleanNum) return true;
+        return false;
       });
+
+      // 2. Only if NO student has this chest number, check database key or internal ID
+      if (!studentEntry) {
+        studentEntry = Object.entries(appData.students || {}).find(([id, s]) => {
+          if (!s) return false;
+          const studentKey = String(id || '').trim().toLowerCase();
+          const studentId = String(s.id || '').trim().toLowerCase();
+          return studentKey === cleanCode || studentId === cleanCode;
+        });
+      }
 
       if (studentEntry) {
         const [id, student] = studentEntry;
@@ -751,16 +1013,18 @@
     db.ref().on('value', snapshot => {
       const raw = snapshot.val() || {};
       appData = {
-        teams:            raw.teams            || {},
-        students:         raw.students         || {},
-        programs:         raw.programs         || {},
-        results:          raw.results          || {},
-        teamDirectScores: raw.teamDirectScores || {},
-        teamPenalties:    raw.teamPenalties    || {},
-        studentPenalties: raw.studentPenalties || {},
-        pointsConfig:     raw.pointsConfig     || { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 },
-        groupPointsConfig:raw.groupPointsConfig|| { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 },
-        teamPointsConfig: raw.teamPointsConfig || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 }
+        teams:                    raw.teams                    || {},
+        students:                 raw.students                 || {},
+        programs:                 raw.programs                 || {},
+        results:                  raw.results                  || {},
+        participantRegistrations: raw.participantRegistrations || {},
+        registrations:            raw.registrations            || {},
+        registrationPrograms:     raw.registrationPrograms     || raw.registrationProgramss || {},
+        teamPenalties:            raw.teamPenalties            || {},
+        studentPenalties:         raw.studentPenalties         || {},
+        pointsConfig:             raw.pointsConfig             || { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 },
+        groupPointsConfig:        raw.groupPointsConfig        || { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 },
+        teamPointsConfig:         raw.teamPointsConfig         || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 }
       };
       render();
     }, err => {

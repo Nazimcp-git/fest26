@@ -59,10 +59,18 @@ async function renderHomePage() {
         `;
       }).join('');
 
+  const showClassResults = appData.settings?.showClassResults !== false;
+
+  // Filter out First Class (Class 1) from public class-wise results
+  const publicClassesArray = (classesArray || []).filter(c => {
+    const name = String(c.name || '').trim().toLowerCase();
+    return name !== '1' && name !== 'first' && name !== 'class 1';
+  });
+
   // Render Top Classes
-  const classesHtml = (!classesArray || classesArray.length === 0)
+  const classesHtml = (!publicClassesArray || publicClassesArray.length === 0)
     ? `<div class="col-span-full py-12 text-center text-gray-500 font-medium">No class scores yet</div>`
-    : classesArray.slice(0, 4).map((c, i) => {
+    : publicClassesArray.slice(0, 4).map((c, i) => {
         return `
           <div class="bg-white/50 backdrop-blur-md rounded-2xl border border-white/60 p-4 shadow-sm hover:bg-white/80 transition-all flex justify-between items-center group">
             <div class="flex items-center gap-4">
@@ -179,6 +187,7 @@ async function renderHomePage() {
         </div>
       </div>
 
+      ${showClassResults ? `
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         <!-- Top Classes Section -->
@@ -216,7 +225,28 @@ async function renderHomePage() {
           </div>
         </div>
 
-      </div>
+      </div>` : `
+      <!-- Top Students Section (Full Width when Class Results Hidden) -->
+      <div>
+        <h2 class="text-xl font-bold text-gray-900 tracking-tight mb-5 flex items-center gap-2">
+          <i class="fas fa-star text-orange-400"></i> Individual Leaders
+        </h2>
+        <div class="bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl overflow-hidden shadow-lg shadow-black/5">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead class="bg-black/5 border-b border-black/5">
+                <tr>
+                  <th class="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rank</th>
+                  <th class="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Student</th>
+                  <th class="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Category</th>
+                  <th class="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-right">Points</th>
+                </tr>
+              </thead>
+              <tbody>${topStudentsHtml}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>`}
 
       <!-- Category Toppers Section -->
       <div class="pt-8">
@@ -337,9 +367,17 @@ async function renderLeaderboardPage(categoryFilter = 'All') {
     filteredStudents = studentsArray.filter(s => s.category === categoryFilter);
   }
 
-  const classesHtml = (!classesArray || classesArray.length === 0)
+  const showClassResults = appData.settings?.showClassResults !== false;
+
+  // Filter out First Class (Class 1) from public class-wise results
+  const publicClassesArray = (classesArray || []).filter(c => {
+    const name = String(c.name || '').trim().toLowerCase();
+    return name !== '1' && name !== 'first' && name !== 'class 1';
+  });
+
+  const classesHtml = (!publicClassesArray || publicClassesArray.length === 0)
     ? `<tr><td colspan="3" class="py-8 text-center text-gray-500">No class data available</td></tr>`
-    : classesArray.map((c, i) => `
+    : publicClassesArray.map((c, i) => `
         <tr class="border-b border-black/5 hover:bg-white/40 transition-colors group">
           <td class="px-5 py-4 w-16">
             <div class="w-8 h-8 rounded-xl bg-white border border-white/60 shadow-sm flex items-center justify-center font-bold text-gray-500 text-sm">${i+1}</div>
@@ -374,7 +412,8 @@ async function renderLeaderboardPage(categoryFilter = 'All') {
         <p class="text-sm text-gray-600 font-medium mt-1 mb-8">Detailed rankings across teams, classes, and individuals.</p>
       </div>
         
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div class="grid grid-cols-1 ${showClassResults ? 'md:grid-cols-2' : ''} gap-8">
+        ${showClassResults ? `
         <!-- Class Leaderboard -->
         <div class="bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl overflow-hidden shadow-lg shadow-black/5 flex flex-col h-[500px]">
           <div class="p-6 border-b border-white/60 bg-white/40 flex items-center gap-3">
@@ -386,7 +425,7 @@ async function renderLeaderboardPage(categoryFilter = 'All') {
               <tbody>${classesHtml}</tbody>
             </table>
           </div>
-        </div>
+        </div>` : ''}
 
         <!-- Team Points Breakdown -->
         <div class="bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl overflow-hidden shadow-lg shadow-black/5 flex flex-col h-[500px]">

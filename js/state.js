@@ -14,7 +14,8 @@ let appData = {
   teamPointsConfig:    {},
   teamDirectScores:    {},
   teamPenalties:       {},
-  participantRegistrations: {}
+  participantRegistrations: {},
+  settings:            {}
 };
 
 // UI state

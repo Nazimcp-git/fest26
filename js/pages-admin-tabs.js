@@ -438,6 +438,7 @@ function renderPointsConfigTab() {
   const c1 = appData.pointsConfig || {};
   const c2 = appData.groupPointsConfig || {};
   const c3 = appData.teamPointsConfig || {};
+  const isClassVisible = appData.settings?.showClassResults !== false;
 
   const field = (id, val, label) => `
     <div>
@@ -446,7 +447,26 @@ function renderPointsConfigTab() {
     </div>`;
 
   return `
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-4xl mx-auto space-y-6">
+      <!-- Public Visibility Settings -->
+      <div class="bg-white rounded-xl border border-gray-200/60 p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-semibold text-gray-900">Class-Wise Results Public Visibility</h2>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${isClassVisible ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}">
+                ${isClassVisible ? 'Visible' : 'Hidden'}
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Control if class points and standings appear on public pages. Class 1 (First Class) is removed from public view.</p>
+          </div>
+          <button type="button" class="toggle-class-results-btn relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isClassVisible ? 'bg-indigo-600' : 'bg-gray-300'}" role="switch" aria-checked="${isClassVisible}">
+            <span class="sr-only">Toggle class-wise visibility</span>
+            <span class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isClassVisible ? 'translate-x-5' : 'translate-x-0'}"></span>
+          </button>
+        </div>
+      </div>
+
       <form id="update-points-form" class="space-y-6">
         <div class="bg-white rounded-xl border border-gray-200/60 p-6 shadow-sm">
           <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-3 mb-4">Individual Event Points</h2>

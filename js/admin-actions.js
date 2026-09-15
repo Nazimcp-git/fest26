@@ -283,3 +283,30 @@ async function handleAdminListClick(e) {
     return;
   }
 }
+
+/**
+ * Toggles whether class-wise results are visible to the public.
+ * Saves immediately to Firebase settings/showClassResults.
+ * @param {HTMLElement} btn
+ */
+async function toggleClassResultsVisibility(btn) {
+  const current = appData.settings?.showClassResults !== false;
+  const nextVal = !current;
+
+  if (btn) btn.disabled = true;
+  try {
+    await db.ref('settings/showClassResults').set(nextVal);
+    if (!appData.settings) appData.settings = {};
+    appData.settings.showClassResults = nextVal;
+
+    ToastEngine.success(nextVal 
+      ? 'Class-wise results are now visible to the public' 
+      : 'Class-wise results are now hidden from the public'
+    );
+    renderAdminTab(activeAdminTab);
+  } catch (err) {
+    ToastEngine.error('Failed to update visibility setting: ' + err.message);
+    if (btn) btn.disabled = false;
+  }
+}
+

@@ -221,6 +221,8 @@ async function renderDashboardTab() {
         <td class="px-5 py-3 font-semibold text-gray-900">${s.totalPoints || 0}</td>
       </tr>`).join('');
 
+  const isClassVisible = appData.settings?.showClassResults !== false;
+
   return `
     <div class="space-y-8">
       <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
@@ -230,6 +232,34 @@ async function renderDashboardTab() {
           <p class="text-xs text-amber-700 mt-1">This view shows ALL scores (Pending + Ready + Published). It is not the public leaderboard.</p>
         </div>
       </div>
+
+      <!-- Public Display Controls -->
+      <div class="bg-white rounded-2xl border border-gray-200/70 p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-2xl ${isClassVisible ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-gray-100 text-gray-500 border-gray-200'} border flex items-center justify-center flex-shrink-0 transition-colors">
+              <i class="fas fa-chalkboard-teacher text-xl"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <h3 class="text-base font-bold text-gray-900">Class-Wise Results (Public Display)</h3>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${isClassVisible ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}">
+                  <span class="w-1.5 h-1.5 rounded-full ${isClassVisible ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'} mr-1.5"></span>
+                  ${isClassVisible ? 'Visible to Public' : 'Hidden from Public'}
+                </span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Toggle whether class standings and points are displayed on the public Home and Leaderboard pages. <span class="font-semibold text-orange-600">(First Class / Class 1 is excluded from public standings)</span>.</p>
+            </div>
+          </div>
+          <div class="flex items-center sm:self-center self-end">
+            <button type="button" id="toggle-class-results-btn" class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${isClassVisible ? 'bg-orange-600' : 'bg-gray-300'}" role="switch" aria-checked="${isClassVisible}">
+              <span class="sr-only">Toggle class-wise points visibility</span>
+              <span class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${isClassVisible ? 'translate-x-5' : 'translate-x-0'}"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div>
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Live Team Standings</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">${teamsHtml}</div>

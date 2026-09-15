@@ -29,7 +29,8 @@ function syncData() {
       teamDirectScores:     raw.teamDirectScores     || {},
       teamPenalties:        raw.teamPenalties        || {},
       participantRegistrations: raw.participantRegistrations || {},
-      registrations:        raw.registrations        || {}
+      registrations:        raw.registrations        || {},
+      settings:             raw.settings             || {}
     };
 
     // Invalidate calculation caches on data change

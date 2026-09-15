@@ -35,6 +35,14 @@ document.addEventListener('click', e => {
     window.location.hash = `/team/${teamCard.dataset.teamId}`;
   }
 
+  // Toggle class results public visibility
+  const classToggleBtn = e.target.closest('#toggle-class-results-btn, .toggle-class-results-btn');
+  if (classToggleBtn) {
+    if (typeof toggleClassResultsVisibility === 'function') {
+      toggleClassResultsVisibility(classToggleBtn);
+    }
+  }
+
   // Close mobile nav when any nav-link or logout is tapped
   if (e.target.closest(".nav-link") || e.target.closest("#logout-btn")) {
     const mobileNav = document.getElementById("mobile-nav-container");

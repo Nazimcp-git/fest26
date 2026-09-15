@@ -189,18 +189,155 @@ async function renderAdminTab(tabId) {
 // ── Tab Renderers ────────────────────────────────────────────────────────
 
 async function renderDashboardTab() {
-  const { teamsArray, studentsArray } = calculateAllScoresInternal();
+  const { teamsArray, studentsArray, classesArray } = calculateAllScoresInternal();
+
+  // Compute top team & scores for each category
+  const categoryLeaders = {};
+  const maxPtsPerCategory = {};
+
+  CATEGORIES.forEach(cat => {
+    let topTeam = null;
+    let maxPts = -1;
+    teamsArray.forEach(team => {
+      const pts = team.categoryPoints?.[cat] || 0;
+      if (pts > maxPts) {
+        maxPts = pts;
+        topTeam = team;
+      }
+    });
+    categoryLeaders[cat] = { team: topTeam, points: maxPts > 0 ? maxPts : 0 };
+    maxPtsPerCategory[cat] = maxPts > 0 ? maxPts : 0;
+  });
 
   const teamsHtml = teamsArray.length === 0 ? emptyState('fa-users', 'No teams data') : teamsArray.map((team, i) => `
-    <div class="bg-white rounded-xl border border-gray-200/60 p-5 shadow-sm">
-      <div class="flex justify-between items-center mb-3">
-        <h3 class="font-semibold text-gray-900">${sanitize(team.name)}</h3>
-        ${i < 3 ? `<i class="fas fa-medal text-${['yellow-500','gray-400','amber-600'][i]}"></i>` : `<span class="text-xs text-gray-400 font-medium">#${i+1}</span>`}
+    <div class="bg-white rounded-xl border border-gray-200/60 p-5 shadow-sm flex flex-col justify-between">
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-semibold text-gray-900">${sanitize(team.name)}</h3>
+          ${i < 3 ? `<i class="fas fa-medal text-${['yellow-500','gray-400','amber-600'][i]}"></i>` : `<span class="text-xs text-gray-400 font-medium">#${i+1}</span>`}
+        </div>
+        <p class="text-3xl font-bold text-gray-900">${team.totalPoints}</p>
       </div>
-      <p class="text-3xl font-bold text-gray-900">${team.totalPoints}</p>
+      <div class="grid grid-cols-3 gap-1.5 mt-3 pt-3 border-t border-gray-100">
+        ${CATEGORIES.map(cat => {
+          const pts = team.categoryPoints?.[cat] || 0;
+          const isTop = pts > 0 && pts === maxPtsPerCategory[cat];
+          return `
+            <div class="rounded-lg p-1.5 text-center ${isTop ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50 border border-gray-100'}">
+              <div class="text-[9px] font-bold ${isTop ? 'text-amber-800' : 'text-gray-500'} uppercase tracking-tight truncate">${cat}</div>
+              <div class="text-xs font-black ${isTop ? 'text-amber-600' : 'text-gray-800'} mt-0.5">${pts}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
     </div>`).join('');
 
-  const { classesArray } = calculateAllScoresInternal();
+  // Category Leaders Cards
+  const categoryLeadersHtml = CATEGORIES.map(cat => {
+    const leader = categoryLeaders[cat];
+    const hasLeader = leader.team && leader.points > 0;
+    const topTeamName = hasLeader ? leader.team.name : 'No points yet';
+    const topPoints = hasLeader ? leader.points : 0;
+
+    const rankedTeams = [...teamsArray].map(t => ({
+      name: t.name,
+      pts: t.categoryPoints?.[cat] || 0
+    })).sort((a, b) => b.pts - a.pts);
+
+    return `
+      <div class="bg-white rounded-xl border border-gray-200/80 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
+            <div>${categoryBadge(cat)}</div>
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Top Team</span>
+          </div>
+
+          <!-- Top Position Team Banner -->
+          <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl p-3 mb-4 flex items-center justify-between">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+                <i class="fas fa-crown"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-black text-gray-900 truncate leading-tight">${sanitize(topTeamName)}</p>
+                <p class="text-[10px] text-amber-700 font-semibold mt-0.5">Top Position</p>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0 ml-2">
+              <span class="text-xl font-black text-amber-600 leading-none">${topPoints}</span>
+              <span class="text-[10px] font-bold text-gray-400 block">pts</span>
+            </div>
+          </div>
+
+          <!-- All Teams in this Category -->
+          <div class="space-y-1.5">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Team Standings</p>
+            ${rankedTeams.map((t, idx) => {
+              const isTop = idx === 0 && t.pts > 0;
+              return `
+                <div class="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-lg ${isTop ? 'bg-orange-50/70 font-bold text-orange-900' : 'text-gray-600 bg-gray-50/50'}">
+                  <span class="flex items-center gap-2 truncate">
+                    <span class="w-4 text-[10px] font-bold ${isTop ? 'text-orange-600' : 'text-gray-400'}">${idx + 1}.</span>
+                    <span class="truncate">${sanitize(t.name)}</span>
+                  </span>
+                  <span class="font-black ${isTop ? 'text-orange-600' : 'text-gray-800'} ml-2">${t.pts}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Category Scores Matrix Table
+  const categoryMatrixHtml = `
+    <div class="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden mt-6">
+      <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <h3 class="text-sm font-bold text-gray-900 flex items-center gap-2">
+          <i class="fas fa-table text-indigo-500"></i> Category Points Matrix
+        </h3>
+        <span class="text-xs text-gray-500 font-medium">Top team in each category highlighted with <i class="fas fa-crown text-amber-500 ml-0.5 mr-1"></i></span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-gray-50 border-b border-gray-200/80 text-gray-600 font-bold uppercase tracking-wider text-[10px]">
+            <tr>
+              <th class="px-4 py-3">Team</th>
+              <th class="px-4 py-3 text-right">Total</th>
+              ${CATEGORIES.map(cat => `<th class="px-4 py-3 text-center">${cat}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            ${teamsArray.map((team, idx) => `
+              <tr class="hover:bg-blue-50/20 transition-colors">
+                <td class="px-4 py-3 font-semibold text-gray-900 whitespace-nowrap">
+                  <span class="inline-block w-5 text-gray-400 font-bold">#${idx + 1}</span>
+                  ${sanitize(team.name)}
+                </td>
+                <td class="px-4 py-3 text-right font-black text-sm text-indigo-600 whitespace-nowrap">
+                  ${team.totalPoints}
+                </td>
+                ${CATEGORIES.map(cat => {
+                  const pts = team.categoryPoints?.[cat] || 0;
+                  const isTop = pts > 0 && pts === maxPtsPerCategory[cat];
+                  return `
+                    <td class="px-4 py-3 text-center whitespace-nowrap ${isTop ? 'bg-amber-50/50' : ''}">
+                      <span class="inline-flex items-center gap-1 font-bold ${isTop ? 'text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-full' : 'text-gray-700'}">
+                        ${isTop ? '<i class="fas fa-crown text-[9px] text-amber-500"></i>' : ''}
+                        ${pts}
+                      </span>
+                    </td>
+                  `;
+                }).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
   const classesHtml = !classesArray || classesArray.length === 0 ? emptyState('fa-chalkboard-teacher', 'No class data') : classesArray.slice(0, 10).map((c, i) => `
     <div class="bg-white rounded-xl border border-indigo-200/60 p-4 shadow-sm flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -263,6 +400,20 @@ async function renderDashboardTab() {
       <div>
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Live Team Standings</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">${teamsHtml}</div>
+      </div>
+
+      <!-- Category-wise Score & Top Positions -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <i class="fas fa-trophy text-amber-500"></i> Category-Wise Standings & Top Teams
+          </h2>
+          <span class="text-xs text-gray-500 font-medium">Top position per category</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          ${categoryLeadersHtml}
+        </div>
+        ${categoryMatrixHtml}
       </div>
       <div>
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Live Class Standings</h2>

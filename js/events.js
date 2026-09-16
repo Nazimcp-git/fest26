@@ -85,7 +85,7 @@ auth.onAuthStateChanged(user => {
   currentUser = user;
   if (authChanged) {
     isInitialLoad = true;
-    router();
+    syncData();
   }
 });
 

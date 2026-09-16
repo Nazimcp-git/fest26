@@ -1400,15 +1400,18 @@
             }
 
             // Realtime DB Sync
-            db.ref().on('value', snapshot => {
-                const data = snapshot.val() || {};
-                appData = {
-                    students: data.students || {},
-                    teams: data.teams || {},
-                    programs: data.programs || {},
-                    participantRegistrations: data.participantRegistrations || {},
-                    registrations: data.registrations || {}
-                };
+            const contraCols = ['students', 'teams', 'programs', 'participantRegistrations', 'registrations'];
+            contraCols.forEach(col => {
+                db.ref(col).on('value', snap => {
+                    appData[col] = snap.val() || {};
+                    // Protect active inputs from clobbering
+                    const activeEl = document.activeElement;
+                    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT')) {
+                        return;
+                    }
+                    renderApp();
+                });
+            });
 
                 // Protect active inputs from clobbering
                 const activeEl = document.activeElement;

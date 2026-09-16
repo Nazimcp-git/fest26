@@ -3061,16 +3061,14 @@
             }
             currentUser = JSON.parse(storedUser);
 
-            db.ref().on('value', snapshot => {
-                const data = snapshot.val() || {};
-                appData = {
-                    students: data.students || {},
-                    teams: data.teams || {},
-                    programs: data.programs || {},
-                    participantRegistrations: data.participantRegistrations || {},
-                    registrationPrograms: data.registrationPrograms || {},
-                    settings: data.settings || {}
-                };
+            const partPortalCols = ['students', 'teams', 'programs', 'participantRegistrations', 'registrationPrograms', 'settings'];
+            partPortalCols.forEach(col => {
+                db.ref(col).on('value', snap => {
+                    appData[col] = snap.val() || {};
+                    if (selectedProgramId) return;
+                    render();
+                });
+            });
 
                 // Teams are allowed to stay in view-only mode even if appData.settings?.portals?.participant is false
                 

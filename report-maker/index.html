@@ -253,22 +253,21 @@
     // ══════════════════════════════════════════════
     //  FIREBASE SYNC
     // ══════════════════════════════════════════════
-    db.ref().on('value', snapshot => {
-      const raw = snapshot.val() || {};
-      appData = {
-        students: raw.students || {},
-        teams: raw.teams || {},
-        programs: raw.programs || {},
-        results: raw.results || {},
-        pointsConfig: raw.pointsConfig || { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 },
-        groupPointsConfig: raw.groupPointsConfig || { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 },
-        teamPointsConfig: raw.teamPointsConfig || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 },
-        teamDirectScores: raw.teamDirectScores || {},
-        teamPenalties: raw.teamPenalties || {},
-        studentPenalties: raw.studentPenalties || {},
-        participantRegistrations: raw.participantRegistrations || {},
-        registrations: raw.registrations || {}
-      };
+    const reportCollections = [
+      'students', 'teams', 'programs',
+      'pointsConfig', 'groupPointsConfig', 'teamPointsConfig',
+      'teamDirectScores', 'teamPenalties', 'studentPenalties',
+      'participantRegistrations', 'registrations'
+    ];
+    reportCollections.forEach(col => {
+      db.ref(col).on('value', snap => {
+        appData[col] = snap.val() || {};
+        dataLoaded = true;
+        render();
+      });
+    });
+    db.ref('results').orderByChild('status').equalTo('published').on('value', snap => {
+      appData.results = snap.val() || {};
       dataLoaded = true;
       render();
     });

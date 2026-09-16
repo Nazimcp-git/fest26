@@ -1,8 +1,7 @@
 {
   "rules": {
-    ".read": true,
-
     "students": {
+      ".read": true,
       ".write": "auth != null",
       "$studentId": {
         ".validate": "newData.hasChildren(['chestNo', 'name', 'teamId']) && newData.child('chestNo').isString() && newData.child('name').isString() && newData.child('teamId').isString()"
@@ -10,6 +9,7 @@
     },
 
     "teams": {
+      ".read": true,
       ".write": "auth != null",
       "$teamId": {
         ".validate": "newData.child('name').isString()"
@@ -17,6 +17,7 @@
     },
 
     "programs": {
+      ".read": true,
       ".write": "auth != null",
       "$programId": {
         ".validate": "newData.child('name').isString() && newData.child('category').isString()"
@@ -24,6 +25,8 @@
     },
 
     "results": {
+      ".indexOn": ["status"],
+      ".read": "auth != null || (query.orderByChild == 'status' && query.equalTo == 'published')",
       ".write": "auth != null",
       "$resultId": {
         ".validate": "newData.hasChildren(['programId', 'programName', 'status'])",
@@ -39,21 +42,25 @@
     },
 
     "pointsConfig": {
+      ".read": true,
       ".write": "auth != null",
       ".validate": "newData.hasChildren(['first', 'second', 'third'])"
     },
 
     "groupPointsConfig": {
+      ".read": true,
       ".write": "auth != null",
       ".validate": "newData.hasChildren(['first', 'second', 'third'])"
     },
 
     "teamPointsConfig": {
+      ".read": true,
       ".write": "auth != null",
       ".validate": "newData.hasChildren(['first', 'second', 'third'])"
     },
 
     "teamDirectScores": {
+      ".read": true,
       ".write": "auth != null",
       "$teamId": {
         "$category": {
@@ -63,6 +70,7 @@
     },
 
     "teamPenalties": {
+      ".read": true,
       ".write": "auth != null",
       "$penaltyId": {
         ".validate": "newData.hasChildren(['teamId', 'points', 'reason']) && newData.child('points').isNumber() && newData.child('points').val() > 0"
@@ -70,14 +78,16 @@
     },
 
     "studentPenalties": {
-      ".write": "auth != null",
+      ".read": true,
+      ".write": true,
       "$penaltyId": {
         ".validate": "newData.hasChildren(['studentId', 'points', 'reason']) && newData.child('points').isNumber() && newData.child('points').val() > 0"
       }
     },
 
     "participantRegistrations": {
-      ".write": "auth != null",
+      ".read": true,
+      ".write": true,
       "$programId": {
         "$teamId": {
           ".validate": "true"
@@ -86,31 +96,36 @@
     },
 
     "registrations": {
-      ".write": "auth != null"
+      ".read": true,
+      ".write": true
     },
 
     "registrationPrograms": {
-      ".write": "auth != null",
+      ".read": true,
+      ".write": true,
       "$programId": {
         ".validate": "newData.isBoolean()"
       }
     },
 
     "registrationProgramss": {
-      ".write": "auth != null",
+      ".read": true,
+      ".write": true,
       "$programId": {
         ".validate": "newData.isBoolean()"
       }
     },
 
     "notifications": {
-      ".write": "auth != null",
+      ".read": true,
+      ".write": true,
       "$notificationId": {
         ".validate": "newData.hasChildren(['type', 'timestamp'])"
       }
     },
 
     "settings": {
+      ".read": true,
       ".write": "auth != null"
     }
   }

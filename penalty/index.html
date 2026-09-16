@@ -159,14 +159,11 @@
     };
 
     // Firebase Realtime Listener
-    db.ref().on('value', snapshot => {
-      const raw = snapshot.val() || {};
-      appData = {
-        students: raw.students || {},
-        teams: raw.teams || {},
-        studentPenalties: raw.studentPenalties || {}
-      };
-      render();
+    ['students', 'teams', 'studentPenalties'].forEach(col => {
+      db.ref(col).on('value', snapshot => {
+        appData[col] = snapshot.val() || {};
+        render();
+      });
     });
 
     // Passcode Login — Secure SHA-256 Hash Verification

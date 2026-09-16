@@ -500,18 +500,39 @@
     }
 
     // ── Firebase Realtime Sync ──
-    db.ref().on('value', snapshot => {
-      const raw = snapshot.val() || {};
-      appData = {
-        teams:            raw.teams            || {},
-        students:         raw.students         || {},
-        programs:         raw.programs         || {},
-        results:          raw.results          || {},
-        teamDirectScores: raw.teamDirectScores || {},
-        teamPenalties:    raw.teamPenalties    || {}
-      };
-      render();
+    const syncCollections = ['teams', 'students', 'programs', 'teamDirectScores', 'teamPenalties'];
+    let loadedCount = 0;
+    const totalRequired = syncCollections.length + 1;
+
+    function handleInitialSync() {
+      loadedCount++;
+      if (loadedCount >= totalRequired) {
+        render();
+      }
+    }
+
+    syncCollections.forEach(col => {
+      db.ref(col).on('value', snapshot => {
+        appData[col] = snapshot.val() || {};
+        if (loadedCount < totalRequired) {
+          handleInitialSync();
+        } else {
+          render();
+        }
+      }, err => {
+        console.warn(`Could not sync ${col}:`, err);
+      });
+    });
+
+    db.ref('results').orderByChild('status').equalTo('published').on('value', snapshot => {
+      appData.results = snapshot.val() || {};
+      if (loadedCount < totalRequired) {
+        handleInitialSync();
+      } else {
+        render();
+      }
     }, err => {
+      console.error("Firebase Results Read Failed:", err);
       document.getElementById('app').innerHTML = `
         <div class="min-h-screen bg-gray-950 flex items-center justify-center">
           <div class="text-center">

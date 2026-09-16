@@ -10,62 +10,82 @@ let _pendingRenderTimer = null;
 const RENDER_THROTTLE_MS = 2000;
 
 /**
- * Opens a real-time listener on the root of the database and
- * keeps appData in sync. Triggers the router after the first load.
+ * Synchronizes application data from Firebase.
+ * If user is authenticated (admin), fetches all results (pending, ready, published)
+ * and administrative collections.
+ * If user is not authenticated (public), fetches ONLY published results using:
+ * db.ref('results').orderByChild('status').equalTo('published')
+ * ensuring unpublished results are NEVER sent over the network or accessible via devtools.
  */
-function syncData() {
-  const rootRef = db.ref();
+async function syncData() {
+  cleanupListeners();
 
-  const listener = rootRef.on('value', snapshot => {
-    const raw = snapshot.val() || {};
-    appData = {
-      teams:                raw.teams                || {},
-      students:             raw.students             || {},
-      programs:             raw.programs             || {},
-      results:              raw.results              || {},
-      pointsConfig:         raw.pointsConfig         || { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 },
-      groupPointsConfig:    raw.groupPointsConfig    || { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 },
-      teamPointsConfig:     raw.teamPointsConfig     || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 },
-      teamDirectScores:     raw.teamDirectScores     || {},
-      teamPenalties:        raw.teamPenalties        || {},
-      participantRegistrations: raw.participantRegistrations || {},
-      registrations:        raw.registrations        || {},
-      settings:             raw.settings             || {}
-    };
+  const isAuth = !!currentUser;
 
-    // Invalidate calculation caches on data change
+  // Base public collections
+  const publicCollections = [
+    'teams', 'students', 'programs',
+    'pointsConfig', 'groupPointsConfig', 'teamPointsConfig',
+    'teamDirectScores', 'teamPenalties', 'settings'
+  ];
+
+  // Admin-only collections
+  const adminCollections = [
+    'studentPenalties', 'participantRegistrations', 'registrations'
+  ];
+
+  const collections = isAuth ? [...publicCollections, ...adminCollections] : publicCollections;
+
+  // Query for results: admins get all results; public gets ONLY published results
+  const resultsQuery = isAuth
+    ? db.ref('results')
+    : db.ref('results').orderByChild('status').equalTo('published');
+
+  // Initial parallel load to ensure data is populated before rendering
+  const loadPromises = collections.map(col =>
+    db.ref(col).once('value')
+      .then(snap => ({ key: col, val: snap.val() }))
+      .catch(err => {
+        console.warn(`Could not read ${col}:`, err);
+        return { key: col, val: null };
+      })
+  );
+
+  loadPromises.push(
+    resultsQuery.once('value')
+      .then(snap => ({ key: 'results', val: snap.val() }))
+      .catch(err => {
+        console.warn('Could not read results:', err);
+        return { key: 'results', val: null };
+      })
+  );
+
+  try {
+    const snapshots = await Promise.all(loadPromises);
+    snapshots.forEach(({ key, val }) => {
+      if (key === 'pointsConfig') {
+        appData[key] = val || { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 };
+      } else if (key === 'groupPointsConfig') {
+        appData[key] = val || { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 };
+      } else if (key === 'teamPointsConfig') {
+        appData[key] = val || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 };
+      } else {
+        appData[key] = val || {};
+      }
+    });
+
     invalidateCache();
 
     if (isInitialLoad) {
       router();
       isInitialLoad = false;
     } else {
-      // If user is on admin, DON'T call router at all.
-      // appData is already updated in memory above.
-      // The admin panel stays frozen — no scroll jumps, no re-renders.
-      // Fresh data shows up when the user switches tabs.
-      const hash = window.location.hash.slice(1) || '/';
-      if (!hash.startsWith('/admin')) {
-        // Throttle public re-renders: at most once per RENDER_THROTTLE_MS
-        const now = Date.now();
-        const elapsed = now - _lastRenderTime;
-        if (elapsed >= RENDER_THROTTLE_MS) {
-          _lastRenderTime = now;
-          if (_pendingRenderTimer) { clearTimeout(_pendingRenderTimer); _pendingRenderTimer = null; }
-          router(true);
-        } else if (!_pendingRenderTimer) {
-          _pendingRenderTimer = setTimeout(() => {
-            _pendingRenderTimer = null;
-            _lastRenderTime = Date.now();
-            router(true);
-          }, RENDER_THROTTLE_MS - elapsed);
-        }
-      }
+      onDataUpdated();
     }
-  }, error => {
+  } catch (error) {
     console.error("Firebase Read Failed:", error);
     const appEl = document.getElementById("app");
-    if (appEl) {
+    if (appEl && isInitialLoad) {
       appEl.innerHTML = `
         <div class="min-h-screen flex items-center justify-center">
           <div class="text-center max-w-md px-6">
@@ -80,9 +100,49 @@ function syncData() {
           </div>
         </div>`;
     }
+  }
+
+  // Set up real-time listeners for live updates
+  collections.forEach(col => {
+    const ref = db.ref(col);
+    const cb = snap => {
+      appData[col] = snap.val() || {};
+      invalidateCache();
+      onDataUpdated();
+    };
+    ref.on('value', cb);
+    _activeListeners.push({ ref, event: 'value', callback: cb });
   });
 
-  _activeListeners.push({ ref: rootRef, event: 'value', callback: listener });
+  const resultsCb = snap => {
+    appData.results = snap.val() || {};
+    invalidateCache();
+    onDataUpdated();
+  };
+  resultsQuery.on('value', resultsCb);
+  _activeListeners.push({ ref: resultsQuery, event: 'value', callback: resultsCb });
+}
+
+/**
+ * Throttled router update when public data changes.
+ */
+function onDataUpdated() {
+  const hash = window.location.hash.slice(1) || '/';
+  if (!hash.startsWith('/admin')) {
+    const now = Date.now();
+    const elapsed = now - _lastRenderTime;
+    if (elapsed >= RENDER_THROTTLE_MS) {
+      _lastRenderTime = now;
+      if (_pendingRenderTimer) { clearTimeout(_pendingRenderTimer); _pendingRenderTimer = null; }
+      router(true);
+    } else if (!_pendingRenderTimer) {
+      _pendingRenderTimer = setTimeout(() => {
+        _pendingRenderTimer = null;
+        _lastRenderTime = Date.now();
+        router(true);
+      }, RENDER_THROTTLE_MS - elapsed);
+    }
+  }
 }
 
 

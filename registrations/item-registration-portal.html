@@ -1713,21 +1713,24 @@ function printTeamRegistrations() {
             }
             currentUser = JSON.parse(storedUser);
 
-            db.ref().on('value', snapshot => {
-                const data = snapshot.val() || {};
-                appData = {
-                    students: data.students || {},
-                    teams: data.teams || {},
-                    programs: data.programs || {},
-                    registrationProgramss: data.registrationProgramss || {},
-                    registrations: data.registrations || {},
-                    settings: data.settings || {}
-                };
-                
-                if (currentUser.type !== 'admin' && !appData.settings?.portals?.item) {
-                    window.location.replace('index.html');
-                    return;
-                }
+            const itemPortalCols = ['students', 'teams', 'programs', 'registrationProgramss', 'registrations', 'settings'];
+            itemPortalCols.forEach(col => {
+                db.ref(col).on('value', snap => {
+                    appData[col] = snap.val() || {};
+                    if (currentUser.type !== 'admin' && !appData.settings?.portals?.item) {
+                        window.location.replace('index.html');
+                        return;
+                    }
+                    if (selectedProgramId) {
+                        const modalContainer = document.getElementById('modal-container');
+                        if (modalContainer && !modalContainer.classList.contains('hidden')) {
+                            renderParticipantSelection(selectedProgramId, selectedRosterClass, selectedRosterCategory, false);
+                            return;
+                        }
+                    }
+                    render();
+                });
+            });
 
                 // If user currently has the program registration modal open, update roster in-place only
                 // This protects active form inputs (pieceTitle, firstLine, youtubeLink, student selection) from being wiped!

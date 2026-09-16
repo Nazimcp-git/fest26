@@ -123,29 +123,32 @@
             background: rgba(0,0,0,0.25);
         }
     </style>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    animation: {
-                        'fade-in': 'fadeIn 0.2s ease-out forwards',
-                        'blob': 'blob 7s infinite alternate ease-in-out',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(4px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
+        if (typeof tailwind !== 'undefined') {
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        fontFamily: { sans: ['Inter', 'sans-serif'] },
+                        animation: {
+                            'fade-in': 'fadeIn 0.2s ease-out forwards',
+                            'blob': 'blob 7s infinite alternate ease-in-out',
                         },
-                        blob: {
-                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
-                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-                            '100%': { transform: 'translate(0px, 0px) scale(1)' }
+                        keyframes: {
+                            fadeIn: {
+                                '0%': { opacity: '0', transform: 'translateY(4px)' },
+                                '100%': { opacity: '1', transform: 'translateY(0)' },
+                            },
+                            blob: {
+                                '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                                '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                                '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                                '100%': { transform: 'translate(0px, 0px) scale(1)' }
+                            }
                         }
                     }
                 }
-            }
+            };
         }
     </script>
 </head>
@@ -3065,33 +3068,30 @@
             partPortalCols.forEach(col => {
                 db.ref(col).on('value', snap => {
                     appData[col] = snap.val() || {};
-                    if (selectedProgramId) return;
-                    render();
-                });
-            });
 
-                // Teams are allowed to stay in view-only mode even if appData.settings?.portals?.participant is false
-                
-                // If this user currently has a registration modal open, DO NOT re-render the app or modal.
-                // This protects unsaved checkbox selections from being wiped when other teams save their data concurrently!
-                if (selectedProgramId) {
-                    const teamName = currentUser?.teamName;
-                    const teamId = currentModalTeamId || currentUser?.teamId || (teamName && Object.keys(appData.teams || {}).find(id => appData.teams[id]?.name === teamName)) || Object.keys(appData.teams || {})[0];
-                    const teamRegs = appData.participantRegistrations?.[selectedProgramId]?.[teamId] || [];
-                    const rosterTabBtn = document.querySelector('.modal-tab-btn[data-modal-tab="roster"]');
-                    if (rosterTabBtn) {
-                        rosterTabBtn.innerHTML = `<i class="fas fa-users mr-1.5"></i>Enrolled (${teamRegs.length})`;
+                    // Teams are allowed to stay in view-only mode even if appData.settings?.portals?.participant is false
+                    
+                    // If this user currently has a registration modal open, DO NOT re-render the app or modal.
+                    // This protects unsaved checkbox selections from being wiped when other teams save their data concurrently!
+                    if (selectedProgramId) {
+                        const teamName = currentUser?.teamName;
+                        const teamId = currentModalTeamId || currentUser?.teamId || (teamName && Object.keys(appData.teams || {}).find(id => appData.teams[id]?.name === teamName)) || Object.keys(appData.teams || {})[0];
+                        const teamRegs = appData.participantRegistrations?.[selectedProgramId]?.[teamId] || [];
+                        const rosterTabBtn = document.querySelector('.modal-tab-btn[data-modal-tab="roster"]');
+                        if (rosterTabBtn) {
+                            rosterTabBtn.innerHTML = `<i class="fas fa-users mr-1.5"></i>Enrolled (${teamRegs.length})`;
+                        }
+                        return;
                     }
-                    return;
-                }
-                
-                // If user is actively typing in any input, select, or textarea, protect their focus and input
-                const activeEl = document.activeElement;
-                if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA')) {
-                    return;
-                }
-                
-                renderApp();
+                    
+                    // If user is actively typing in any input, select, or textarea, protect their focus and input
+                    const activeEl = document.activeElement;
+                    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA')) {
+                        return;
+                    }
+                    
+                    renderApp();
+                });
             });
         }
         

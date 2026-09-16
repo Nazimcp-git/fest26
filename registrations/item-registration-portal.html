@@ -1721,42 +1721,33 @@ function printTeamRegistrations() {
                         window.location.replace('index.html');
                         return;
                     }
+
+                    // If user currently has the program registration modal open, update roster in-place only
+                    // This protects active form inputs (pieceTitle, firstLine, youtubeLink, student selection) from being wiped!
                     if (selectedProgramId) {
                         const modalContainer = document.getElementById('modal-container');
                         if (modalContainer && !modalContainer.classList.contains('hidden')) {
-                            renderParticipantSelection(selectedProgramId, selectedRosterClass, selectedRosterCategory, false);
+                            const editOverlay = document.getElementById('edit-modal-overlay');
+                            if (!editOverlay) {
+                                updateModalRosterInPlace(selectedProgramId, currentModalTeamName);
+                            }
                             return;
                         }
                     }
-                    render();
-                });
-            });
 
-                // If user currently has the program registration modal open, update roster in-place only
-                // This protects active form inputs (pieceTitle, firstLine, youtubeLink, student selection) from being wiped!
-                if (selectedProgramId) {
-                    const modalContainer = document.getElementById('modal-container');
-                    if (modalContainer && !modalContainer.classList.contains('hidden')) {
-                        const editOverlay = document.getElementById('edit-modal-overlay');
-                        if (!editOverlay) {
-                            updateModalRosterInPlace(selectedProgramId, currentModalTeamName);
-                        }
+                    // If user has an edit modal open, don't wipe active edits
+                    if (document.getElementById('edit-modal-overlay')) {
                         return;
                     }
-                }
 
-                // If user has an edit modal open, don't wipe active edits
-                if (document.getElementById('edit-modal-overlay')) {
-                    return;
-                }
+                    // If user is actively typing in any input, select, or textarea, protect their focus and input
+                    const activeEl = document.activeElement;
+                    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA')) {
+                        return;
+                    }
 
-                // If user is actively typing in any input, select, or textarea, protect their focus and input
-                const activeEl = document.activeElement;
-                if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA')) {
-                    return;
-                }
-
-                renderApp();
+                    renderApp();
+                });
             });
         }
 

@@ -14,43 +14,46 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
-          animation: {
-            'blob': 'blob 8s infinite alternate ease-in-out',
-            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'ticker': 'ticker 35s linear infinite',
-            'fade-up': 'fadeUp 0.5s ease-out forwards',
-            'scale-in': 'scaleIn 0.4s ease-out forwards',
-            'progress': 'progress 15s linear forwards',
-          },
-          keyframes: {
-            blob: {
-              '0%': { transform: 'translate(0,0) scale(1)' },
-              '50%': { transform: 'translate(30px,-40px) scale(1.08)' },
-              '100%': { transform: 'translate(0,0) scale(1)' }
+    if (typeof tailwind !== 'undefined') {
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Inter', 'sans-serif'] },
+            animation: {
+              'blob': 'blob 8s infinite alternate ease-in-out',
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'ticker': 'ticker 35s linear infinite',
+              'fade-up': 'fadeUp 0.5s ease-out forwards',
+              'scale-in': 'scaleIn 0.4s ease-out forwards',
+              'progress': 'progress 15s linear forwards',
             },
-            ticker: {
-              '0%': { transform: 'translateX(0)' },
-              '100%': { transform: 'translateX(-50%)' }
-            },
-            fadeUp: {
-              '0%': { opacity: '0', transform: 'translateY(20px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' }
-            },
-            scaleIn: {
-              '0%': { opacity: '0', transform: 'scale(0.95)' },
-              '100%': { opacity: '1', transform: 'scale(1)' }
-            },
-            progress: {
-              '0%': { width: '100%' },
-              '100%': { width: '0%' }
+            keyframes: {
+              blob: {
+                '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                '100%': { transform: 'translate(0px, 0px) scale(1)' }
+              },
+              fadeUp: {
+                '0%': { opacity: '0', transform: 'translateY(12px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' }
+              },
+              scaleIn: {
+                '0%': { opacity: '0', transform: 'scale(0.95)' },
+                '100%': { opacity: '1', transform: 'scale(1)' }
+              },
+              ticker: {
+                '0%': { transform: 'translateX(0)' },
+                '100%': { transform: 'translateX(-50%)' }
+              },
+              progress: {
+                '0%': { width: '0%' },
+                '100%': { width: '100%' }
+              }
             }
           }
         }
-      }
+      };
     }
   </script>
   <style>

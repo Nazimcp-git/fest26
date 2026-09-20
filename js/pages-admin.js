@@ -484,6 +484,17 @@ async function renderDashboardTab() {
               </div>
             </div>
           </a>
+          <a href="../slideshow/" target="_blank" class="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl border border-indigo-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                <i class="fas fa-sliders-h text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 text-sm">Results Showcase</h3>
+                <p class="text-[11px] text-gray-500">24/7 synchronized slideshow</p>
+              </div>
+            </div>
+          </a>
           <a href="../backup/" target="_blank" class="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
             <div class="flex items-center gap-3 mb-2">
               <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-slate-600 group-hover:text-white transition-colors">

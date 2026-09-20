@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alert 2k26 — Results Showcase</title>
+  
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="../logo/logo.png" />
+  <link rel="icon" type="image/webp" href="../logo/logo.webp" />
+  <link rel="apple-touch-icon" href="../logo/logo.png" />
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+
+  <!-- Tailwind (pre-built) -->
+  <link rel="stylesheet" href="../results/styles/tailwind.css" />
+
+  <style>
+    :root {
+      --bg-primary: #FBFBFA;
+      --card-bg: #FFFFFF;
+      --card-border: rgba(0, 0, 0, 0.07);
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+      --accent-color: #6366F1;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: var(--bg-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text-primary);
+      user-select: none;
+    }
+
+    /* Ambient Subtle Grid & Glow */
+    .bg-mesh {
+      background-image: 
+        radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.035) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(245, 158, 11, 0.03) 0px, transparent 50%);
+    }
+
+    /* Smooth Slide Transitions */
+    .slide-enter {
+      animation: slideInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.99);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Progress bar smooth transition */
+    .progress-fill {
+      transition: width 0.1s linear;
+    }
+
+    /* Custom pill shadow */
+    .light-shadow {
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+    }
+    .card-shadow {
+      box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), 0 4px 10px -2px rgba(15, 23, 42, 0.02);
+    }
+
+    /* Auto-fit container for grade scaling */
+    #participants-fit-wrapper {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      transform-origin: top center;
+      transition: transform 0.25s ease-out;
+    }
+
+    /* Ticker animation */
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .animate-ticker-smooth {
+      display: flex;
+      width: max-content;
+      animation: ticker 32s linear infinite;
+    }
+    .animate-ticker-smooth:hover {
+      animation-play-state: paused;
+    }
+
+    /* Custom sleek scrollbar just in case */
+    ::-webkit-scrollbar { width: 0px; height: 0px; display: none; }
+  </style>
+
+  <!-- Firebase (compat version) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+</head>
+<body class="bg-mesh flex flex-col justify-between">
+
+  <!-- Branded Minimal Loading Screen -->
+  <div id="loading-screen" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#FBFBFA]">
+    <div class="flex flex-col items-center max-w-sm text-center px-6">
+      <div class="w-16 h-16 rounded-2xl bg-white card-shadow border border-black/5 flex items-center justify-center mb-5 p-2.5">
+        <img src="../logo/logo.webp" onerror="this.onerror=null;this.src='../logo/logo.png'" alt="Alert 2k26" class="w-full h-full object-contain" />
+      </div>
+      <h2 class="text-xl font-black text-slate-900 tracking-tight mb-1">Alert 2k26</h2>
+      <p class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-6">Synchronized Results Showcase</p>
+      
+      <!-- Progress line -->
+      <div class="w-48 h-1 bg-slate-200/80 rounded-full overflow-hidden relative">
+        <div id="loader-bar" class="absolute top-0 bottom-0 left-0 bg-slate-900 rounded-full w-1/3 animate-pulse"></div>
+      </div>
+      <span class="text-[11px] font-medium text-slate-400 mt-3">Connecting to real-time database...</span>
+    </div>
+  </div>
+
+  <!-- Synchronized Time Progress Bar (Top Edge) -->
+  <div class="w-full h-1 bg-slate-200/60 relative z-30 overflow-hidden">
+    <div id="slide-progress-bar" class="h-full bg-slate-900 progress-fill w-0"></div>
+  </div>
+
+  <!-- Main Viewport Shell -->
+  <div id="slideshow-app" class="flex-grow flex flex-col w-full h-[calc(100vh-4px)] overflow-hidden relative">
+
+    <!-- Top Navigation & Information Bar -->
+    <header class="px-6 lg:px-10 py-3.5 flex items-center justify-between flex-shrink-0 z-20 border-b border-black/[0.04] bg-white/70 backdrop-blur-md">
+      <!-- Left: Logo & Event Title -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-9 h-9 rounded-xl bg-white border border-black/5 flex items-center justify-center light-shadow p-1.5 flex-shrink-0">
+          <img src="../logo/logo.webp" onerror="this.onerror=null;this.src='../logo/logo.png'" alt="Alert 2k26" class="w-full h-full object-contain" />
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-black tracking-tight text-slate-900 uppercase">Alert 2k26</span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              24/7 Live Sync
+            </span>
+          </div>
+          <p class="text-[10px] font-medium text-slate-500 tracking-wide">Arts Fest • Darunnajath Islamic Complex</p>
+        </div>
+      </div>
+
+      <!-- Center: Slide Index & Category Indicator -->
+      <div class="flex items-center gap-2">
+        <div id="slide-counter-badge" class="px-3 py-1 rounded-xl bg-slate-100/90 border border-slate-200/70 text-slate-700 font-bold text-xs tracking-wide">
+          <span id="current-slide-num">--</span> / <span id="total-slides-num">--</span>
+        </div>
+        <div id="order-badge" class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200/60 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+          <i class="fas fa-list-ol text-[9px] text-slate-400"></i>
+          <span id="order-mode-label">Category Order</span>
+        </div>
+      </div>
+
+      <!-- Right: Live Clock & Screen Controls -->
+      <div class="flex items-center gap-3">
+        <!-- Live Clock -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 light-shadow text-xs font-bold text-slate-800 tabular-nums">
+          <i class="far fa-clock text-slate-400 text-[11px]"></i>
+          <span id="wall-clock">--:--:--</span>
+        </div>
+
+        <!-- Manual Pause / Re-Sync Button -->
+        <button id="btn-sync" onclick="togglePlayPause()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 light-shadow text-xs font-bold text-slate-700 flex items-center gap-1.5 transition-all" title="Toggle Auto-Play / Sync">
+          <i id="play-pause-icon" class="fas fa-pause text-[10px] text-slate-500"></i>
+          <span id="sync-status-text" class="hidden sm:inline text-[11px]">Live Sync</span>
+        </button>
+
+        <!-- Slide Speed Selector Button -->
+        <div class="relative inline-block text-left">
+          <button onclick="toggleSpeedMenu()" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 light-shadow text-xs font-bold text-slate-700 flex items-center gap-1 transition-all" title="Change Slide Duration">
+            <span id="speed-label" class="text-[11px]">25s</span>
+            <i class="fas fa-chevron-down text-[8px] text-slate-400 ml-0.5"></i>
+          </button>
+          <div id="speed-menu" class="hidden absolute right-0 mt-1.5 w-28 bg-white rounded-xl card-shadow border border-slate-200/80 py-1 z-50 text-xs">
+            <button onclick="setSlideSpeed(10)" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium text-slate-700 flex items-center justify-between">10 seconds <span id="chk-10" class="text-indigo-600 font-bold hidden">✓</span></button>
+            <button onclick="setSlideSpeed(15)" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium text-slate-700 flex items-center justify-between">15 seconds <span id="chk-15" class="text-indigo-600 font-bold hidden">✓</span></button>
+            <button onclick="setSlideSpeed(20)" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium text-slate-700 flex items-center justify-between">20 seconds <span id="chk-20" class="text-indigo-600 font-bold hidden">✓</span></button>
+            <button onclick="setSlideSpeed(25)" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium text-slate-700 flex items-center justify-between">25 seconds <span id="chk-25" class="text-indigo-600 font-bold">✓</span></button>
+            <button onclick="setSlideSpeed(30)" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium text-slate-700 flex items-center justify-between">30 seconds <span id="chk-30" class="text-indigo-600 font-bold hidden">✓</span></button>
+          </div>
+        </div>
+
+        <!-- Fullscreen Button -->
+        <button onclick="toggleFullscreen()" class="w-8 h-8 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 light-shadow text-slate-600 flex items-center justify-center transition-all" title="Toggle Fullscreen">
+          <i id="fs-icon" class="fas fa-expand text-xs"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Workspace (Height Constrained for Zero Overflow) -->
+    <main class="flex-grow w-full max-w-[1700px] mx-auto px-6 lg:px-10 py-3 flex flex-col justify-between overflow-hidden min-h-0 relative z-10">
+
+      <!-- Slide Card Container -->
+      <div id="slide-stage" class="w-full h-full flex flex-col justify-between overflow-hidden min-h-0">
+        <!-- Rendered dynamically -->
+      </div>
+
+    </main>
+
+    <!-- Navigation Chevrons (Floating Minimal) -->
+    <button onclick="navigateSlide(-1)" class="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-2xl bg-white/80 hover:bg-white border border-slate-200/80 card-shadow flex items-center justify-center text-slate-400 hover:text-slate-900 transition-all opacity-40 hover:opacity-100 hover:scale-105" title="Previous Slide">
+      <i class="fas fa-chevron-left text-xs"></i>
+    </button>
+    <button onclick="navigateSlide(1)" class="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-2xl bg-white/80 hover:bg-white border border-slate-200/80 card-shadow flex items-center justify-center text-slate-400 hover:text-slate-900 transition-all opacity-40 hover:opacity-100 hover:scale-105" title="Next Slide">
+      <i class="fas fa-chevron-right text-xs"></i>
+    </button>
+
+    <!-- Bottom Standings Ticker -->
+    <footer class="h-10 bg-white border-t border-slate-200/80 flex items-center overflow-hidden flex-shrink-0 z-20 light-shadow">
+      <div class="px-4 h-full bg-slate-900 text-white flex items-center gap-2 flex-shrink-0">
+        <i class="fas fa-trophy text-amber-400 text-xs"></i>
+        <span class="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Team Standings</span>
+      </div>
+      <div class="flex-grow overflow-hidden relative">
+        <div id="teams-ticker-content" class="animate-ticker-smooth items-center">
+          <div class="px-6 text-xs text-slate-400 font-medium">Calculating live team standings...</div>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Application Logic -->
+  <script>
+    // ── Official Category List & Styling ──
+    const CATEGORIES = ["BIDAYA", "ALIYA", "UOOLA", "THANIYA", "THANAWIYYA", "KULLIYYA"];
+
+    const CATEGORY_THEMES = {
+      'BIDAYA': {
+        badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        dot: 'bg-emerald-500',
+        accentBar: 'from-emerald-500 to-teal-500',
+        softBorder: 'border-emerald-200/60'
+      },
+      'ALIYA': {
+        badgeBg: 'bg-sky-50 text-sky-800 border-sky-200',
+        dot: 'bg-sky-500',
+        accentBar: 'from-sky-500 to-cyan-500',
+        softBorder: 'border-sky-200/60'
+      },
+      'UOOLA': {
+        badgeBg: 'bg-violet-50 text-violet-800 border-violet-200',
+        dot: 'bg-violet-500',
+        accentBar: 'from-violet-500 to-purple-500',
+        softBorder: 'border-violet-200/60'
+      },
+      'THANIYA': {
+        badgeBg: 'bg-amber-50 text-amber-800 border-amber-200',
+        dot: 'bg-amber-500',
+        accentBar: 'from-amber-500 to-yellow-500',
+        softBorder: 'border-amber-200/60'
+      },
+      'THANAWIYYA': {
+        badgeBg: 'bg-rose-50 text-rose-800 border-rose-200',
+        dot: 'bg-rose-500',
+        accentBar: 'from-rose-500 to-pink-500',
+        softBorder: 'border-rose-200/60'
+      },
+      'KULLIYYA': {
+        badgeBg: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+        dot: 'bg-indigo-500',
+        accentBar: 'from-indigo-500 to-blue-500',
+        softBorder: 'border-indigo-200/60'
+      }
+    };
+
+    const DEFAULT_CAT_THEME = {
+      badgeBg: 'bg-slate-100 text-slate-800 border-slate-200',
+      dot: 'bg-slate-500',
+      accentBar: 'from-slate-700 to-slate-900',
+      softBorder: 'border-slate-200'
+    };
+
+    // ── Badges Styling (Light Minimal) ──
+    const POSITION_STYLES = {
+      'first': {
+        label: '1st Place',
+        badge: 'bg-amber-50 text-amber-800 border-amber-300 font-black',
+        icon: 'fa-trophy text-amber-500',
+        podiumBorder: 'border-amber-300',
+        podiumBg: 'bg-amber-50/40'
+      },
+      'second': {
+        label: '2nd Place',
+        badge: 'bg-slate-100 text-slate-700 border-slate-300 font-black',
+        icon: 'fa-medal text-slate-400',
+        podiumBorder: 'border-slate-300',
+        podiumBg: 'bg-slate-50/50'
+      },
+      'third': {
+        label: '3rd Place',
+        badge: 'bg-orange-50 text-orange-800 border-orange-300 font-black',
+        icon: 'fa-medal text-orange-500',
+        podiumBorder: 'border-orange-200',
+        podiumBg: 'bg-orange-50/30'
+      }
+    };
+
+    const GRADE_STYLES = {
+      'a_grade': {
+        label: 'A Grade',
+        badge: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-extrabold',
+        icon: 'fa-award text-emerald-600'
+      },
+      'b_grade': {
+        label: 'B Grade',
+        badge: 'bg-blue-50 text-blue-800 border-blue-300 font-extrabold',
+        icon: 'fa-award text-blue-600'
+      }
+    };
+
+    // ── Application State ──
+    let appData = {
+      results: {},
+      students: {},
+      teams: {},
+      teamPenalties: {},
+      pointsConfig: { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 },
+      groupPointsConfig: { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 },
+      teamPointsConfig: { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 }
+    };
+
+    let orderedResults = [];
+    let slideDurationSec = parseInt(localStorage.getItem('slideshow_duration') || '25', 10);
+    let orderMode = localStorage.getItem('slideshow_order') || 'category'; // 'category' | 'announced'
+    let isUserPaused = false;
+    let manualSlideIndex = null;
+    let autoResumeTimeout = null;
+    let currentRenderedResultId = null;
+
+    // ── Helpers ──
+    function sanitize(str) {
+      if (typeof str !== 'string') return '';
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return str.replace(/[&<>"']/g, c => map[c]);
+    }
+
+    function formatDate(ts) {
+      if (!ts) return '';
+      return new Date(ts).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    }
+
+    function formatTime(ts) {
+      if (!ts) return '';
+      return new Date(ts).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ── Specific Order Sorter ──
+    // Canonical Fest Order: Category -> Stage Type -> Program Name
+    function sortResults(resultsList) {
+      const list = [...resultsList];
+      if (orderMode === 'announced') {
+        // Chronological announcement (most recent first)
+        return list.sort((a, b) => (b.timestamp || b.announcedAt || 0) - (a.timestamp || a.announcedAt || 0));
+      }
+
+      // Default: Specific Fest Order
+      return list.sort((a, b) => {
+        const catA = String(a.category || '').toUpperCase().trim();
+        const catB = String(b.category || '').toUpperCase().trim();
+        const idxA = CATEGORIES.indexOf(catA);
+        const idxB = CATEGORIES.indexOf(catB);
+
+        const orderA = idxA !== -1 ? idxA : 999;
+        const orderB = idxB !== -1 ? idxB : 999;
+
+        if (orderA !== orderB) return orderA - orderB;
+
+        // Stage events before Non-Stage events
+        const stageA = (a.stageType || 'stage') === 'non-stage' ? 1 : 0;
+        const stageB = (b.stageType || 'stage') === 'non-stage' ? 1 : 0;
+        if (stageA !== stageB) return stageA - stageB;
+
+        // Program Name Alphabetical
+        const nameA = String(a.programName || a.name || '').trim();
+        const nameB = String(b.programName || b.name || '').trim();
+        return nameA.localeCompare(nameB);
+      });
+    }
+
+    // ── 24/7 Wall-Clock Synchronization Engine ──
+    // Guarantees all screens, pages, and tabs remain in 100% lockstep sync
+    // and NEVER start from 0 when opened or refreshed!
+    function getWallClockSlideInfo() {
+      const count = orderedResults.length;
+      if (count === 0) {
+        return { index: 0, progressPct: 0, total: 0 };
+      }
+
+      // If user manually paused or navigated, use manual index
+      if (isUserPaused && manualSlideIndex !== null) {
+        const safeIndex = ((manualSlideIndex % count) + count) % count;
+        return { index: safeIndex, progressPct: 100, total: count, isManual: true };
+      }
+
+      const durationMs = slideDurationSec * 1000;
+      const totalCycleMs = count * durationMs;
+      const now = Date.now();
+
+      const cycleTimeMs = now % totalCycleMs;
+      const index = Math.floor(cycleTimeMs / durationMs);
+      const slideElapsedMs = cycleTimeMs % durationMs;
+      const progressPct = (slideElapsedMs / durationMs) * 100;
+
+      return { index, progressPct, total: count, isManual: false };
+    }
+
+    // ── Clock & Slideshow Tick Loop ──
+    function startSyncLoop() {
+      setInterval(() => {
+        // Update Live Wall Clock
+        const clockEl = document.getElementById('wall-clock');
+        if (clockEl) {
+          clockEl.textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        if (orderedResults.length === 0) return;
+
+        const info = getWallClockSlideInfo();
+
+        // Update progress bar smoothly
+        const barEl = document.getElementById('slide-progress-bar');
+        if (barEl) {
+          barEl.style.width = `${Math.min(100, Math.max(0, info.progressPct))}%`;
+        }
+
+        // Check if slide index changed
+        const targetResult = orderedResults[info.index];
+        if (targetResult && targetResult.id !== currentRenderedResultId) {
+          renderCurrentSlide(targetResult, info.index, info.total);
+        }
+      }, 100);
+    }
+
+    // ── Dynamic Auto-Fit Grade Scaling Engine ──
+    // Makes sure all grades and positions fit on the page.
+    // If it overflows, it automatically adapts columns, decreases padding/font,
+    // and applies dynamic CSS scale so ZERO content is ever cut off or scrolled!
+    function autoFitGradesToViewport() {
+      const wrapper = document.getElementById('participants-fit-wrapper');
+      const container = document.getElementById('participants-scroll-box');
+      if (!wrapper || !container) return;
+
+      // Reset transform first to measure true natural height
+      wrapper.style.transform = 'scale(1)';
+      wrapper.style.transformOrigin = 'top center';
+
+      // Measure available height vs needed scroll height
+      const availableHeight = container.clientHeight;
+      const neededHeight = wrapper.scrollHeight;
+
+      if (neededHeight > availableHeight && availableHeight > 0) {
+        // Calculate exact scale factor needed
+        const scale = Math.max(0.55, availableHeight / neededHeight);
+        wrapper.style.transform = `scale(${scale})`;
+        wrapper.style.width = `${100 / scale}%`;
+        wrapper.style.transformOrigin = 'top left';
+      } else {
+        wrapper.style.transform = 'scale(1)';
+        wrapper.style.width = '100%';
+        wrapper.style.transformOrigin = 'top center';
+      }
+    }
+
+    // ── Render Active Slide ──
+    function renderCurrentSlide(result, index, total) {
+      currentRenderedResultId = result.id;
+      const stage = document.getElementById('slide-stage');
+      const currentNumEl = document.getElementById('current-slide-num');
+      const totalNumEl = document.getElementById('total-slides-num');
+
+      if (currentNumEl) currentNumEl.textContent = String(index + 1).padStart(2, '0');
+      if (totalNumEl) totalNumEl.textContent = String(total).padStart(2, '0');
+
+      const catName = String(result.category || 'GENERAL').toUpperCase();
+      const theme = CATEGORY_THEMES[catName] || DEFAULT_CAT_THEME;
+
+      // Extract and sort participants
+      const participants = Array.isArray(result.participants)
+        ? result.participants
+        : Object.values(result.participants || {});
+
+      const posWeight = { 'first': 1, 'second': 2, 'third': 3 };
+      const gradeWeight = { 'a_grade': 1, 'b_grade': 2 };
+
+      // Sort: 1st, 2nd, 3rd, then A Grade, then B Grade, then others
+      const sortedParticipants = [...participants].sort((a, b) => {
+        const pA = posWeight[a.position] || 99;
+        const pB = posWeight[b.position] || 99;
+        if (pA !== pB) return pA - pB;
+
+        const gA = gradeWeight[a.grade] || 99;
+        const gB = gradeWeight[b.grade] || 99;
+        if (gA !== gB) return gA - gB;
+
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
+
+      const count = sortedParticipants.length;
+
+      // Layout Tiers based on participant count
+      // Tier 1: 1 - 3 participants (Spacious Hero Podium Cards)
+      // Tier 2: 4 - 8 participants (2 or 3 Column Balanced Grid)
+      // Tier 3: 9 - 16 participants (3 or 4 Column Compact Grid)
+      // Tier 4: 17+ participants (4 to 5 Column Micro Grid)
+      // Layout Tiers based on participant count (Enlarged for high-visibility TV & Screen displays)
+      let gridClass = 'grid-cols-1 md:grid-cols-3 gap-6';
+      let cardPadding = 'p-6';
+      let avatarSize = 'w-16 h-16';
+      let avatarText = 'text-lg';
+      let nameSize = 'text-2xl font-black';
+      let subSize = 'text-sm';
+      let badgeSize = 'px-3.5 py-1.5 text-xs';
+      let badgeIconSize = 'text-sm';
+      let minHeightClass = 'min-h-[140px]';
+
+      if (count <= 3) {
+        // Tier 1: 1 - 3 participants (Podium Hero Cards - noticeably larger & prominent)
+        gridClass = count === 1 ? 'grid-cols-1 max-w-2xl mx-auto gap-6' : count === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-4xl mx-auto gap-6' : 'grid-cols-1 md:grid-cols-3 max-w-6xl mx-auto gap-6 lg:gap-8';
+        cardPadding = 'p-6 sm:p-7 lg:p-8';
+        avatarSize = 'w-20 h-20 sm:w-24 sm:h-24';
+        avatarText = 'text-xl sm:text-2xl';
+        nameSize = 'text-2xl sm:text-3xl font-black';
+        subSize = 'text-sm sm:text-base font-semibold';
+        badgeSize = 'px-4 py-2 text-sm';
+        badgeIconSize = 'text-base';
+        minHeightClass = 'min-h-[180px] sm:min-h-[200px]';
+      } else if (count <= 8) {
+        // Tier 2: 4 - 8 participants (Balanced large grid)
+        gridClass = 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5';
+        cardPadding = 'p-4 sm:p-5';
+        avatarSize = 'w-14 h-14 sm:w-16 sm:h-16';
+        avatarText = 'text-base';
+        nameSize = 'text-lg sm:text-xl font-black';
+        subSize = 'text-xs sm:text-sm font-semibold';
+        badgeSize = 'px-3 py-1.5 text-xs font-bold';
+        badgeIconSize = 'text-sm';
+        minHeightClass = 'min-h-[130px] sm:min-h-[145px]';
+      } else if (count <= 16) {
+        // Tier 3: 9 - 16 participants (Comfortable compact cards)
+        gridClass = 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 lg:gap-4';
+        cardPadding = 'p-3.5 sm:p-4';
+        avatarSize = 'w-12 h-12';
+        avatarText = 'text-sm font-bold';
+        nameSize = 'text-base font-black';
+        subSize = 'text-xs font-medium';
+        badgeSize = 'px-2.5 py-1 text-[11px] font-bold';
+        badgeIconSize = 'text-xs';
+        minHeightClass = 'min-h-[105px]';
+      } else {
+        // Tier 4: High density (17 - 35+ participants)
+        gridClass = 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3';
+        cardPadding = 'p-3';
+        avatarSize = 'w-10 h-10';
+        avatarText = 'text-xs font-bold';
+        nameSize = 'text-sm font-black';
+        subSize = 'text-[11px] font-medium';
+        badgeSize = 'px-2 py-0.5 text-[10px] font-semibold';
+        badgeIconSize = 'text-[11px]';
+        minHeightClass = 'min-h-[90px]';
+      }
+
+      // Build cards HTML
+      const participantsCardsHtml = sortedParticipants.map((p, idx) => {
+        const student = appData.students ? appData.students[p.studentId] : null;
+        const team = student ? (appData.teams[student.teamId] || {}) : (appData.teams[p.teamId] || {});
+        const teamName = team.name || 'Team';
+        const chestNo = student ? student.chestNo : (p.chestNo || p.chest || '');
+        const className = student && student.className ? `Class ${student.className}` : '';
+
+        const pos = POSITION_STYLES[p.position];
+        const grd = GRADE_STYLES[p.grade];
+
+        let badgesHtml = '';
+        if (pos) {
+          badgesHtml += `
+            <span class="inline-flex items-center gap-1.5 rounded-xl border ${pos.badge} ${badgeSize} shadow-sm">
+              <i class="fas ${pos.icon} ${badgeIconSize}"></i>
+              <span>${pos.label}</span>
+            </span>`;
+        }
+        if (grd) {
+          badgesHtml += `
+            <span class="inline-flex items-center gap-1.5 rounded-xl border ${grd.badge} ${badgeSize} shadow-sm">
+              <i class="fas ${grd.icon} ${badgeIconSize}"></i>
+              <span>${grd.label}</span>
+            </span>`;
+        }
+        if (!badgesHtml) {
+          badgesHtml = `
+            <span class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-bold ${badgeSize}">
+              <span>Participant</span>
+            </span>`;
+        }
+
+        const photoUrl = chestNo 
+          ? `https://raw.githubusercontent.com/Nazimcp-git/azinco/refs/heads/main/images/${encodeURIComponent(chestNo)}.jpg`
+          : '';
+
+        const isPodium = count <= 3 && pos;
+        const cardBgClass = isPodium ? `${pos.podiumBg} ${pos.podiumBorder}` : 'bg-white border-slate-200/90';
+
+        return `
+          <div class="rounded-2xl border ${cardBgClass} ${cardPadding} ${minHeightClass} card-shadow flex flex-col justify-between transition-all hover:border-slate-300 relative overflow-hidden group">
+            
+            <div class="flex items-center gap-3.5 sm:gap-4">
+              <!-- Student Photo / Chest Avatar -->
+              <div class="${avatarSize} rounded-2xl bg-slate-100 border border-slate-200/80 flex items-center justify-center flex-shrink-0 relative overflow-hidden group-hover:scale-105 transition-transform shadow-inner">
+                ${photoUrl ? `
+                  <img src="${photoUrl}" alt="${sanitize(p.name)}" 
+                    class="w-full h-full object-cover rounded-2xl"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                ` : ''}
+                <div class="w-full h-full flex items-center justify-center font-black ${avatarText} text-slate-600 ${photoUrl ? 'hidden' : ''}">
+                  ${sanitize(chestNo || (idx + 1))}
+                </div>
+              </div>
+
+              <!-- Name & Details -->
+              <div class="min-w-0 flex-grow">
+                <h4 class="${nameSize} text-slate-900 tracking-tight truncate leading-tight">${sanitize(p.name)}</h4>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="${subSize} font-bold text-indigo-600 truncate">${sanitize(teamName)}</span>
+                  ${className ? `<span class="text-slate-300 text-xs">•</span><span class="${subSize} font-medium text-slate-500 truncate">${sanitize(className)}</span>` : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Badges Bar -->
+            <div class="flex flex-wrap items-center gap-2 mt-3.5 pt-3 border-t border-black/[0.04]">
+              ${badgesHtml}
+              ${chestNo ? `<span class="ml-auto text-[11px] font-black text-slate-500 bg-slate-100/90 border border-slate-200/70 px-2.5 py-1 rounded-lg">#${sanitize(chestNo)}</span>` : ''}
+            </div>
+
+          </div>`;
+      }).join('');
+
+      // Build program category & stage tags
+      const stageLabel = (result.stageType || 'stage') === 'non-stage' ? 'Non-Stage Event' : 'Stage Event';
+      const typeLabel = result.programType === 'group' ? 'Group Program' : result.programType === 'team' ? 'Team Program' : 'Individual';
+
+      stage.innerHTML = `
+        <div class="slide-enter flex flex-col h-full justify-between overflow-hidden">
+          
+          <!-- Program Hero Header -->
+          <div class="flex-shrink-0 pb-3 pt-1">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border ${theme.badgeBg} light-shadow">
+                  <span class="w-2 h-2 rounded-full ${theme.dot}"></span>
+                  ${sanitize(catName)}
+                </span>
+                <span class="px-2.5 py-1 rounded-xl text-[11px] font-bold uppercase tracking-wider bg-white border border-slate-200/90 text-slate-600 light-shadow">
+                  ${stageLabel}
+                </span>
+                <span class="px-2.5 py-1 rounded-xl text-[11px] font-bold uppercase tracking-wider bg-white border border-slate-200/90 text-slate-600 light-shadow">
+                  ${typeLabel}
+                </span>
+              </div>
+              
+              <div class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+                <i class="far fa-calendar-check text-[10px]"></i>
+                <span>${formatDate(result.timestamp || result.announcedAt)}</span>
+                <span>•</span>
+                <span>${formatTime(result.timestamp || result.announcedAt)}</span>
+              </div>
+            </div>
+
+            <!-- Program Title -->
+            <div class="flex items-baseline justify-between gap-4">
+              <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.05]">
+                ${sanitize(result.programName || result.name || 'Untitled Event')}
+              </h1>
+              <div class="flex-shrink-0 text-right hidden sm:block">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">Recipients</span>
+                <span class="text-lg font-black text-slate-800">${count} Positions & Grades</span>
+              </div>
+            </div>
+
+            <!-- Color Accent Ribbon -->
+            <div class="h-1 w-28 rounded-full bg-gradient-to-r ${theme.accentBar} mt-3"></div>
+          </div>
+
+          <!-- Participants Grid Container (Guaranteed 100% Fit) -->
+          <div id="participants-scroll-box" class="flex-grow w-full overflow-hidden flex flex-col justify-center my-auto min-h-0">
+            <div id="participants-fit-wrapper">
+              <div class="grid ${gridClass} w-full">
+                ${participantsCardsHtml}
+              </div>
+            </div>
+          </div>
+
+        </div>`;
+
+      // Apply dynamic auto-fit scale
+      requestAnimationFrame(() => {
+        autoFitGradesToViewport();
+      });
+    }
+
+    // ── Recalculate Live Team Scores (PUBLISHED ONLY) ──
+    function calculateTeamScores() {
+      const teams = appData.teams || {};
+      const penalties = {};
+
+      Object.values(appData.teamPenalties || {}).forEach(p => {
+        if (p && p.teamId) {
+          penalties[p.teamId] = (penalties[p.teamId] || 0) + (Number(p.points) || 0);
+        }
+      });
+
+      const teamPoints = {};
+      Object.keys(teams).forEach(id => { teamPoints[id] = 0; });
+
+      Object.values(appData.results || {}).forEach(r => {
+        if (!r || String(r.status || '').trim().toLowerCase() !== 'published') return;
+
+        const cfg = r.programType === 'group'
+          ? (appData.groupPointsConfig || { first: 10, second: 7, third: 5, a_grade: 0, b_grade: 0 })
+          : r.programType === 'team'
+            ? (appData.teamPointsConfig || { first: 15, second: 10, third: 7, a_grade: 0, b_grade: 0 })
+            : (appData.pointsConfig || { first: 5, second: 3, third: 2, a_grade: 1, b_grade: 0 });
+
+        const pList = Array.isArray(r.participants) ? r.participants : Object.values(r.participants || {});
+
+        pList.forEach(p => {
+          if (!p) return;
+          let pts = 0;
+          if (p.position && p.position !== 'none' && cfg[p.position]) pts += Number(cfg[p.position]) || 0;
+          if (p.grade && p.grade !== 'none' && cfg[p.grade]) pts += Number(cfg[p.grade]) || 0;
+          if (pts <= 0) return;
+
+          let tId = p.teamId || r.teamId;
+          if (!tId) {
+            let st = p.studentId && appData.students ? appData.students[p.studentId] : null;
+            if (st && st.teamId) tId = st.teamId;
+          }
+
+          if (tId && teamPoints[tId] !== undefined) {
+            teamPoints[tId] += pts;
+          }
+        });
+      });
+
+      const arr = Object.entries(teams).map(([id, t]) => {
+        const total = Math.max(0, (teamPoints[id] || 0) - (penalties[id] || 0));
+        return { id, name: t.name || 'Team', totalPoints: total };
+      });
+
+      arr.sort((a, b) => b.totalPoints - a.totalPoints);
+      return arr;
+    }
+
+    // ── Update Team Standings Ticker ──
+    function updateTicker() {
+      const teams = calculateTeamScores();
+      const tickerEl = document.getElementById('teams-ticker-content');
+      if (!tickerEl) return;
+
+      if (teams.length === 0) {
+        tickerEl.innerHTML = `<div class="px-6 text-xs text-slate-400 font-medium">No team scores published yet.</div>`;
+        return;
+      }
+
+      const medals = ['text-amber-500', 'text-slate-400', 'text-orange-500'];
+
+      const itemsHtml = teams.map((t, idx) => {
+        const iconClass = idx < 3 ? 'fa-medal ' + medals[idx] : 'fa-flag text-slate-400';
+        return `
+          <div class="flex items-center gap-2.5 px-6 flex-shrink-0">
+            <span class="text-[10px] font-black text-slate-400">#${idx + 1}</span>
+            <i class="fas ${iconClass} text-xs"></i>
+            <span class="text-xs font-bold text-slate-800 tracking-tight whitespace-nowrap">${sanitize(t.name)}</span>
+            <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-black text-slate-900">${t.totalPoints}</span>
+          </div>`;
+      }).join('<div class="w-px h-4 bg-slate-200 flex-shrink-0"></div>');
+
+      // Duplicate content to achieve seamless continuous loop
+      tickerEl.innerHTML = `${itemsHtml}<div class="w-8 flex-shrink-0"></div>${itemsHtml}`;
+    }
+
+    // ── Process Results on Database Change ──
+    function onDataSync() {
+      // Filter published results with at least 1 participant
+      const published = Object.entries(appData.results || {})
+        .map(([id, r]) => ({ id, ...r }))
+        .filter(r => r.status === 'published' && r.participants && (
+          Array.isArray(r.participants) ? r.participants.length > 0 : Object.keys(r.participants).length > 0
+        ));
+
+      orderedResults = sortResults(published);
+
+      // Dismiss loading screen
+      const loader = document.getElementById('loading-screen');
+      if (loader) {
+        loader.classList.add('transition-opacity', 'duration-500', 'opacity-0');
+        setTimeout(() => loader.remove(), 550);
+      }
+
+      updateTicker();
+
+      if (orderedResults.length === 0) {
+        document.getElementById('slide-stage').innerHTML = `
+          <div class="flex flex-col items-center justify-center h-full text-center px-6">
+            <div class="w-20 h-20 rounded-3xl bg-white border border-slate-200 card-shadow flex items-center justify-center mb-6">
+              <i class="fas fa-bullhorn text-3xl text-slate-400"></i>
+            </div>
+            <h2 class="text-3xl font-black text-slate-800 tracking-tight mb-2">Awaiting Results</h2>
+            <p class="text-sm font-medium text-slate-500 max-w-md">Published competition results will immediately appear here in synchronized 24/7 sequence.</p>
+          </div>`;
+        return;
+      }
+
+      // Check current wall-clock slide
+      const info = getWallClockSlideInfo();
+      const current = orderedResults[info.index];
+      if (current) {
+        renderCurrentSlide(current, info.index, info.total);
+      }
+    }
+
+    // ── Controls: Play / Pause / Re-Sync ──
+    function togglePlayPause() {
+      isUserPaused = !isUserPaused;
+      const icon = document.getElementById('play-pause-icon');
+      const text = document.getElementById('sync-status-text');
+
+      if (isUserPaused) {
+        icon.className = 'fas fa-play text-[10px] text-amber-600';
+        text.textContent = 'Paused (Click to Sync)';
+        text.className = 'text-[11px] font-bold text-amber-700';
+
+        // Auto-resume sync after 25s of inactivity
+        if (autoResumeTimeout) clearTimeout(autoResumeTimeout);
+        autoResumeTimeout = setTimeout(() => {
+          if (isUserPaused) togglePlayPause();
+        }, 25000);
+      } else {
+        manualSlideIndex = null;
+        icon.className = 'fas fa-pause text-[10px] text-slate-500';
+        text.textContent = 'Live Sync';
+        text.className = 'text-[11px] font-bold text-slate-700';
+        if (autoResumeTimeout) clearTimeout(autoResumeTimeout);
+
+        // Immediate tick to wall clock
+        const info = getWallClockSlideInfo();
+        if (orderedResults[info.index]) {
+          renderCurrentSlide(orderedResults[info.index], info.index, info.total);
+        }
+      }
+    }
+
+    // ── Controls: Manual Slide Navigation ──
+    function navigateSlide(direction) {
+      if (orderedResults.length === 0) return;
+      isUserPaused = true;
+
+      const info = getWallClockSlideInfo();
+      manualSlideIndex = (manualSlideIndex !== null ? manualSlideIndex : info.index) + direction;
+      manualSlideIndex = ((manualSlideIndex % orderedResults.length) + orderedResults.length) % orderedResults.length;
+
+      const icon = document.getElementById('play-pause-icon');
+      const text = document.getElementById('sync-status-text');
+      icon.className = 'fas fa-play text-[10px] text-amber-600';
+      text.textContent = 'Paused (Click to Sync)';
+      text.className = 'text-[11px] font-bold text-amber-700';
+
+      const target = orderedResults[manualSlideIndex];
+      renderCurrentSlide(target, manualSlideIndex, orderedResults.length);
+
+      if (autoResumeTimeout) clearTimeout(autoResumeTimeout);
+      autoResumeTimeout = setTimeout(() => {
+        if (isUserPaused) togglePlayPause();
+      }, 25000);
+    }
+
+    // ── Controls: Slide Speed ──
+    function toggleSpeedMenu() {
+      const menu = document.getElementById('speed-menu');
+      menu.classList.toggle('hidden');
+    }
+
+    function setSlideSpeed(sec) {
+      slideDurationSec = sec;
+      localStorage.setItem('slideshow_duration', sec);
+      document.getElementById('speed-label').textContent = `${sec}s`;
+
+      [10, 15, 20, 25, 30].forEach(s => {
+        const el = document.getElementById(`chk-${s}`);
+        if (el) el.classList.toggle('hidden', s !== sec);
+      });
+
+      document.getElementById('speed-menu').classList.add('hidden');
+    }
+
+    // Close speed menu when clicked outside
+    window.addEventListener('click', (e) => {
+      if (!e.target.closest('#speed-menu') && !e.target.closest('button[onclick="toggleSpeedMenu()"]')) {
+        const menu = document.getElementById('speed-menu');
+        if (menu) menu.classList.add('hidden');
+      }
+    });
+
+    // ── Controls: Fullscreen Toggle ──
+    function toggleFullscreen() {
+      const fsIcon = document.getElementById('fs-icon');
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+        fsIcon.className = 'fas fa-compress text-xs';
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        fsIcon.className = 'fas fa-expand text-xs';
+      }
+    }
+
+    // Re-fit on screen resize (e.g. going fullscreen or rotating TV)
+    window.addEventListener('resize', () => {
+      autoFitGradesToViewport();
+    });
+
+    // ── Keyboard Shortcuts ──
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        navigateSlide(1);
+      } else if (e.key === 'ArrowLeft') {
+        navigateSlide(-1);
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFullscreen();
+      } else if (e.key.toLowerCase() === 'p') {
+        togglePlayPause();
+      }
+    });
+
+    // ── Initialize Speed UI ──
+    setSlideSpeed(slideDurationSec);
+
+    // ── Firebase Realtime Sync Listeners ──
+    const collectionsToSync = ['teams', 'students', 'teamPenalties', 'pointsConfig', 'groupPointsConfig', 'teamPointsConfig'];
+
+    collectionsToSync.forEach(col => {
+      db.ref(col).on('value', snap => {
+        appData[col] = snap.val() || {};
+        onDataSync();
+      }, err => console.warn(`Could not sync ${col}:`, err));
+    });
+
+    // Query published results only
+    db.ref('results').orderByChild('status').equalTo('published').on('value', snap => {
+      appData.results = snap.val() || {};
+      onDataSync();
+    }, err => {
+      console.error("Firebase results sync failed:", err);
+      const loader = document.getElementById('loading-screen');
+      if (loader) {
+        loader.innerHTML = `
+          <div class="text-center px-6">
+            <i class="fas fa-wifi text-4xl text-rose-500 mb-3"></i>
+            <h3 class="text-lg font-bold text-slate-800">Connection Error</h3>
+            <p class="text-xs text-slate-500 mt-1 mb-4">Could not load results from database.</p>
+            <button onclick="location.reload()" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold">Retry</button>
+          </div>`;
+      }
+    });
+
+    // Fallback: dismiss loader after 6 seconds in case of slow network
+    setTimeout(() => {
+      const loader = document.getElementById('loading-screen');
+      if (loader && !loader.classList.contains('opacity-0')) {
+        loader.classList.add('transition-opacity', 'duration-500', 'opacity-0');
+        setTimeout(() => loader.remove(), 550);
+      }
+    }, 6000);
+
+    // Start Realtime Wall Clock & Slide Sync Loop
+    startSyncLoop();
+  </script>
+</body>
+</html>

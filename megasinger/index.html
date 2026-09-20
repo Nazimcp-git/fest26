@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Song Registration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #fafbfc;
+            --surface: #ffffff;
+            --ink: #16202a;
+            --muted: #6b7785;
+            --line: #e5e9ee;
+            --accent: #0f766e;
+            --accent-soft: #e6f4f2;
+            --danger: #b42318;
+            --radius: 10px;
+            --font: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html {
+            -webkit-text-size-adjust: 100%
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: var(--font);
+            font-size: 16px;
+            line-height: 1.5
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+            color: inherit
+        }
+
+        button {
+            cursor: pointer
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px
+        }
+
+        .hidden {
+            display: none !important
+        }
+
+        .wrap {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px 16px 64px
+        }
+
+        .wrap.wide {
+            max-width: 1040px
+        }
+
+        /* Gate + picker */
+        .center {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px
+        }
+
+        .panel {
+            width: 100%;
+            max-width: 380px
+        }
+
+        .panel h1 {
+            font-size: 26px;
+            line-height: 1.2;
+            margin: 0 0 6px;
+            font-weight: 700;
+            letter-spacing: -.01em
+        }
+
+        .panel p {
+            margin: 0 0 22px;
+            color: var(--muted)
+        }
+
+        .panel .back {
+            margin-top: 14px
+        }
+
+        .field {
+            display: block;
+            margin-bottom: 14px
+        }
+
+        .field span {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px
+        }
+
+        .field em {
+            font-style: normal;
+            font-weight: 400;
+            color: var(--muted)
+        }
+
+        input[type=text],
+        input[type=password],
+        textarea,
+        select {
+            width: 100%;
+            padding: 11px 12px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: -1px;
+            border-color: var(--accent)
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 72px
+        }
+
+        .btn {
+            border: 0;
+            border-radius: var(--radius);
+            padding: 11px 18px;
+            font-weight: 600;
+            background: var(--accent);
+            color: #fff
+        }
+
+        .btn:hover {
+            background: #0c5f59
+        }
+
+        .btn:disabled {
+            opacity: .6;
+            cursor: default
+        }
+
+        .btn.block {
+            width: 100%
+        }
+
+        .btn.ghost {
+            background: transparent;
+            color: var(--ink);
+            border: 1px solid var(--line)
+        }
+
+        .btn.ghost:hover {
+            background: #f0f3f6
+        }
+
+        .btn.small {
+            padding: 7px 12px;
+            font-size: 14px
+        }
+
+        .err {
+            color: var(--danger);
+            font-size: 14px;
+            min-height: 20px;
+            margin: 8px 0 0
+        }
+
+        .names {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface);
+            overflow: hidden
+        }
+
+        .names li+li {
+            border-top: 1px solid var(--line)
+        }
+
+        .names button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 14px;
+            background: none;
+            border: 0;
+            text-align: left;
+            font-weight: 500
+        }
+
+        .names button:hover {
+            background: var(--accent-soft)
+        }
+
+        .avatar {
+            flex: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-soft);
+            color: var(--accent);
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 14px
+        }
+
+        /* App */
+        .top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 22px;
+            flex-wrap: wrap
+        }
+
+        .top h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -.01em
+        }
+
+        .who {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--muted);
+            flex-wrap: wrap
+        }
+
+        .who b {
+            color: var(--ink);
+            font-weight: 600
+        }
+
+        .linkbtn {
+            background: none;
+            border: 0;
+            padding: 4px 6px;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 14px
+        }
+
+        .linkbtn:hover {
+            text-decoration: underline
+        }
+
+        .bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 6px
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: #eef1f4;
+            border-radius: var(--radius);
+            padding: 3px
+        }
+
+        .tabs button {
+            border: 0;
+            background: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--muted)
+        }
+
+        .tabs button[aria-selected=true] {
+            background: var(--surface);
+            color: var(--ink);
+            box-shadow: 0 1px 2px rgba(16, 32, 42, .08)
+        }
+
+        .bar .search {
+            flex: 1;
+            min-width: 150px
+        }
+
+        .bar .search input {
+            padding: 9px 12px
+        }
+
+        .bar select {
+            width: auto;
+            padding: 9px 12px
+        }
+
+        .list {
+            list-style: none;
+            margin: 8px 0 0;
+            padding: 0
+        }
+
+        .song {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 2px;
+            border-bottom: 1px solid var(--line)
+        }
+
+        .song .main {
+            min-width: 0
+        }
+
+        .song .title {
+            font-weight: 600;
+            font-size: 17px;
+            overflow-wrap: anywhere
+        }
+
+        .song .artist {
+            color: var(--muted);
+            overflow-wrap: anywhere
+        }
+
+        .tag {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 8px;
+            border-radius: 99px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            vertical-align: 1px
+        }
+
+        .song .note {
+            margin-top: 4px;
+            font-size: 14px;
+            color: var(--muted);
+            overflow-wrap: anywhere
+        }
+
+        .song .meta {
+            flex: none;
+            text-align: right;
+            font-size: 14px
+        }
+
+        .song .meta .by {
+            font-weight: 600
+        }
+
+        .song .meta .by .tag {
+            margin-left: 0;
+            margin-right: 0
+        }
+
+        .song .meta .when {
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .del {
+            margin-top: 4px;
+            background: none;
+            border: 0;
+            padding: 0;
+            color: var(--danger);
+            font-size: 13px
+        }
+
+        .del:hover {
+            text-decoration: underline
+        }
+
+        .empty {
+            padding: 48px 0;
+            text-align: center;
+            color: var(--muted)
+        }
+
+        .count {
+            font-size: 14px;
+            color: var(--muted);
+            margin: 14px 2px 0
+        }
+
+        @media (max-width:520px) {
+            .song {
+                flex-direction: column;
+                gap: 8px
+            }
+
+            .song .meta {
+                text-align: left
+            }
+        }
+
+        /* Admin */
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 22px;
+            margin: 0 0 16px;
+            font-size: 14px;
+            color: var(--muted)
+        }
+
+        .stats b {
+            color: var(--ink);
+            font-size: 18px;
+            margin-right: 4px
+        }
+
+        .tablewrap {
+            overflow-x: auto;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface);
+            margin-top: 12px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px
+        }
+
+        th,
+        td {
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid var(--line)
+        }
+
+        th {
+            background: #f4f6f8;
+            font-weight: 600;
+            white-space: nowrap
+        }
+
+        tr:last-child td {
+            border-bottom: 0
+        }
+
+        td.nowrap {
+            white-space: nowrap
+        }
+
+        td.wrapcell {
+            min-width: 140px;
+            overflow-wrap: anywhere
+        }
+
+        /* Dialog */
+        dialog {
+            border: 0;
+            border-radius: 14px;
+            padding: 22px;
+            width: calc(100% - 32px);
+            max-width: 420px;
+            box-shadow: 0 12px 40px rgba(16, 32, 42, .18);
+            color: var(--ink)
+        }
+
+        dialog::backdrop {
+            background: rgba(16, 32, 42, .35)
+        }
+
+        dialog h2 {
+            margin: 0 0 16px;
+            font-size: 20px
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 8px
+        }
+
+        .banner {
+            background: #fff7e6;
+            border: 1px solid #f3d9a4;
+            color: #7a5200;
+            padding: 10px 12px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            margin-bottom: 16px
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            background: var(--ink);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 99px;
+            font-size: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s
+        }
+
+        .toast.show {
+            opacity: 1
+        }
+
+        @media (prefers-reduced-motion:reduce) {
+            .toast {
+                transition: none
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 1. Passcode -->
+    <section id="gate" class="center hidden">
+        <div class="panel">
+            <h1>Song Registration</h1>
+            <p>Enter your team passcode.</p>
+            <label class="field">
+                <span>Passcode</span>
+                <input id="passInput" type="password" autocomplete="off" inputmode="numeric">
+            </label>
+            <button id="passBtn" class="btn block">Enter</button>
+            <p id="passErr" class="err" role="alert"></p>
+        </div>
+    </section>
+
+    <!-- 2. Name picker (members of the team only) -->
+    <section id="picker" class="center hidden">
+        <div class="panel">
+            <h1>Who are you?</h1>
+            <p id="pickerTeam"></p>
+            <ul id="nameList" class="names"></ul>
+            <button id="pickerBack" class="linkbtn back">Use a different passcode</button>
+        </div>
+    </section>
+
+    <!-- 3. Team app -->
+    <main id="app" class="wrap hidden">
+        <div id="cfgBanner" class="banner hidden">Firebase is not configured. Add your config in the script to load and
+            save songs.</div>
+
+        <header class="top">
+            <h1>Registered songs</h1>
+            <div class="who">
+                <span class="avatar" id="meAvatar"></span>
+                <b id="meName"></b>
+                <span class="tag" id="meTeam" style="margin-left:0"></span>
+                <button id="switchBtn" class="linkbtn">Switch name</button>
+                <button id="lockBtn" class="linkbtn">Lock</button>
+            </div>
+        </header>
+
+        <div class="bar">
+            <div class="tabs" role="tablist">
+                <button role="tab" id="tabAll" aria-selected="true">All songs</button>
+                <button role="tab" id="tabMine" aria-selected="false">My team</button>
+            </div>
+            <div class="search"><input id="search" type="text" placeholder="Search songs" aria-label="Search songs">
+            </div>
+            <button id="addBtn" class="btn small">Add song</button>
+        </div>
+
+        <ul id="songList" class="list"></ul>
+        <p id="count" class="count"></p>
+    </main>
+
+    <!-- 4. Admin -->
+    <main id="admin" class="wrap wide hidden">
+        <div id="cfgBanner2" class="banner hidden">Firebase is not configured. Add your config in the script to load
+            songs.</div>
+
+        <header class="top">
+            <h1>Admin</h1>
+            <div class="who">
+                <button id="xlsBtn" class="btn small">Export Excel</button>
+                <button id="pdfBtn" class="btn small ghost">Export PDF</button>
+                <button id="adminLock" class="linkbtn">Lock</button>
+            </div>
+        </header>
+
+        <div id="stats" class="stats"></div>
+
+        <div class="bar">
+            <select id="adminTeam" aria-label="Filter by team"></select>
+            <div class="search"><input id="adminSearch" type="text" placeholder="Search all data"
+                    aria-label="Search all data"></div>
+        </div>
+
+        <div class="tablewrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Song</th>
+                        <th>Singer</th>
+                        <th>Language</th>
+                        <th>Note</th>
+                        <th>Candidate</th>
+                        <th>Team</th>
+                        <th>Added on</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="adminBody"></tbody>
+            </table>
+        </div>
+        <p id="adminCount" class="count"></p>
+    </main>
+
+    <!-- Add song dialog -->
+    <dialog id="addDlg">
+        <h2>Add a song</h2>
+        <label class="field"><span>Song title</span><input id="fTitle" type="text" maxlength="120"></label>
+        <label class="field"><span>Singer / artist</span><input id="fArtist" type="text" maxlength="120"></label>
+        <label class="field"><span>Language <em>(optional)</em></span><input id="fLang" type="text" maxlength="40"
+                placeholder="Malayalam, Arabic, Urdu..."></label>
+        <label class="field"><span>Note <em>(optional)</em></span><textarea id="fNote"
+                maxlength="300"></textarea></label>
+        <p id="addErr" class="err" role="alert"></p>
+        <div class="actions">
+            <button id="cancelAdd" class="btn ghost">Cancel</button>
+            <button id="saveAdd" class="btn">Save song</button>
+        </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        /* ============ CONFIG ============ */
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBkgc0RI_2qmugDBtcVofdWrq9s_1Ca6Fg",
+            authDomain: "hosing-eba59.firebaseapp.com",
+            databaseURL: "https://hosing-eba59-default-rtdb.firebaseio.com",
+            projectId: "hosing-eba59",
+            storageBucket: "hosing-eba59.firebasestorage.app",
+            messagingSenderId: "963568996041",
+            appId: "1:963568996041:web:24765839fd6e2da1960718",
+            measurementId: "G-5LXSM6EMFH"
+        };
+
+        const ADMIN_PIN = "786786786";
+
+        const TEAMS = {
+            LIBERA: { code: "841926", members: ["Salim"] },
+            RELETIA: { code: "395172", members: ["Faihan", "Muflih", "Rabeeh Ap"] },
+            OPERA: { code: "620485", members: ["Mishal", "Adil"] },
+            ALETHEIA: { code: "714309", members: ["Nizam"] }
+        };
+        /* ================================== */
+
+        const $ = id => document.getElementById(id);
+        const configured = !FIREBASE_CONFIG.apiKey.startsWith("YOUR_");
+        let db = null;
+        if (configured) {
+            firebase.initializeApp(FIREBASE_CONFIG);
+            db = firebase.database();
+        }
+
+        const teamLabel = k => k ? k[0] + k.slice(1).toLowerCase() : "";
+        const memberTeam = {};
+        Object.entries(TEAMS).forEach(([t, v]) => v.members.forEach(m => memberTeam[m] = t));
+        const teamOf = s => s.team || memberTeam[s.by] || "";
+
+        let role = localStorage.getItem("sr_admin") === "1" ? "admin" : "team";
+        let team = localStorage.getItem("sr_team");
+        let user = localStorage.getItem("sr_user");
+        if (team && !TEAMS[team]) team = null;
+        let songs = [];
+        let tab = "all";
+
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        const norm = s => String(s).trim().toLowerCase().replace(/\s+/g, " ");
+        const fmt = ts => ts ? new Date(ts).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+
+        function toast(msg) {
+            const t = $("toast");
+            t.textContent = msg;
+            t.classList.add("show");
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => t.classList.remove("show"), 2200);
+        }
+
+        function view(name) {
+            ["gate", "picker", "app", "admin"].forEach(v => $(v).classList.toggle("hidden", v !== name));
+        }
+
+        function lockAll() {
+            ["sr_admin", "sr_team", "sr_user"].forEach(k => localStorage.removeItem(k));
+            role = "team"; team = null; user = null; tab = "all";
+            route();
+        }
+
+        /* ---- Passcode ---- */
+        function tryPass() {
+            const v = $("passInput").value.trim();
+            const hit = Object.keys(TEAMS).find(t => TEAMS[t].code === v);
+            if (v === ADMIN_PIN) {
+                role = "admin";
+                localStorage.setItem("sr_admin", "1");
+                localStorage.removeItem("sr_team");
+                localStorage.removeItem("sr_user");
+                team = null; user = null;
+            } else if (hit) {
+                role = "team";
+                team = hit;
+                user = null;
+                localStorage.removeItem("sr_admin");
+                localStorage.setItem("sr_team", team);
+                localStorage.removeItem("sr_user");
+            } else {
+                $("passErr").textContent = "Wrong passcode. Try again.";
+                $("passInput").select();
+                return;
+            }
+            $("passErr").textContent = "";
+            $("passInput").value = "";
+            route();
+        }
+        $("passBtn").onclick = tryPass;
+        $("passInput").addEventListener("keydown", e => { if (e.key === "Enter") tryPass(); });
+
+        /* ---- Name picker ---- */
+        function buildPicker() {
+            $("pickerTeam").textContent = `Team ${teamLabel(team)}. Choose your name.`;
+            $("nameList").innerHTML = TEAMS[team].members.map(n =>
+                `<li><button data-name="${esc(n)}"><span class="avatar">${esc(n[0])}</span>${esc(n)}</button></li>`
+            ).join("");
+        }
+        $("nameList").addEventListener("click", e => {
+            const b = e.target.closest("button[data-name]");
+            if (!b) return;
+            user = b.dataset.name;
+            localStorage.setItem("sr_user", user);
+            route();
+        });
+        $("pickerBack").onclick = lockAll;
+        $("switchBtn").onclick = () => { localStorage.removeItem("sr_user"); user = null; route(); };
+        $("lockBtn").onclick = lockAll;
+        $("adminLock").onclick = lockAll;
+
+        /* ---- Routing ---- */
+        function route() {
+            if (role === "admin") {
+                $("cfgBanner2").classList.toggle("hidden", configured);
+                view("admin");
+                renderAdmin();
+                return;
+            }
+            if (!team) { view("gate"); $("passInput").focus(); return; }
+            if (!user || !TEAMS[team].members.includes(user)) { buildPicker(); view("picker"); return; }
+            $("meName").textContent = user;
+            $("meAvatar").textContent = user[0];
+            $("meTeam").textContent = teamLabel(team);
+            $("cfgBanner").classList.toggle("hidden", configured);
+            view("app");
+            render();
+        }
+
+        /* ---- Data ---- */
+        if (configured) {
+            db.ref("songs").on("value", snap => {
+                const arr = [];
+                snap.forEach(c => { arr.push({ id: c.key, ...c.val() }); });
+                arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                songs = arr;
+                render();
+                renderAdmin();
+            }, () => toast("Could not load songs. Check database rules."));
+        }
+
+        function removeSong(s) {
+            if (!configured) return;
+            if (confirm(`Delete "${s.title}"?`)) {
+                db.ref("songs/" + s.id).remove().then(() => toast("Song deleted"), () => toast("Could not delete song"));
+            }
+        }
+
+        /* ---- Team view ---- */
+        function render() {
+            if ($("app").classList.contains("hidden")) return;
+            const q = norm($("search").value);
+            const mine = songs.filter(s => teamOf(s) === team);
+
+            $("tabAll").textContent = `All songs (${songs.length})`;
+            $("tabMine").textContent = `My team (${mine.length})`;
+            $("tabAll").setAttribute("aria-selected", tab === "all");
+            $("tabMine").setAttribute("aria-selected", tab === "mine");
+
+            let rows = tab === "mine" ? mine : songs;
+            if (q) rows = rows.filter(s => norm([s.title, s.artist, s.by, teamOf(s), s.language, s.note].join(" ")).includes(q));
+
+            if (!rows.length) {
+                $("songList").innerHTML = `<li class="empty">${q ? "No songs match your search."
+                    : tab === "mine" ? "Your team has not added any songs yet."
+                        : "No songs registered yet. Add the first one."
+                    }</li>`;
+                $("count").textContent = "";
+                return;
+            }
+
+            $("songList").innerHTML = rows.map(s => `
+    <li class="song">
+      <div class="main">
+        <div class="title">${esc(s.title)}</div>
+        <div class="artist">${esc(s.artist)}${s.language ? `<span class="tag">${esc(s.language)}</span>` : ""}</div>
+        ${s.note ? `<div class="note">${esc(s.note)}</div>` : ""}
+      </div>
+      <div class="meta">
+        <div class="by">${esc(s.by)}</div>
+        <div class="when">${esc(teamLabel(teamOf(s)))}</div>
+        <div class="when">${esc(fmt(s.createdAt))}</div>
+        ${teamOf(s) === team ? `<button class="del" data-del="${esc(s.id)}">Delete</button>` : ""}
+      </div>
+    </li>`).join("");
+            $("count").textContent = `${rows.length} ${rows.length === 1 ? "song" : "songs"}`;
+        }
+
+        $("tabAll").onclick = () => { tab = "all"; render(); };
+        $("tabMine").onclick = () => { tab = "mine"; render(); };
+        $("search").addEventListener("input", render);
+
+        $("songList").addEventListener("click", e => {
+            const b = e.target.closest("button[data-del]");
+            if (!b) return;
+            const s = songs.find(x => x.id === b.dataset.del);
+            if (s && teamOf(s) === team) removeSong(s); // teams can only delete their own songs
+        });
+
+        /* ---- Add song ---- */
+        const dlg = $("addDlg");
+        $("addBtn").onclick = () => {
+            ["fTitle", "fArtist", "fLang", "fNote"].forEach(id => $(id).value = "");
+            $("addErr").textContent = "";
+            dlg.showModal();
+            $("fTitle").focus();
+        };
+        $("cancelAdd").onclick = () => dlg.close();
+
+        $("saveAdd").onclick = () => {
+            const title = $("fTitle").value.trim();
+            const artist = $("fArtist").value.trim();
+            const language = $("fLang").value.trim();
+            const note = $("fNote").value.trim();
+
+            if (!title || !artist) { $("addErr").textContent = "Enter the song title and the singer."; return; }
+            if (!configured) { $("addErr").textContent = "Firebase is not configured yet."; return; }
+            if (songs.some(s => norm(s.title) === norm(title) && norm(s.artist) === norm(artist))) {
+                $("addErr").textContent = "This song is already registered.";
+                return;
+            }
+
+            $("saveAdd").disabled = true;
+            db.ref("songs").push({
+                title, artist, language, note,
+                by: user,
+                team,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                dlg.close();
+                toast("Song added");
+            }).catch(() => {
+                $("addErr").textContent = "Could not save. Check your connection and database rules.";
+            }).finally(() => { $("saveAdd").disabled = false; });
+        };
+
+        /* ---- Admin ---- */
+        $("adminTeam").innerHTML = `<option value="">All teams</option>` +
+            Object.keys(TEAMS).map(t => `<option value="${t}">${teamLabel(t)}</option>`).join("");
+
+        function adminRows() {
+            const t = $("adminTeam").value;
+            const q = norm($("adminSearch").value);
+            let rows = songs;
+            if (t) rows = rows.filter(s => teamOf(s) === t);
+            if (q) rows = rows.filter(s => norm([s.title, s.artist, s.by, teamOf(s), s.language, s.note, fmt(s.createdAt)].join(" ")).includes(q));
+            return rows;
+        }
+
+        function renderAdmin() {
+            if ($("admin").classList.contains("hidden")) return;
+
+            $("stats").innerHTML = `<span><b>${songs.length}</b>Total songs</span>` +
+                Object.keys(TEAMS).map(t =>
+                    `<span><b>${songs.filter(s => teamOf(s) === t).length}</b>${teamLabel(t)}</span>`).join("");
+
+            const rows = adminRows();
+            $("adminBody").innerHTML = rows.length ? rows.map((s, i) => `
+    <tr>
+      <td class="nowrap">${i + 1}</td>
+      <td class="wrapcell"><b>${esc(s.title)}</b></td>
+      <td class="wrapcell">${esc(s.artist)}</td>
+      <td>${esc(s.language)}</td>
+      <td class="wrapcell">${esc(s.note)}</td>
+      <td class="nowrap">${esc(s.by)}</td>
+      <td class="nowrap">${esc(teamLabel(teamOf(s)))}</td>
+      <td class="nowrap">${esc(fmt(s.createdAt))}</td>
+      <td><button class="del" data-del="${esc(s.id)}">Delete</button></td>
+    </tr>`).join("") : `<tr><td colspan="9" class="empty">No songs found.</td></tr>`;
+            $("adminCount").textContent = rows.length ? `${rows.length} ${rows.length === 1 ? "song" : "songs"} shown` : "";
+        }
+        $("adminTeam").onchange = renderAdmin;
+        $("adminSearch").addEventListener("input", renderAdmin);
+        $("adminBody").addEventListener("click", e => {
+            const b = e.target.closest("button[data-del]");
+            if (!b) return;
+            const s = songs.find(x => x.id === b.dataset.del);
+            if (s) removeSong(s);
+        });
+
+        /* Exports use whatever is currently shown (team filter + search) */
+        function exportData() {
+            return adminRows().map((s, i) => ({
+                "#": i + 1,
+                "Song": s.title || "",
+                "Singer": s.artist || "",
+                "Language": s.language || "",
+                "Note": s.note || "",
+                "Candidate": s.by || "",
+                "Team": teamLabel(teamOf(s)),
+                "Added on": fmt(s.createdAt)
+            }));
+        }
+        const stamp = () => new Date().toISOString().slice(0, 10);
+
+        $("xlsBtn").onclick = () => {
+            if (typeof XLSX === "undefined") { toast("Excel library failed to load"); return; }
+            const data = exportData();
+            if (!data.length) { toast("Nothing to export"); return; }
+            const ws = XLSX.utils.json_to_sheet(data);
+            ws["!cols"] = [{ wch: 4 }, { wch: 30 }, { wch: 24 }, { wch: 12 }, { wch: 30 }, { wch: 14 }, { wch: 12 }, { wch: 22 }];
+            const summary = Object.keys(TEAMS).map(t => ({ "Team": teamLabel(t), "Songs": songs.filter(s => teamOf(s) === t).length }));
+            summary.push({ "Team": "Total", "Songs": songs.length });
+            const ws2 = XLSX.utils.json_to_sheet(summary);
+            ws2["!cols"] = [{ wch: 14 }, { wch: 8 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Songs");
+            XLSX.utils.book_append_sheet(wb, ws2, "Summary");
+            XLSX.writeFile(wb, `songs-${stamp()}.xlsx`);
+        };
+
+        /* PDF: opens the browser's print dialog, choose "Save as PDF" (keeps Malayalam/Arabic text intact) */
+        $("pdfBtn").onclick = () => {
+            const data = exportData();
+            if (!data.length) { toast("Nothing to export"); return; }
+            const cols = Object.keys(data[0]);
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Songs ${stamp()}</title>
+<style>
+@page{size:A4 landscape;margin:12mm}
+body{font-family:"Noto Sans","Noto Sans Malayalam","Noto Sans Arabic",Arial,sans-serif;font-size:11px;color:#111}
+h1{font-size:16px;margin:0 0 2px}
+p{margin:0 0 10px;color:#555}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:5px 6px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+th{background:#eee}
+tr{page-break-inside:avoid}
+</style></head><body>
+<h1>Registered songs</h1>
+<p>${data.length} songs. Exported ${esc(fmt(Date.now()))}</p>
+<table><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
+<tbody>${data.map(r => `<tr>${cols.map(c => `<td>${esc(r[c])}</td>`).join("")}</tr>`).join("")}</tbody></table>
+<\/body><\/html>`;
+            const old = document.getElementById("pdfFrame");
+            if (old) old.remove();
+            const f = document.createElement("iframe");
+            f.id = "pdfFrame";
+            f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+            document.body.appendChild(f);
+            const d = f.contentWindow.document;
+            d.open(); d.write(html); d.close();
+            setTimeout(() => { f.contentWindow.focus(); f.contentWindow.print(); }, 300);
+        };
+
+        route();
+    </script>
+</body>
+
+</html>

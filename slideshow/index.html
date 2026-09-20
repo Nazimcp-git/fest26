@@ -184,20 +184,7 @@
           <span id="sync-status-text" class="hidden sm:inline text-[11px]">Live Sync</span>
         </button>
 
-        <!-- Slide Speed Selector Button -->
-        <div class="relative inline-block text-left">
-          <button onclick="toggleSpeedMenu()" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 light-shadow text-xs font-bold text-slate-700 flex items-center gap-1 transition-all" title="Change Slide Duration">
-            <span id="speed-label" class="text-[11px]">25s</span>
-            <i class="fas fa-chevron-down text-[8px] text-slate-400 ml-0.5"></i>
-          </button>
-          <div id="speed-menu" class="hidden absolute right-0 mt-1.5 w-28 bg-white rounded-xl card-shadow border border-slate-200/80 py-1 z-50 text-xs">
-            <button onclick="setSlideSpeed(10)" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium text-slate-700 flex items-center justify-between">10 seconds <span id="chk-10" class="text-indigo-600 font-bold hidden">✓</span></button>
-            <button onclick="setSlideSpeed(15)" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium text-slate-700 flex items-center justify-between">15 seconds <span id="chk-15" class="text-indigo-600 font-bold hidden">✓</span></button>
-            <button onclick="setSlideSpeed(20)" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium text-slate-700 flex items-center justify-between">20 seconds <span id="chk-20" class="text-indigo-600 font-bold hidden">✓</span></button>
-            <button onclick="setSlideSpeed(25)" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium text-slate-700 flex items-center justify-between">25 seconds <span id="chk-25" class="text-indigo-600 font-bold">✓</span></button>
-            <button onclick="setSlideSpeed(30)" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium text-slate-700 flex items-center justify-between">30 seconds <span id="chk-30" class="text-indigo-600 font-bold hidden">✓</span></button>
-          </div>
-        </div>
+
 
         <!-- Fullscreen Button -->
         <button onclick="toggleFullscreen()" class="w-8 h-8 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 light-shadow text-slate-600 flex items-center justify-center transition-all" title="Toggle Fullscreen">
@@ -340,7 +327,8 @@
     };
 
     let orderedResults = [];
-    let slideDurationSec = parseInt(localStorage.getItem('slideshow_duration') || '25', 10);
+    try { localStorage.removeItem('slideshow_duration'); } catch (e) {}
+    const slideDurationSec = 25; // Fixed 25 seconds per slide
     let orderMode = localStorage.getItem('slideshow_order') || 'category'; // 'category' | 'announced'
     let isUserPaused = false;
     let manualSlideIndex = null;
@@ -893,33 +881,6 @@
       }, 25000);
     }
 
-    // ── Controls: Slide Speed ──
-    function toggleSpeedMenu() {
-      const menu = document.getElementById('speed-menu');
-      menu.classList.toggle('hidden');
-    }
-
-    function setSlideSpeed(sec) {
-      slideDurationSec = sec;
-      localStorage.setItem('slideshow_duration', sec);
-      document.getElementById('speed-label').textContent = `${sec}s`;
-
-      [10, 15, 20, 25, 30].forEach(s => {
-        const el = document.getElementById(`chk-${s}`);
-        if (el) el.classList.toggle('hidden', s !== sec);
-      });
-
-      document.getElementById('speed-menu').classList.add('hidden');
-    }
-
-    // Close speed menu when clicked outside
-    window.addEventListener('click', (e) => {
-      if (!e.target.closest('#speed-menu') && !e.target.closest('button[onclick="toggleSpeedMenu()"]')) {
-        const menu = document.getElementById('speed-menu');
-        if (menu) menu.classList.add('hidden');
-      }
-    });
-
     // ── Controls: Fullscreen Toggle ──
     function toggleFullscreen() {
       const fsIcon = document.getElementById('fs-icon');
@@ -949,9 +910,6 @@
         togglePlayPause();
       }
     });
-
-    // ── Initialize Speed UI ──
-    setSlideSpeed(slideDurationSec);
 
     // ── Firebase Realtime Sync Listeners ──
     const collectionsToSync = ['teams', 'students', 'teamPenalties', 'pointsConfig', 'groupPointsConfig', 'teamPointsConfig'];
